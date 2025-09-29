@@ -6,6 +6,7 @@
     "*.glb": ["@parcel/transformer-raw"],
     "*.png": ["@parcel/transformer-raw"],
     "*.jpg": ["@parcel/transformer-raw"],
+    "*.svg": ["@parcel/transformer-raw"],
     ".wasm": ["@parcel/transformer-raw"]
   }
 }

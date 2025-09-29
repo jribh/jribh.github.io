@@ -10,6 +10,7 @@ import { gsap } from 'gsap';
 import hdriUrl from './assets/hdri_bg.hdr';
 import modelUrl from './assets/head_packed.glb';
 import shadowMaskUrl from './assets/Head_Shadowmask.png';
+import logoUrl from './assets/logo.svg';
 
 let headContainer = document.querySelector("#head-container");
 headContainer.style.overflow = "default";
@@ -29,6 +30,12 @@ const IS_TOUCH_DEVICE = (function(){
     if ('ontouchstart' in window) return true;
     const ua = (navigator.userAgent || '').toLowerCase();
     return /mobi|iphone|ipad|android|tablet/.test(ua);
+  } catch { return false; }
+})();
+
+const PREFERS_REDUCED_MOTION = (function(){
+  try {
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   } catch { return false; }
 })();
 
@@ -71,15 +78,125 @@ const g2xEl = document.getElementById('g2x'); // optional red radial gradient ov
 // Ensure initial blackout
 if (theCanvas) theCanvas.style.opacity = '0';
 if (bgEl) bgEl.style.opacity = '0';
-// Create a fullscreen blackout overlay that fades out on startup
+// Create a fullscreen loading overlay that fades in on startup
+const MIN_LOADING_DISPLAY_MS = 1200;
 let blackoutEl = document.createElement('div');
-blackoutEl.style.position = 'fixed';
-blackoutEl.style.inset = '0';
-blackoutEl.style.background = '#000';
-blackoutEl.style.zIndex = '9999';
-blackoutEl.style.opacity = '1';
-blackoutEl.style.pointerEvents = 'none';
+blackoutEl.className = 'loading-overlay';
+const loadingContent = document.createElement('div');
+loadingContent.className = 'loading-overlay__content';
+const logoImg = new Image();
+logoImg.src = logoUrl;
+logoImg.alt = 'JRIBH logo';
+logoImg.draggable = false;
+logoImg.decoding = 'async';
+logoImg.className = 'loading-overlay__logo';
+const loadingBar = document.createElement('div');
+loadingBar.className = 'loading-overlay__bar';
+const loadingBarFill = document.createElement('div');
+loadingBarFill.className = 'loading-overlay__progress';
+loadingBar.appendChild(loadingBarFill);
+loadingContent.appendChild(logoImg);
+loadingContent.appendChild(loadingBar);
+blackoutEl.appendChild(loadingContent);
 document.body.appendChild(blackoutEl);
+gsap.set(blackoutEl, { opacity: 0 });
+gsap.set(loadingContent, { opacity: 0, y: 16 });
+
+let overlayActivated = false;
+let overlayActivatedAt = null;
+let startupDelayHandle = null;
+let pendingStartupLaunch = null;
+const activateLoadingOverlay = () => {
+  if (overlayActivated) return;
+  overlayActivated = true;
+  overlayActivatedAt = performance.now();
+  blackoutEl.style.pointerEvents = 'auto';
+  if (PREFERS_REDUCED_MOTION) {
+    gsap.set(blackoutEl, { opacity: 1 });
+    gsap.set(loadingContent, { opacity: 1, y: 0 });
+    return;
+  }
+  const fadeInTl = gsap.timeline();
+  fadeInTl.to(blackoutEl, { opacity: 1, duration: 1.2, ease: 'power2.out' }, 0);
+  fadeInTl.to(loadingContent, { opacity: 1, duration: 1.2, ease: 'power2.out' }, 0.1);
+
+  if (startupTriggered && pendingStartupLaunch) {
+    const elapsed = performance.now() - overlayActivatedAt;
+    const waitMs = Math.max(0, MIN_LOADING_DISPLAY_MS - elapsed);
+    if (startupDelayHandle) {
+      clearTimeout(startupDelayHandle);
+      startupDelayHandle = null;
+    }
+    if (waitMs <= 0) {
+      pendingStartupLaunch();
+    } else {
+      startupDelayHandle = setTimeout(pendingStartupLaunch, waitMs);
+    }
+  }
+};
+
+if (document.readyState === 'complete') {
+  requestAnimationFrame(activateLoadingOverlay);
+} else {
+  window.addEventListener('load', () => requestAnimationFrame(activateLoadingOverlay), { once: true });
+  requestAnimationFrame(activateLoadingOverlay);
+}
+
+const loadingManager = new THREE.LoadingManager();
+let assetsReady = false;
+let modelReady = false;
+let startupTriggered = false;
+
+loadingManager.onProgress = (_url, itemsLoaded, itemsTotal) => {
+  const progress = itemsTotal ? itemsLoaded / itemsTotal : 1;
+  tweenLoadingBarWidth(`${Math.min(progress * 100, 100)}%`, 0.45, 'power2.out');
+};
+
+loadingManager.onLoad = () => {
+  assetsReady = true;
+  tweenLoadingBarWidth('100%', 0.5, 'power3.out');
+  tryStartStartupSequence();
+};
+
+loadingManager.onError = (url) => {
+  console.warn(`Asset failed to load: ${url}`);
+  tweenLoadingBarWidth('100%', 0.5, 'power3.out');
+  assetsReady = true;
+  tryStartStartupSequence();
+};
+
+function tryStartStartupSequence() {
+  if (startupTriggered) return;
+  if (!assetsReady || !modelReady) return;
+  startupTriggered = true;
+  const elapsed = overlayActivatedAt ? (performance.now() - overlayActivatedAt) : 0;
+  const waitMs = Math.max(0, MIN_LOADING_DISPLAY_MS - elapsed);
+  pendingStartupLaunch = () => {
+    startupDelayHandle = null;
+    const fn = startStartupSequence;
+    pendingStartupLaunch = null;
+    fn();
+  };
+  if (waitMs > 0) {
+    startupDelayHandle = setTimeout(pendingStartupLaunch, waitMs);
+  } else {
+    pendingStartupLaunch();
+  }
+}
+
+function tweenLoadingBarWidth(widthValue, duration = 0.45, ease = 'power2.out') {
+  if (!loadingBarFill) return;
+  if (PREFERS_REDUCED_MOTION || duration <= 0) {
+    gsap.set(loadingBarFill, { width: widthValue });
+    return;
+  }
+  gsap.to(loadingBarFill, {
+    width: widthValue,
+    duration,
+    ease,
+    overwrite: 'auto'
+  });
+}
 
 theCanvas.style.overflow = "hidden";
 theCanvas.style.left = '0';
@@ -580,8 +697,8 @@ allLights.forEach(l => {
 const pmremGenerator = new THREE.PMREMGenerator(renderer);
 pmremGenerator.compileEquirectangularShader();
 
-new RGBELoader()
-    .load(hdriUrl, (texture) => {
+new RGBELoader(loadingManager)
+  .load(hdriUrl, (texture) => {
         texture.mapping = THREE.EquirectangularReflectionMapping;
 
         // Create a scene just for rotation
@@ -613,7 +730,7 @@ let blackMaterial = new THREE.MeshBasicMaterial({
 let mixer, GLTFHead;
 
 function loadGLTFHead(GLTFName) {
-    const loader = new GLTFLoader();
+  const loader = new GLTFLoader(loadingManager);
 
     // Meshopt for geometry compression
     loader.setMeshoptDecoder(MeshoptDecoder);
@@ -629,11 +746,13 @@ function loadGLTFHead(GLTFName) {
         // Initialize scroll-based effects to match current page position before startup
         initializeScrollEffectsFromCurrentPosition();
         
-        // Kick off startup sequence once model is in scene
-        startStartupSequence();
+    modelReady = true;
+    tryStartStartupSequence();
 
     }, undefined, function (error) {
         console.error(error);
+    modelReady = true;
+    tryStartStartupSequence();
     });
 }
 
@@ -662,7 +781,7 @@ function manipulateModel(model, animations) {
         }
     };
 
-    const shadowMaskTexture = new THREE.TextureLoader().load(shadowMaskUrl);
+  const shadowMaskTexture = new THREE.TextureLoader(loadingManager).load(shadowMaskUrl);
     shadowMaskTexture.flipY = false;
     if (shadowMaskTexture) shadowMaskTexture.anisotropy = MAX_ANISOTROPY;
 
@@ -797,7 +916,7 @@ function manipulateModel(model, animations) {
     });
 
     scene.add(model);
-
+    // model.rotation.y -= 0.2;
     // Chin pose: slight up during startup, default otherwise
     chin.rotation.x = startupActive ? (Math.PI / 2 - initialChinLiftRad) : Math.PI / 2;
 
@@ -1941,9 +2060,9 @@ async function startStartupSequence(){
   const tl = gsap.timeline();
 
   // Phase 1: fade from black to show model+bg (dark)
-  tl.to(blackoutEl, { opacity: 0, duration: 1.2, ease: 'power1.inOut', onComplete: ()=>{ blackoutEl?.remove(); blackoutEl = null; } }, 0);
-  tl.to(theCanvas, { opacity: 1, duration: 0.8, ease: 'power1.inOut' }, 0);
-  tl.to(bgEl, { opacity: 0.1, duration: 0.6, ease: 'power1.inOut' }, 0);
+  tl.to(blackoutEl, { opacity: 0, duration: 0.45, ease: 'power1.inOut', onComplete: ()=>{ blackoutEl?.remove(); blackoutEl = null; } }, 0);
+  tl.to(theCanvas, { opacity: 1, duration: 0.6, ease: 'power1.inOut' }, 0);
+  tl.to(bgEl, { opacity: 0.1, duration: 0.45, ease: 'power1.inOut' }, 0);
 
   // Phase 2 setup at ~0.62s
   tl.call(() => {
