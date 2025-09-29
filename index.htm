@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+    <!-- Typography families used for design tokens -->
+    <link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Fraunces:ital,wght@1,400;1,500;1,600&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="src/styles.css">
     <title>Jribh Shandilya | Interaction Design</title>
 </head>
@@ -27,7 +28,19 @@
     </section>
 </div>
 
+<!-- Bottom Navbar -->
+<nav class="navbar" aria-label="Primary">
+    <a href="#home" class="navbar__link text-label is-active" data-nav="home">Home</a>
+    <a href="#about" class="navbar__link text-label" data-nav="about">About</a>
+    <img src="src/assets/logo.svg" alt="Logo" class="navbar__logo" />
+    <a href="#work" class="navbar__link text-label" data-nav="work">Work</a>
+    <a href="#contact" class="navbar__link text-label" data-nav="contact">Contact</a>
+    
+    <!-- optional focus ring target for keyboard navigation -->
+</nav>
+
 <script type="module" src="./src/main.js"></script>
+<script type="module" src="./src/index.js"></script>
 
 </body>
 </html>

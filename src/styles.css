@@ -1,27 +1,83 @@
+/*
+  Design Tokens: Colors
+  Source: Figma palette (Primary, Secondary, Text, White, Background)
+  Notes:
+  - Transparent colors use modern rgb() slash syntax for alpha for better readability.
+  - Keep this as the single source of truth for colors across the site.
+*/
+:root {
+    /* Primary */
+    --primary-lightest: #FFEBED;
+    --primary-light: #FB8E84;
+    --primary-main: #FA5242;
+    --primary-dark: #D92A1A;
+
+    /* Secondary */
+    --secondary-main: #9997FE;
+
+    /* Text (on dark backgrounds) */
+    --text-primary: rgb(255 255 255 / 1);   /* 100% */
+    --text-secondary: rgb(255 255 255 / 0.5); /* 50% */
+    --text-tertiary: rgb(255 255 255 / 0.3);  /* 30% */
+
+    /* White scales */
+    --white-100: rgb(255 255 255 / 1);
+    --white-80:  rgb(255 255 255 / 0.8);
+    --white-60:  rgb(255 255 255 / 0.6);
+    --white-40:  rgb(255 255 255 / 0.4);
+    --white-20:  rgb(255 255 255 / 0.2);
+
+    /* Backgrounds */
+    --bg-card:   rgb(255 255 255 / 0.09);   /* Card 9% */
+    --bg-navbar: rgb(0 0 0 / 0.16);         /* Navbar 16% */
+    --bg-black:  #000000;                   /* Black */
+
+    /* Site canvas (existing design color) */
+    --bg-canvas: #060607;                   /* current body background */
+
+    /* Typography families */
+    --font-heading-serif: 'Fraunces', serif;  /* for H1, H3 variants */
+    --font-heading-sans: 'Antonio', sans-serif; /* for tight caps H2 */
+    --font-body: 'Outfit', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';
+
+    /* Line-height tokens */
+    --lh-heading: 1.1; /* "Auto" for headings (tight) */
+    --lh-104: 1.04;    /* H2 specific per Figma 104% */
+
+    /* Label (Buttons) */
+    --label-font: 'Outfit', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';
+    --label-weight: 700;       /* Bold */
+    --label-size: 1em;         /* 16px */
+    --label-letter: 0.15em;    /* 15% tracking */
+    --label-line-height: 1;    /* tight for buttons */
+}
+
 body {
     overflow-x: hidden !important;
     overflow-y: auto;
     margin:0;
     padding:0;
-    background-color: #060607;
-    font-size: 14px;
+    background-color: var(--bg-canvas);
+    font-size: 16px;
+    font-family: var(--font-body);
+    color: var(--text-primary);
     scroll-behavior: smooth;
     scroll-snap-type: y mandatory;
 }
 
 @media (max-width:600px) {
     body {
-        font-size:12px;
+        font-size:14px;
     }
 }
 @media (min-width:600px) {
     body {
-        font-size:12px;
+        font-size:14px;
     }
 }
 @media (min-width:1000px) {
     body {
-        font-size:12px;
+        font-size:14px;
     }
 }
 @media (min-width:1350px) {
@@ -36,12 +92,12 @@ body {
 }
 @media (min-width:1850px) {
     body {
-        font-size:18px;
+        font-size:16px;
     }
 }
 @media (min-width:2000px) {
     body {
-        font-size:22px;
+        font-size:16px;
     }
 }
 
@@ -81,6 +137,116 @@ body::-webkit-scrollbar-thumb:active {
     z-index: 5;
 }
 
+/* Bottom Navbar */
+.navbar {
+    position: fixed;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    bottom: 4em; /* requested distance from bottom */
+    width: auto; /* hug content */
+    display: inline-flex; /* shrink-wrap to content */
+    align-items: center;
+    justify-content: center;
+    gap: 2em; /* as requested */
+    padding-left: 2.25em; /* requested */
+    padding-right: 2.25em; /* requested */
+    padding-block: 0.75em; /* height from paddings only */
+    background: var(--bg-navbar);
+    border: 1px solid var(--white-20);
+    border-radius: 1em;
+    box-shadow:
+        0 0 0 1px rgb(255 255 255 / 0.06) inset,
+        0 8px 24px rgb(0 0 0 / 0.45),
+        0 2px 6px rgb(0 0 0 / 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 10;
+    white-space: nowrap; /* keep single line */
+    /* let height be intrinsic (paddings + line-heights); remove explicit constraints */
+}
+
+.navbar__link {
+    text-decoration: none;
+    color: var(--text-secondary); /* inactive */
+    transition: color 180ms ease, opacity 180ms ease;
+}
+.navbar__link:hover { color: var(--text-primary); }
+.navbar__link.is-active { color: var(--text-primary); }
+
+.navbar__logo {
+    width: 3em; /* as requested */
+    height: auto;
+    display: block;
+}
+
+/* Typography styles (from Figma) */
+
+/* Headings */
+.heading-h1 {
+    font-family: var(--font-heading-serif);
+    font-style: italic;
+    font-weight: 600; /* SemiBold */
+    font-size: 11.25em; /* 180px */
+    line-height: var(--lh-heading);
+    letter-spacing: -0.03em; /* -3% */
+}
+
+.heading-h2 {
+    font-family: var(--font-heading-sans);
+    font-style: normal;
+    font-weight: 700; /* Bold */
+    font-size: 7.5em; /* 120px */
+    line-height: var(--lh-104);
+    letter-spacing: -0.06em; /* -6% */
+    text-transform: uppercase; /* tight capital headings */
+}
+
+.heading-h3 {
+    font-family: var(--font-heading-serif);
+    font-style: italic;
+    font-weight: 600; /* SemiBold */
+    font-size: 6.25em; /* 100px */
+    line-height: var(--lh-heading);
+    letter-spacing: -0.03em; /* -3% */
+}
+
+.heading-h3-regular {
+    font-family: var(--font-heading-serif);
+    font-style: italic;
+    font-weight: 400; /* Regular */
+    font-size: 6.25em; /* 100px */
+    line-height: var(--lh-heading);
+    letter-spacing: -0.03em; /* -3% */
+}
+
+/* Body */
+.body-default {
+    font-family: var(--font-body);
+    font-weight: 500; /* Medium */
+    font-size: 2.25em; /* 36px */
+    line-height: 1.5; /* Auto */
+    letter-spacing: 0; /* 0% */
+}
+
+.body-small {
+    font-family: var(--font-body);
+    font-weight: 500; /* Medium */
+    font-size: 1em; /* 16px */
+    line-height: 1.5; /* Auto */
+    letter-spacing: 0.06em; /* 6% */
+}
+
+/* Label (Buttons) */
+.text-label {
+    font-family: var(--label-font);
+    font-weight: var(--label-weight);
+    font-size: var(--label-size);
+    line-height: var(--label-line-height);
+    letter-spacing: var(--label-letter);
+    text-transform: uppercase; /* always capitalized */
+}
+
 .content-section {
     height: 100vh;
 }
@@ -101,7 +267,7 @@ body::-webkit-scrollbar-thumb:active {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #000;
+    background-color: var(--bg-black);
     z-index: 10000;
     opacity: 0;
     pointer-events: none;
@@ -126,7 +292,7 @@ body::-webkit-scrollbar-thumb:active {
     width: 8.6em;
     height: 0.25em;
     border-radius: 0.125em;
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--white-20);
     overflow: hidden;
     position: relative;
 }
@@ -135,7 +301,7 @@ body::-webkit-scrollbar-thumb:active {
     width: 0%;
     height: 100%;
     border-radius: inherit;
-    background: #FFFFFF;
+    background: var(--white-100);
 }
 
 @media (prefers-reduced-motion: reduce) {

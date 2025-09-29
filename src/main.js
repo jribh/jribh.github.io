@@ -52,6 +52,8 @@ const inactivityThreshold = 5000; // time before head moves back to position
 const WIND_BASE_TS = 1.0;
 
 let scene = new THREE.Scene();
+// Nudge entire scene slightly to the right to correct off-center model
+scene.position.x = 0.35;
 let w = window.innerWidth;
 let h = window.innerHeight;
 let aspectRatio = w/h,
@@ -322,7 +324,12 @@ function createGradientBackground() {
   uGlowColor: { value: new THREE.Color(0x77211A) },
   uGlowCenter: { value: new THREE.Vector2(0.5, 0.25) },
   uGlowRadius: { value: 0.43 },
-  uGlowIntensity: { value: 0.9 }
+  uGlowIntensity: { value: 0.9 },
+  // Additional large static glow on top-left (replacing removed blob)
+  uGlow2Color: { value: new THREE.Color(0x810C01) },
+  uGlow2Center: { value: new THREE.Vector2(0.04, 0.70) },
+  uGlow2Radius: { value: 0.62 },
+  uGlow2Intensity: { value: 0.55 }
     },
     vertexShader: `
       varying vec2 vUv;
@@ -341,6 +348,11 @@ function createGradientBackground() {
       uniform vec2 uGlowCenter; 
       uniform float uGlowRadius; 
       uniform float uGlowIntensity;
+  // Second static glow (top-left)
+  uniform vec3 uGlow2Color; 
+  uniform vec2 uGlow2Center; 
+  uniform float uGlow2Radius; 
+  uniform float uGlow2Intensity;
 
       vec3 screenBlend(vec3 base, vec3 over){
         return 1.0 - (1.0 - base) * (1.0 - over);
@@ -350,7 +362,7 @@ function createGradientBackground() {
         float t = 1.0 - clamp(vUv.y, 0.0, 1.0);
         vec3 col = mix(uTopColor, uBottomColor, t);
 
-        // Circular blur gradient (aspect-correct) as a red glow behind the head
+        // Circular blur gradient (aspect-correct) as a red glow behind the head (center-bottom)
         vec2 p = vUv - uGlowCenter;
         float aspect = max(uResolution.x, 1.0) / max(uResolution.y, 1.0);
         p.x *= aspect;
@@ -360,6 +372,15 @@ function createGradientBackground() {
         m = pow(m, 1.4);
         vec3 glow = uGlowColor * (uGlowIntensity * m);
         col = screenBlend(col, glow);
+
+        // Large warm glow from top-left
+        vec2 p2 = vUv - uGlow2Center;
+        p2.x *= aspect;
+        float d2 = length(p2);
+        float m2 = 1.0 - smoothstep(0.0, max(uGlow2Radius, 1e-4), d2);
+        m2 = pow(m2, 1.6);
+        vec3 glow2 = uGlow2Color * (uGlow2Intensity * m2);
+        col = screenBlend(col, glow2);
         gl_FragColor = vec4(col, 1.0);
       }
     `,
@@ -376,11 +397,16 @@ function createGradientBackground() {
 
 function positionGradientBackgroundFromFrustum() {
   if (!_bgGrad) return;
-  const w = (camera.right - camera.left);
-  const h = (camera.top - camera.bottom);
-  _bgGrad.scale.set(w, h, 1);
-  _bgGrad.position.x = (camera.left + camera.right) * 0.5;
-  _bgGrad.position.y = (camera.top + camera.bottom) * 0.5;
+  const fw = (camera.right - camera.left);
+  const fh = (camera.top - camera.bottom);
+  // Add slight bleed so no edges show if there are tiny rounding differences
+  const bleed = 1.06;
+  _bgGrad.scale.set(fw * bleed, fh * bleed, 1);
+  // Counter the scene's position so the background stays centered on the camera
+  const cx = (camera.left + camera.right) * 0.5;
+  const cy = (camera.top + camera.bottom) * 0.5;
+  _bgGrad.position.x = cx - (scene.position?.x || 0);
+  _bgGrad.position.y = cy - (scene.position?.y || 0);
 
   // Keep shader aware of CSS pixel resolution for consistent look
   const vw = window.visualViewport ? Math.floor(window.visualViewport.width) : window.innerWidth;
@@ -403,184 +429,6 @@ function updateGradientColorsForScroll(scrollProgress) {
   
   // Update the uniform
   _bgGrad.material.uniforms.uTopColor.value.copy(currentTopColor);
-}
-
-let _glowBlobs = [];
-let _glowInited = false;
-
-function _createGlowMaterial(tint, intensity = 1.0, radius = 0.55, softness = 0.35) {
-  return new THREE.ShaderMaterial({
-    uniforms: {
-      uTint:      { value: new THREE.Color(tint) },
-      uIntensity: { value: intensity },
-      uRadius:    { value: radius },
-      uSoftness:  { value: softness }
-    },
-    vertexShader: `
-      varying vec2 vUv;
-      void main(){
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      precision highp float;
-      varying vec2 vUv;
-      uniform vec3 uTint;
-      uniform float uIntensity;
-      uniform float uRadius;
-      uniform float uSoftness;
-      void main(){
-        vec2 p = vUv - 0.5;
-        float dist = length(p);
-        float e0 = max(uRadius - uSoftness, 0.0);
-        float e1 = uRadius;
-        float glow = 1.0 - smoothstep(e0, e1, dist);
-        vec3 col = uTint * glow * uIntensity;
-        gl_FragColor = vec4(col, glow);
-      }
-    `,
-    transparent: true,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    depthTest: true,
-    toneMapped: true
-  });
-}
-
-function _createGlowBlob({ name, color, wFrac, hFrac, anchor, offFracX, offFracY, z = -40, intensity = 0.9, radius = 0.6, softness = 0.4, anim = {} }){
-  const geo = new THREE.PlaneGeometry(1, 1, 1, 1);
-  const mat = _createGlowMaterial(color, intensity, radius, softness);
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.name = name || 'GlowBlob';
-  mesh.renderOrder = -500; // draw early, stays behind via depth
-  mesh.position.z = z;
-  // metadata for updates
-  mesh.userData.glow = {
-    wFrac, hFrac,
-    anchor, offFracX, offFracY,
-    baseIntensity: intensity,
-    baseColor: new THREE.Color(color),
-    anim: Object.assign({
-      speed: 0.15,
-      ampScale: 0.06,
-      ampIntensity: 0.2,
-      phase: 0
-    }, anim)
-  };
-  scene.add(mesh);
-  _glowBlobs.push(mesh);
-  return mesh;
-}
-
-function _getFrustumSize(){
-  return {
-    w: (camera.right - camera.left),
-    h: (camera.top - camera.bottom)
-  };
-}
-
-function _anchorWorld(anchor){
-  const v = new THREE.Vector3();
-  if (!anchor) return v.set(0,0,0);
-  try { anchor.getWorldPosition(v); return v; } catch{ return v.set(0,0,0); }
-}
-
-function _updateGlowBlobs(time){
-  if (!_glowBlobs.length) return;
-  const { w: fw, h: fh } = _getFrustumSize();
-  for (const m of _glowBlobs){
-    const g = m.userData.glow;
-    // scale vs frustum
-    const sX = g.wFrac * fw;
-    const sY = g.hFrac * fh;
-    // subtle scale animation
-    const an = g.anim;
-    const osc = Math.sin(time * an.speed + (an.phase || 0));
-    const scaleMod = 1.0 + osc * an.ampScale;
-    m.scale.set(sX * scaleMod, sY * scaleMod, 1);
-    // intensity animation using base intensity
-    const mat = m.material;
-    const baseI = g.baseIntensity;
-    const iMod = 1.0 + osc * an.ampIntensity;
-    mat.uniforms.uIntensity.value = baseI * iMod;
-    
-    // position using anchor bone + fractional offset of frustum + slow movement animation
-    const a = _anchorWorld(g.anchor);
-    
-    // Add slow drifting movement animation
-    const moveSpeed = an.moveSpeed || 0.02;
-    const moveRangeX = an.moveRangeX || 0.08;
-    const moveRangeY = an.moveRangeY || 0.06;
-    
-    // Create slow, organic movement using different frequencies for X and Y
-    const moveX = Math.sin(time * moveSpeed) * moveRangeX * fw;
-    const moveY = Math.cos(time * moveSpeed * 0.7) * moveRangeY * fh; // Different frequency for Y
-    
-    const targetX = a.x + g.offFracX * fw + moveX;
-    const targetY = a.y + g.offFracY * fh + moveY;
-    m.position.x = targetX;
-    m.position.y = targetY;
-  }
-}
-
-function initGlowBlobsIfNeeded(){
-  if (_glowInited) return;
-  // Require head/shoulder bones to anchor
-  if (!head) return;
-  const { w: fw, h: fh } = _getFrustumSize(); // for initial sizing if needed
-  
-  // Dramatic warm amber/orange behind left shoulder, larger and more intense
-  const orangeLeft = _createGlowBlob({
-    name: 'GlowBlob_OrangeLeft',
-    color: 0x810C01,  // More vibrant orange
-    wFrac: 1.6, hFrac: 2.0,  // Much larger
-    anchor: leftShoulder || head,
-    offFracX: -0.6, offFracY: 0.6,  // Higher up, more to the left
-    z: -45,
-    intensity: 0.4,
-    radius: 0.35,
-    softness: 0.2,
-    anim: { 
-      speed: 0.5, 
-      ampScale: 0.08, 
-      ampIntensity: 0.25, 
-      phase: 0.0,
-      // Slow movement animation parameters
-      moveSpeed: 0.015,   // Very slow drift speed
-      moveRangeX: 0.12,   // Horizontal drift range (as fraction of frustum width)
-      moveRangeY: 0.08    // Vertical drift range (as fraction of frustum height)
-    }
-  });
-  
-  // Expose references for easy tweaking
-  window.glowBlobs = {
-    orangeLeft,
-    // Helper to update a blob's properties
-    update: (blobRef, props) => {
-      if (!blobRef || !blobRef.material) return;
-      const g = blobRef.userData.glow;
-      const mat = blobRef.material;
-      if (props.color !== undefined) {
-        const newColor = new THREE.Color(props.color);
-        mat.uniforms.uTint.value.copy(newColor);
-        g.baseColor.copy(newColor);
-      }
-      if (props.intensity !== undefined) {
-        g.baseIntensity = props.intensity;
-        mat.uniforms.uIntensity.value = props.intensity;
-      }
-      if (props.radius !== undefined) mat.uniforms.uRadius.value = props.radius;
-      if (props.softness !== undefined) mat.uniforms.uSoftness.value = props.softness;
-      if (props.wFrac !== undefined) g.wFrac = props.wFrac;
-      if (props.hFrac !== undefined) g.hFrac = props.hFrac;
-      if (props.offFracX !== undefined) g.offFracX = props.offFracX;
-      if (props.offFracY !== undefined) g.offFracY = props.offFracY;
-      if (props.z !== undefined) blobRef.position.z = props.z;
-    }
-  };
-  
-  _glowInited = true;
 }
 
 const hemLight = new THREE.HemisphereLight( 0xabd5f7, 0x000000, 40 );
@@ -920,8 +768,7 @@ function manipulateModel(model, animations) {
     // Chin pose: slight up during startup, default otherwise
     chin.rotation.x = startupActive ? (Math.PI / 2 - initialChinLiftRad) : Math.PI / 2;
 
-  // Initialize glow blobs once bones are available
-  initGlowBlobsIfNeeded();
+  // Glow blobs removed
 }
 
 // --- Tunables ---
@@ -2043,8 +1890,7 @@ function animate() {
   // Post stack
   composer.render();
 
-  // Update glow blobs after render state updates (use elapsed time for smooth motion)
-  _updateGlowBlobs(clock.getElapsedTime());
+  // Glow blobs removed
 
     currentTime += 1/60;
 
