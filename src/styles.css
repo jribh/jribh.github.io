@@ -292,13 +292,16 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 /* Bottom Bar Container */
 .bottom-bar {
     position: fixed;
-    bottom: 4em; /* default desktop spacing */
-    left: 4em; /* horizontal spacing */
-    right: 4em; /* horizontal spacing */
-    width: calc(100% - 8em); /* full width minus padding */
-    display: flex;
+    bottom: 2.8em; /* default desktop spacing (30% reduced from 4em) */
+    left: 0;
+    right: 0;
+    width: 100%;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr; /* left, center, right - center content, equal side spacing */
     align-items: center;
-    justify-content: space-between;
+    padding-left: 4em;
+    padding-right: 4em;
     z-index: 10;
     pointer-events: none; /* allow clicks to pass through container */
 }
@@ -314,7 +317,12 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     align-items: center;
 }
 
+.bottom-bar__left {
+    justify-content: flex-start;
+}
+
 .bottom-bar__right {
+    justify-content: flex-end;
     gap: 2em; /* space between social icons */
 }
 
@@ -349,7 +357,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
 /* Bottom Navbar */
 .navbar {
-    position: static; /* positioned within bottom-bar container */
+    position: relative; /* positioned within bottom-bar container */
     transform: none; /* remove centering transform */
     left: auto;
     right: auto;
@@ -359,16 +367,30 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     align-items: center;
     justify-content: center;
     gap: 2em;
+    margin-left: 1em; /* visual centering adjustment */
     padding-left: 2.25em;
     padding-right: 2.25em;
     padding-block: 0.75em;
+    /* Primary state: no background, border, blur, or border-radius */
+    background: transparent;
+    border-radius: 0;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    z-index: 10;
+    white-space: nowrap; /* keep single line */
+    isolation: isolate; /* create stacking context */
+    /* Smooth transitions between Primary and Secondary states */
+    transition: background 400ms cubic-bezier(0.4, 0, 0.2, 1), 
+                border-radius 400ms cubic-bezier(0.4, 0, 0.2, 1),
+                backdrop-filter 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Secondary state: with background, border, blur, and border-radius */
+.navbar.navbar--secondary {
     background: var(--bg-navbar);
     border-radius: 1.2em;
     -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
-    z-index: 10;
-    white-space: nowrap; /* keep single line */
-    isolation: isolate; /* create stacking context */
 }
 
 /* Gradient border using ::before pseudo-element */
@@ -389,6 +411,14 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     mask-composite: exclude;
     pointer-events: none;
     z-index: -1;
+    /* Hide border in Primary state */
+    opacity: 0;
+    transition: opacity 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Show border in Secondary state */
+.navbar.navbar--secondary::before {
+    opacity: 1;
 }
 
 .navbar__link {
@@ -400,9 +430,44 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 .navbar__link.is-active { color: var(--text-primary); }
 
 .navbar__logo {
-    width: 3em; /* as requested */
+    width: 3em;
     height: auto;
     display: block;
+    /* Primary state: hidden with margins */
+    opacity: 0;
+    margin-left: 2em;
+    margin-right: 2em;
+    /* Smooth transitions */
+    transition: opacity 400ms cubic-bezier(0.4, 0, 0.2, 1),
+                margin-left 400ms cubic-bezier(0.4, 0, 0.2, 1),
+                margin-right 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Secondary state: show logo without margins */
+.navbar--secondary .navbar__logo {
+    opacity: 1;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* Hero Logo - absolute positioned, visible only in primary state */
+.navbar__logo-hero {
+    position: absolute;
+    bottom: 0.8em;
+    left: 50%;
+    transform: translateX(-60%);
+    height: 8em;
+    width: auto;
+    opacity: 1;
+    pointer-events: auto;
+    /* Smooth transition */
+    transition: opacity 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hide hero logo in secondary state */
+.navbar--secondary .navbar__logo-hero {
+    opacity: 0;
+    pointer-events: none;
 }
 
 /* Typography styles (from Figma) */
@@ -540,13 +605,12 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 /* Responsive bottom bar and navbar spacings */
 @media (max-width: 1440px) {
     .bottom-bar {
-        bottom: 3em;
-        left: 3em;
-        right: 3em;
-        width: calc(100% - 6em);
+        bottom: 2.1em;
+        padding-left: 3em;
+        padding-right: 3em;
     }
     
-    .navbar {
+    .navbar.navbar--secondary {
         border-radius: 1.2em;
     }
     
@@ -566,15 +630,17 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
 @media (max-width: 1200px) {
     .bottom-bar {
-        bottom: 2.5em;
-        left: 2.5em;
-        right: 2.5em;
-        width: calc(100% - 5em);
+        bottom: 1.75em;
+        padding-left: 2.5em;
+        padding-right: 2.5em;
     }
     
     .navbar {
         gap: 1.75em;
         padding-inline: 2em;
+    }
+    
+    .navbar.navbar--secondary {
         border-radius: 1.2em;
     }
     
@@ -601,16 +667,18 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
 @media (max-width: 1024px) {
     .bottom-bar {
-        bottom: 2.25em;
-        left: 2em;
-        right: 2em;
-        width: calc(100% - 4em);
+        bottom: 1.58em;
+        padding-left: 2em;
+        padding-right: 2em;
     }
     
     .navbar {
         gap: 1.5em;
         padding-inline: 1.75em;
         padding-block: 0.7em;
+    }
+    
+    .navbar.navbar--secondary {
         border-radius: 1.2em;
     }
     
@@ -637,16 +705,18 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
 @media (max-width: 768px) {
     .bottom-bar {
-        bottom: 2em;
-        left: 1.5em;
-        right: 1.5em;
-        width: calc(100% - 3em);
+        bottom: 1.4em;
+        padding-left: 1.5em;
+        padding-right: 1.5em;
     }
     
     .navbar {
         gap: 1.25em;
         padding-inline: 1.5em;
         padding-block: 0.65em;
+    }
+    
+    .navbar.navbar--secondary {
         border-radius: 1.2em;
     }
     
@@ -678,16 +748,18 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
 @media (max-width: 600px) {
     .bottom-bar {
-        bottom: 1.5em;
-        left: 1.25em;
-        right: 1.25em;
-        width: calc(100% - 2.5em);
+        bottom: 1.05em;
+        padding-left: 1.25em;
+        padding-right: 1.25em;
     }
     
     .navbar {
         gap: 1em;
         padding-inline: 1.25em;
         padding-block: 0.6em;
+    }
+    
+    .navbar.navbar--secondary {
         border-radius: 1.2em;
     }
     
@@ -718,16 +790,18 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
 @media (max-width: 420px) {
     .bottom-bar {
-        bottom: 1.25em;
-        left: 1em;
-        right: 1em;
-        width: calc(100% - 2em);
+        bottom: 0.88em;
+        padding-left: 1em;
+        padding-right: 1em;
     }
     
     .navbar {
         gap: 0.9em;
         padding-inline: 1.1em;
         padding-block: 0.55em;
+    }
+    
+    .navbar.navbar--secondary {
         border-radius: 1.2em;
     }
     
