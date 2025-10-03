@@ -10,7 +10,6 @@ import { gsap } from 'gsap';
 import hdriUrl from './assets/hdri_bg.hdr';
 import modelUrl from './assets/head_packed.glb';
 import shadowMaskUrl from './assets/Head_Shadowmask.png';
-import logoUrl from './assets/logo.svg';
 
 let headContainer = document.querySelector("#head-container");
 headContainer.style.overflow = "default";
@@ -81,17 +80,25 @@ const g2xEl = document.getElementById('g2x'); // optional red radial gradient ov
 if (theCanvas) theCanvas.style.opacity = '0';
 if (bgEl) bgEl.style.opacity = '0';
 // Create a fullscreen loading overlay that fades in on startup
-const MIN_LOADING_DISPLAY_MS = 1200;
+
+// Loading overlay fade durations (in milliseconds)
+const LOADING_FADE_IN_MS = 200;
+const LOADING_FADE_OUT_MS = 250;
+// Helper to convert ms -> seconds for GSAP
+const ms = (v) => Math.max(0, Number(v) || 0) / 1000;
 let blackoutEl = document.createElement('div');
 blackoutEl.className = 'loading-overlay';
 const loadingContent = document.createElement('div');
 loadingContent.className = 'loading-overlay__content';
 const logoImg = new Image();
-logoImg.src = logoUrl;
-logoImg.alt = 'JRIBH logo';
+// Resolve logo URL via bundler to work in dev and build
+const logoUrl = new URL('./assets/logo.svg', import.meta.url);
+logoImg.src = logoUrl.href;
+logoImg.alt = 'Logo';
 logoImg.draggable = false;
 logoImg.decoding = 'async';
 logoImg.className = 'loading-overlay__logo';
+
 const loadingBar = document.createElement('div');
 loadingBar.className = 'loading-overlay__bar';
 const loadingBarFill = document.createElement('div');
@@ -105,13 +112,9 @@ gsap.set(blackoutEl, { opacity: 0 });
 gsap.set(loadingContent, { opacity: 0, y: 16 });
 
 let overlayActivated = false;
-let overlayActivatedAt = null;
-let startupDelayHandle = null;
-let pendingStartupLaunch = null;
 const activateLoadingOverlay = () => {
   if (overlayActivated) return;
   overlayActivated = true;
-  overlayActivatedAt = performance.now();
   blackoutEl.style.pointerEvents = 'auto';
   if (PREFERS_REDUCED_MOTION) {
     gsap.set(blackoutEl, { opacity: 1 });
@@ -119,22 +122,8 @@ const activateLoadingOverlay = () => {
     return;
   }
   const fadeInTl = gsap.timeline();
-  fadeInTl.to(blackoutEl, { opacity: 1, duration: 1.2, ease: 'power2.out' }, 0);
-  fadeInTl.to(loadingContent, { opacity: 1, duration: 1.2, ease: 'power2.out' }, 0.1);
-
-  if (startupTriggered && pendingStartupLaunch) {
-    const elapsed = performance.now() - overlayActivatedAt;
-    const waitMs = Math.max(0, MIN_LOADING_DISPLAY_MS - elapsed);
-    if (startupDelayHandle) {
-      clearTimeout(startupDelayHandle);
-      startupDelayHandle = null;
-    }
-    if (waitMs <= 0) {
-      pendingStartupLaunch();
-    } else {
-      startupDelayHandle = setTimeout(pendingStartupLaunch, waitMs);
-    }
-  }
+  fadeInTl.to(blackoutEl, { opacity: 1, duration: ms(LOADING_FADE_IN_MS), ease: 'power2.out' }, 0);
+  fadeInTl.to(loadingContent, { opacity: 1, duration: ms(LOADING_FADE_IN_MS), ease: 'power2.out' }, 0.1);
 };
 
 if (document.readyState === 'complete') {
@@ -171,19 +160,7 @@ function tryStartStartupSequence() {
   if (startupTriggered) return;
   if (!assetsReady || !modelReady) return;
   startupTriggered = true;
-  const elapsed = overlayActivatedAt ? (performance.now() - overlayActivatedAt) : 0;
-  const waitMs = Math.max(0, MIN_LOADING_DISPLAY_MS - elapsed);
-  pendingStartupLaunch = () => {
-    startupDelayHandle = null;
-    const fn = startStartupSequence;
-    pendingStartupLaunch = null;
-    fn();
-  };
-  if (waitMs > 0) {
-    startupDelayHandle = setTimeout(pendingStartupLaunch, waitMs);
-  } else {
-    pendingStartupLaunch();
-  }
+  startStartupSequence();
 }
 
 function tweenLoadingBarWidth(widthValue, duration = 0.45, ease = 'power2.out') {
@@ -1906,7 +1883,7 @@ async function startStartupSequence(){
   const tl = gsap.timeline();
 
   // Phase 1: fade from black to show model+bg (dark)
-  tl.to(blackoutEl, { opacity: 0, duration: 0.45, ease: 'power1.inOut', onComplete: ()=>{ blackoutEl?.remove(); blackoutEl = null; } }, 0);
+  tl.to(blackoutEl, { opacity: 0, duration: ms(LOADING_FADE_OUT_MS), ease: 'power1.inOut', onComplete: ()=>{ blackoutEl?.remove(); blackoutEl = null; } }, 0);
   tl.to(theCanvas, { opacity: 1, duration: 0.6, ease: 'power1.inOut' }, 0);
   tl.to(bgEl, { opacity: 0.1, duration: 0.45, ease: 'power1.inOut' }, 0);
 

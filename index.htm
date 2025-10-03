@@ -13,6 +13,12 @@
 </head>
 <body>
 
+<!-- Custom Cursor -->
+<div class="custom-cursor">
+    <div class="custom-cursor__circle"></div>
+    <img src="src/assets/cursor-chevron.svg" alt="" class="custom-cursor__chevron" />
+</div>
+
 <div id="head-container">
     <canvas id="artboard"></canvas>
 </div>
@@ -28,17 +34,42 @@
     </section>
 </div>
 
-<!-- Bottom Navbar -->
-<nav class="navbar" aria-label="Primary">
-    <a href="#home" class="navbar__link text-label is-active" data-nav="home">Home</a>
-    <a href="#about" class="navbar__link text-label" data-nav="about">About</a>
-    <img src="src/assets/logo.svg" alt="Logo" class="navbar__logo" />
-    <a href="#work" class="navbar__link text-label" data-nav="work">Work</a>
-    <a href="#contact" class="navbar__link text-label" data-nav="contact">Contact</a>
+<!-- Bottom Bar -->
+<div class="bottom-bar">
+    <!-- Waveform on the left -->
+    <div class="bottom-bar__left">
+        <img src="src/assets/waveform.svg" alt="Waveform" class="bottom-bar__waveform" />
+    </div>
     
-    <!-- optional focus ring target for keyboard navigation -->
+    <!-- Navbar in the center -->
+    <nav class="navbar" aria-label="Primary">
+        <a href="#home" class="navbar__link text-label is-active" data-nav="home">Home</a>
+        <a href="#about" class="navbar__link text-label" data-nav="about">About</a>
+        <img src="src/assets/logo.svg" alt="Logo" class="navbar__logo" />
+        <a href="#work" class="navbar__link text-label" data-nav="work">Work</a>
+        <a href="#contact" class="navbar__link text-label" data-nav="contact">Contact</a>
+    </nav>
+    
+    <!-- Social icons on the right -->
+    <div class="bottom-bar__right">
+        <a href="https://www.linkedin.com/in/jribh-shandilya-820361125/" target="_blank" rel="noopener" class="bottom-bar__social" aria-label="LinkedIn">
+            <img src="src/assets/linkedin.svg" alt="LinkedIn" class="bottom-bar__icon" />
+        </a>
+        <a href="https://www.instagram.com/waititshere/" target="_blank" rel="noopener" class="bottom-bar__social" aria-label="Instagram">
+            <img src="src/assets/instagram.svg" alt="Instagram" class="bottom-bar__icon" />
+        </a>
+    </div>
+</div>
+
+<!-- Side Navigation (Right) -->
+<nav class="side-nav" aria-label="Section navigation">
+    <a href="#home" class="side-nav__dot is-active" data-section="home" aria-label="Home section"></a>
+    <a href="#about" class="side-nav__dot" data-section="about" aria-label="About section"></a>
+    <a href="#work" class="side-nav__dot" data-section="work" aria-label="Work section"></a>
+    <a href="#contact" class="side-nav__dot" data-section="contact" aria-label="Contact section"></a>
 </nav>
 
+<script type="module" src="./src/cursor.js"></script>
 <script type="module" src="./src/main.js"></script>
 <script type="module" src="./src/index.js"></script>
 

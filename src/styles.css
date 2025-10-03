@@ -63,6 +63,76 @@ body {
     color: var(--text-primary);
     scroll-behavior: smooth;
     scroll-snap-type: y mandatory;
+    cursor: none !important; /* hide default cursor */
+}
+
+/* Hide default cursor on all elements */
+*, *::before, *::after {
+    cursor: none !important;
+}
+
+/* Custom Cursor */
+.custom-cursor {
+    position: fixed;
+    pointer-events: none;
+    z-index: 10000;
+    mix-blend-mode: difference;
+    transition: none; /* no transition for position */
+}
+
+.custom-cursor__circle {
+    width: 0.8em;
+    height: 0.8em;
+    border-radius: 50%;
+    background-color: var(--text-primary);
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: translate(-50%, -50%);
+    transition: width 250ms ease, height 250ms ease, background-color 250ms ease;
+}
+
+.custom-cursor__chevron {
+    position: absolute;
+    top: calc(0.8em + 0.8em); /* circle diameter + gap */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 3em;
+    height: 3em;
+    opacity: 0.8; /* text.tertiary opacity */
+    transition: opacity 250ms ease, top 250ms ease;
+}
+
+/* Hover state - cursor over clickable elements */
+.custom-cursor--hover .custom-cursor__circle {
+    width: 2em;
+    height: 2em;
+}
+
+.custom-cursor--hover .custom-cursor__chevron {
+    opacity: 0;
+    top: calc(1.8em + 0.8em); /* adjust position for larger circle */
+}
+
+/* Click/Active state - mouse button pressed */
+.custom-cursor--active .custom-cursor__circle {
+    width: 1em;
+    height: 1em;
+}
+
+.custom-cursor--active .custom-cursor__chevron {
+    top: calc(1em + 1em); /* circle diameter + increased gap */
+}
+
+/* Click on hover state - clicking while over clickable element */
+.custom-cursor--hover.custom-cursor--active .custom-cursor__circle {
+    width: 2.4em;
+    height: 2.4em;
+}
+
+/* Ensure inputs still show text cursor internally */
+input[type="text"], input[type="email"], input[type="password"], textarea {
+    cursor: text !important;
 }
 
 @media (max-width:600px) {
@@ -106,21 +176,33 @@ body::-webkit-scrollbar {
 }
   
 body::-webkit-scrollbar-track {
-    background: #1A1631;        /* color of the tracking area */
+    background: rgba(255, 255, 255, 0.05);        /* scrollbar background color */
 }
   
 body::-webkit-scrollbar-thumb {
     border-radius: 2px;
-    border:0.2em solid #1A1631;
-    background: rgba(67, 61, 105, 0.5);
+    border: 0.2em solid #09090F;
+    background: rgba(255, 255, 255, 0.08);
+    transition: background 800ms ease;
 }
 
 body::-webkit-scrollbar-thumb:hover {
-    background: rgba(67, 61, 105, 0.8);
+    background: rgba(255, 255, 255, 0.15);
 }
 
 body::-webkit-scrollbar-thumb:active {
-    background: rgba(67, 61, 105, 1);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Scrolling state - applied via JavaScript */
+body.is-scrolling::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    transition: background 800ms ease; /* ensure transition works in scrolling state */
+}
+
+body.is-scrolling::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transition: background 800ms ease;
 }
 
 #artboard {
@@ -137,33 +219,176 @@ body::-webkit-scrollbar-thumb:active {
     z-index: 5;
 }
 
+/* Side Navigation (Right) */
+.side-nav {
+    position: fixed;
+    right: 4em; /* spacing from right edge - matches bottom bar */
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+}
+
+.side-nav__dot {
+    width: 0.375em;
+    height: 0.375em;
+    border-radius: 50%;
+    background-color: var(--text-primary);
+    border: 0px solid transparent; /* default no outline */
+    box-shadow: none;
+    transition: all 250ms ease;
+    cursor: pointer;
+    display: block;
+    position: relative;
+    /* Expand click area without changing visual appearance */
+    padding: 0.6em; /* adds clickable area around the dot */
+    background-clip: content-box; /* keeps background only on the dot itself */
+}
+
+/* Outline effect using pseudo-element for larger diameter ring */
+.side-nav__dot.is-active::before,
+.side-nav__dot:hover::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1.125em; /* outer circle diameter (3x inner) */
+    height: 1.125em; /* outer circle diameter */
+    border-radius: 50%;
+    border: 1px solid var(--text-secondary);
+    pointer-events: none;
+}
+
+/* Add ::before to all dots for smooth transitions */
+.side-nav__dot::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1.125em;
+    height: 1.125em;
+    border-radius: 50%;
+    border: 1px solid transparent;
+    pointer-events: none;
+    transition: border-color 250ms ease;
+}
+
+/* Active state: primary.main color */
+.side-nav__dot.is-active {
+    background-color: var(--primary-main);
+}
+
+.side-nav__dot.is-active::before {
+    border-color: var(--text-secondary);
+}
+
+.side-nav__dot:hover::before {
+    border-color: var(--text-secondary);
+}
+
+/* Bottom Bar Container */
+.bottom-bar {
+    position: fixed;
+    bottom: 4em; /* default desktop spacing */
+    left: 4em; /* horizontal spacing */
+    right: 4em; /* horizontal spacing */
+    width: calc(100% - 8em); /* full width minus padding */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 10;
+    pointer-events: none; /* allow clicks to pass through container */
+}
+
+/* Allow clicks on interactive elements */
+.bottom-bar > * {
+    pointer-events: auto;
+}
+
+.bottom-bar__left,
+.bottom-bar__right {
+    display: flex;
+    align-items: center;
+}
+
+.bottom-bar__right {
+    gap: 2em; /* space between social icons */
+}
+
+.bottom-bar__waveform {
+    height: 2em;
+    width: auto;
+    opacity: 0.8;
+    transition: opacity 200ms ease;
+}
+
+.bottom-bar__waveform:hover {
+    opacity: 1;
+}
+
+.bottom-bar__social {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: opacity 200ms ease;
+    opacity: 0.7;
+}
+
+.bottom-bar__social:hover {
+    opacity: 1;
+}
+
+.bottom-bar__icon {
+    width: 1.5em;
+    height: 1.5em;
+}
+
 /* Bottom Navbar */
 .navbar {
-    position: fixed;
-    left: 50%;
+    position: static; /* positioned within bottom-bar container */
+    transform: none; /* remove centering transform */
+    left: auto;
     right: auto;
-    transform: translateX(-50%);
-    bottom: 4em; /* requested distance from bottom */
+    bottom: auto;
     width: auto; /* hug content */
     display: inline-flex; /* shrink-wrap to content */
     align-items: center;
     justify-content: center;
-    gap: 2em; /* as requested */
-    padding-left: 2.25em; /* requested */
-    padding-right: 2.25em; /* requested */
-    padding-block: 0.75em; /* height from paddings only */
+    gap: 2em;
+    padding-left: 2.25em;
+    padding-right: 2.25em;
+    padding-block: 0.75em;
     background: var(--bg-navbar);
-    border: 1px solid var(--white-20);
-    border-radius: 1em;
-    box-shadow:
-        0 0 0 1px rgb(255 255 255 / 0.06) inset,
-        0 8px 24px rgb(0 0 0 / 0.45),
-        0 2px 6px rgb(0 0 0 / 0.3);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    border-radius: 1.2em;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
     z-index: 10;
     white-space: nowrap; /* keep single line */
-    /* let height be intrinsic (paddings + line-heights); remove explicit constraints */
+    isolation: isolate; /* create stacking context */
+}
+
+/* Gradient border using ::before pseudo-element */
+.navbar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px; /* border width */
+    background: linear-gradient(180deg, rgba(255, 151, 142, 0.2) 0%, rgba(255, 255, 255, 0.01) 50%, rgba(255, 255, 255, 0.09) 100%);
+    -webkit-mask: 
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: 
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: -1;
 }
 
 .navbar__link {
@@ -309,6 +534,230 @@ body::-webkit-scrollbar-thumb:active {
     .loading-overlay__content {
         transition-duration: 0.01ms;
         transition-delay: 0s;
+    }
+}
+ 
+/* Responsive bottom bar and navbar spacings */
+@media (max-width: 1440px) {
+    .bottom-bar {
+        bottom: 3em;
+        left: 3em;
+        right: 3em;
+        width: calc(100% - 6em);
+    }
+    
+    .navbar {
+        border-radius: 1.2em;
+    }
+    
+    .bottom-bar__waveform {
+        height: 1.8em;
+    }
+    
+    .bottom-bar__icon {
+        width: 1.4em;
+        height: 1.4em;
+    }
+    
+    .side-nav {
+        right: 3em;
+    }
+}
+
+@media (max-width: 1200px) {
+    .bottom-bar {
+        bottom: 2.5em;
+        left: 2.5em;
+        right: 2.5em;
+        width: calc(100% - 5em);
+    }
+    
+    .navbar {
+        gap: 1.75em;
+        padding-inline: 2em;
+        border-radius: 1.2em;
+    }
+    
+    .bottom-bar__right {
+        gap: 1.75em;
+    }
+    
+    .side-nav {
+        right: 2.5em;
+        gap: 0.14em;
+    }
+    
+    .side-nav__dot {
+        width: 0.35em;
+        height: 0.35em;
+    }
+    
+    .side-nav__dot.is-active::before,
+    .side-nav__dot:hover::before {
+        width: 1.05em;
+        height: 1.05em;
+    }
+}
+
+@media (max-width: 1024px) {
+    .bottom-bar {
+        bottom: 2.25em;
+        left: 2em;
+        right: 2em;
+        width: calc(100% - 4em);
+    }
+    
+    .navbar {
+        gap: 1.5em;
+        padding-inline: 1.75em;
+        padding-block: 0.7em;
+        border-radius: 1.2em;
+    }
+    
+    .bottom-bar__waveform {
+        height: 1.6em;
+    }
+    
+    .side-nav {
+        right: 2em;
+        gap: 0.125em;
+    }
+    
+    .side-nav__dot {
+        width: 0.325em;
+        height: 0.325em;
+    }
+    
+    .side-nav__dot.is-active::before,
+    .side-nav__dot:hover::before {
+        width: 0.975em;
+        height: 0.975em;
+    }
+}
+
+@media (max-width: 768px) {
+    .bottom-bar {
+        bottom: 2em;
+        left: 1.5em;
+        right: 1.5em;
+        width: calc(100% - 3em);
+    }
+    
+    .navbar {
+        gap: 1.25em;
+        padding-inline: 1.5em;
+        padding-block: 0.65em;
+        border-radius: 1.2em;
+    }
+    
+    .bottom-bar__right {
+        gap: 1.5em;
+    }
+    
+    .bottom-bar__icon {
+        width: 1.3em;
+        height: 1.3em;
+    }
+    
+    .side-nav {
+        right: 1.5em;
+        gap: 0.12em;
+    }
+    
+    .side-nav__dot {
+        width: 0.3em;
+        height: 0.3em;
+    }
+    
+    .side-nav__dot.is-active::before,
+    .side-nav__dot:hover::before {
+        width: 0.9em;
+        height: 0.9em;
+    }
+}
+
+@media (max-width: 600px) {
+    .bottom-bar {
+        bottom: 1.5em;
+        left: 1.25em;
+        right: 1.25em;
+        width: calc(100% - 2.5em);
+    }
+    
+    .navbar {
+        gap: 1em;
+        padding-inline: 1.25em;
+        padding-block: 0.6em;
+        border-radius: 1.2em;
+    }
+    
+    .bottom-bar__waveform {
+        height: 1.4em;
+    }
+    
+    .bottom-bar__right {
+        gap: 1.25em;
+    }
+    
+    .side-nav {
+        right: 1.25em;
+        gap: 0.11em;
+    }
+    
+    .side-nav__dot {
+        width: 0.28em;
+        height: 0.28em;
+    }
+    
+    .side-nav__dot.is-active::before,
+    .side-nav__dot:hover::before {
+        width: 0.84em;
+        height: 0.84em;
+    }
+}
+
+@media (max-width: 420px) {
+    .bottom-bar {
+        bottom: 1.25em;
+        left: 1em;
+        right: 1em;
+        width: calc(100% - 2em);
+    }
+    
+    .navbar {
+        gap: 0.9em;
+        padding-inline: 1.1em;
+        padding-block: 0.55em;
+        border-radius: 1.2em;
+    }
+    
+    .bottom-bar__waveform {
+        height: 1.2em;
+    }
+    
+    .bottom-bar__icon {
+        width: 1.2em;
+        height: 1.2em;
+    }
+    
+    .bottom-bar__right {
+        gap: 1em;
+    }
+    
+    .side-nav {
+        right: 1em;
+        gap: 0.1em;
+    }
+    
+    .side-nav__dot {
+        width: 0.25em;
+        height: 0.25em;
+    }
+    
+    .side-nav__dot.is-active::before,
+    .side-nav__dot:hover::before {
+        width: 0.75em;
+        height: 0.75em;
     }
 }
   
