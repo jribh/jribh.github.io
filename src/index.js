@@ -64,7 +64,7 @@ function initSideNav() {
 			e.preventDefault();
 			const section = dot.dataset.section;
 			setActive(section);
-			// Navigate to the section
+			// Navigate to the section using smooth scroll
 			const target = document.querySelector(`[href="#${section}"]`);
 			if (target) {
 				target.click();
@@ -85,31 +85,54 @@ function initSideNav() {
 function initScrollbar() {
 	let scrollTimeout;
 	
-	window.addEventListener('scroll', () => {
-		// Add scrolling class immediately for smooth transition
+	// Get scroll position from smooth scroll or fallback to window
+	const getScrollPosition = () => {
+		if (window.smoothScroll && window.smoothScroll.scrollCurrent !== undefined) {
+			return window.smoothScroll.scrollCurrent;
+		}
+		return window.scrollY;
+	};
+	
+	// Use requestAnimationFrame to continuously monitor scroll position
+	const monitorScroll = () => {
+		const scrollY = getScrollPosition();
+		
+		// Add scrolling class
 		document.body.classList.add('is-scrolling');
 		
 		// Clear existing timeout
 		clearTimeout(scrollTimeout);
 		
 		// Remove class after scrolling stops
-		// Wait longer to allow the 800ms transition to complete smoothly
 		scrollTimeout = setTimeout(() => {
 			document.body.classList.remove('is-scrolling');
-		}, 150); // Shorter delay so transition starts sooner after stopping
+		}, 150);
 		
 		// Update navbar state based on scroll position
-		updateNavbarOnScroll();
-	}, { passive: true });
+		updateNavbarOnScroll(scrollY);
+		
+		// Continue monitoring
+		requestAnimationFrame(monitorScroll);
+	};
+	
+	// Start monitoring
+	requestAnimationFrame(monitorScroll);
 }
 
-function updateNavbarOnScroll() {
+function updateNavbarOnScroll(scrollY = null) {
 	const navbar = document.querySelector('.navbar');
 	if (!navbar) return;
 	
+	// Get scroll position from smooth scroll or parameter
+	if (scrollY === null) {
+		scrollY = window.smoothScroll && window.smoothScroll.scrollCurrent !== undefined 
+			? window.smoothScroll.scrollCurrent 
+			: window.scrollY;
+	}
+	
 	// Calculate which section is currently in view
 	const sections = document.querySelectorAll('.content-section');
-	const scrollPosition = window.scrollY + (window.innerHeight / 2); // middle of viewport
+	const scrollPosition = scrollY + (window.innerHeight / 2); // middle of viewport
 	
 	let currentSection = 'home'; // default to first section
 	let currentSectionIndex = 0;
@@ -145,9 +168,14 @@ function updateNavbarOnScroll() {
 	}
 	
 	// Update dark overlay based on sections 4 and 5 (indices 3 and 4)
+	// On mobile (<=1024px), also show overlay for section 3 (index 2)
 	const darkOverlay = document.getElementById('dark-overlay');
 	if (darkOverlay) {
-		if (currentSectionIndex === 3 || currentSectionIndex === 4) {
+		const isMobile = window.innerWidth <= 1024;
+		const showOverlay = (currentSectionIndex === 3 || currentSectionIndex === 4) || 
+		                    (isMobile && currentSectionIndex === 2);
+		
+		if (showOverlay) {
 			darkOverlay.classList.add('is-visible');
 		} else {
 			darkOverlay.classList.remove('is-visible');
@@ -167,5 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	initSideNav();
 	initScrollbar();
 	// Initial check for navbar state on page load
-	updateNavbarOnScroll();
+	setTimeout(() => {
+		updateNavbarOnScroll();
+	}, 100);
 });

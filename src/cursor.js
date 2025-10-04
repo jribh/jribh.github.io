@@ -4,11 +4,51 @@ function initCustomCursor() {
     const cursor = document.querySelector('.custom-cursor');
     if (!cursor) return;
 
+    const chevron = cursor.querySelector('.custom-cursor__chevron');
     let isVisible = false;
+    
+    // Store current mouse position
+    let mouseX = 0;
+    let mouseY = 0;
+    
+    // Store chevron position for lagged movement
+    let chevronX = 0;
+    let chevronY = 0;
+    
+    // Lag factor for chevron (higher = more lag)
+    const lagFactor = 0.25;
+    
+    // Track if cursor is in top 25% of screen
+    let isInTopZone = false;
+    let currentRotation = 0;
+    let targetRotation = 0;
 
     // Direct cursor movement without smoothing
     document.addEventListener('mousemove', (e) => {
-        cursor.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        
+        // Update cursor position immediately
+        cursor.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
+        
+        // Check if cursor is over the first section
+        const firstSection = document.querySelector('.content-section[data-section="1"]');
+        let isInFirstSection = false;
+        
+        if (firstSection) {
+            const rect = firstSection.getBoundingClientRect();
+            isInFirstSection = (
+                mouseY >= rect.top &&
+                mouseY <= rect.bottom &&
+                mouseX >= rect.left &&
+                mouseX <= rect.right
+            );
+        }
+        
+        // Check if in top 25% of viewport, but not in first section
+        const viewportHeight = window.innerHeight;
+        const topZoneThreshold = viewportHeight * 0.25;
+        isInTopZone = mouseY < topZoneThreshold && !isInFirstSection;
         
         // Show cursor when mouse moves in the page
         if (!isVisible) {
@@ -16,6 +56,38 @@ function initCustomCursor() {
             isVisible = true;
         }
     });
+    
+    // Animate chevron with lag
+    function animateChevron() {
+        // Smoothly interpolate chevron position towards mouse position
+        chevronX += (mouseX - chevronX) * lagFactor;
+        chevronY += (mouseY - chevronY) * lagFactor;
+        
+        // Calculate offset from cursor center
+        const offsetX = chevronX - mouseX;
+        const offsetY = chevronY - mouseY;
+        
+        // Determine target rotation based on zone
+        targetRotation = isInTopZone ? 180 : 0;
+        
+        // Smoothly interpolate rotation
+        currentRotation += (targetRotation - currentRotation) * 0.12;
+        
+        // Distance from dot center to chevron starting position (below the dot)
+        const distanceFromCenter = 1.8; // 0.8em (circle radius) + gap + chevron offset
+        
+        // Set transform origin to be at the cursor dot position
+        // The chevron is 3em tall, so we need to offset the origin upward
+        chevron.style.transformOrigin = `50% -${distanceFromCenter}em`;
+        
+        // Apply transform: translate to follow cursor with lag, then rotate around the origin (which is at the dot)
+        chevron.style.transform = `translate(calc(-50% + ${offsetX}px), calc(${distanceFromCenter}em + ${offsetY}px)) rotate(${currentRotation}deg)`;
+        
+        requestAnimationFrame(animateChevron);
+    }
+    
+    // Start animation loop
+    animateChevron();
 
     // Define clickable selectors
     const clickableSelectors = 'a, button, input, textarea, select, [role="button"], .navbar__link, .side-nav__dot, .bottom-bar__social';

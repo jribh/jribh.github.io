@@ -52,6 +52,18 @@
     --label-line-height: 1;    /* tight for buttons */
 }
 
+/* Smooth scroll setup */
+html {
+    scroll-behavior: auto;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
+}
+
 body {
     overflow-x: hidden !important;
     overflow-y: auto;
@@ -150,34 +162,30 @@ body {
 
 .custom-cursor__chevron {
     position: absolute;
-    top: calc(0.8em + 0.8em); /* circle diameter + gap */
-    left: 50%;
-    transform: translateX(-50%);
+    top: 0;
+    left: 0;
     width: 3em;
     height: 3em;
     opacity: 0.8; /* text.tertiary opacity */
-    transition: opacity 250ms ease, top 250ms ease;
+    transition: opacity 250ms ease;
+    will-change: transform;
+    transform-origin: center center;
 }
 
 /* Hover state - cursor over clickable elements */
 .custom-cursor--hover .custom-cursor__circle {
-    width: 2em;
-    height: 2em;
+    width: 2.6em;
+    height: 2.6em;
 }
 
 .custom-cursor--hover .custom-cursor__chevron {
     opacity: 0;
-    top: calc(1.8em + 0.8em); /* adjust position for larger circle */
 }
 
 /* Click/Active state - mouse button pressed */
 .custom-cursor--active .custom-cursor__circle {
-    width: 1em;
-    height: 1em;
-}
-
-.custom-cursor--active .custom-cursor__chevron {
-    top: calc(1em + 1em); /* circle diameter + increased gap */
+    width: 0.7em;
+    height: 0.7em;
 }
 
 /* Click on hover state - clicking while over clickable element */
@@ -274,6 +282,9 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     position: relative;
     z-index: 5;
     grid-column: 1 / -1; /* Span all 12 columns */
+    /* Ensure sticky positioning works within smooth scroll transform */
+    transform-style: preserve-3d;
+    overflow: visible;
 }
 
 /* Side Navigation (Right) */
@@ -719,6 +730,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 .content-section[data-section="3"] {
     height: auto;
     min-height: 100vh;
+    overflow: visible; /* Allow sticky positioning to work */
 }
 
 /* Remove height constraint for sections 5 and 6 */
@@ -816,6 +828,45 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
 /* Add page padding on mobile */
 @media (max-width: 768px) {
+    .heading-h1 {
+        font-size: 7.5em; /* Increased from 6.5em for better visibility on mobile */
+    }
+    
+    /* Left align section 5 on mobile and remove padding */
+    .section-content--centered {
+        text-align: left;
+        align-items: flex-start;
+        padding-left: 0;
+        padding-right: 0;
+    }
+    
+    /* Remove padding from section-content inside section 5 */
+    .content-section[data-section="5"] .section-content {
+        padding-left: 0;
+        padding-right: 0;
+    }
+    
+    /* Center align H2 in section 4 on mobile */
+    .content-section[data-section="4"] .heading-h2 {
+        text-align: center;
+    }
+    
+    /* Reduce H3-regular size to 50% in section 4 on mobile */
+    .content-section[data-section="4"] .heading-h3-regular {
+        font-size: 3.4375em; /* 50% of 6.875em */
+    }
+    
+    /* Adjust overlay text positions on mobile */
+    .work-overlay--crafting {
+        top: 0.1em; /* Move up from 0.7em */
+        left: -0.8em; /* Move right from -2.1em */
+    }
+    
+    .work-overlay--for-people {
+        bottom: 0.2em; /* Move down from 0.6em */
+        right: -0.6em; /* Move left from -1.6em */
+    }
+    
     .content-section {
         padding-left: 1em;
         padding-right: 1em;
@@ -1089,6 +1140,10 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 }
 
 @media (max-width: 1024px) {
+    .heading-h1 {
+        font-size: 8em; /* Reduced from 11.25em for tablets */
+    }
+    
     .bottom-bar {
         bottom: 1.58em;
         padding-left: 2em;
@@ -1127,6 +1182,11 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 }
 
 @media (max-width: 768px) {
+    /* Make dark overlay darker on mobile for better text readability */
+    #dark-overlay {
+        background-color: rgba(0, 0, 0, 0.75);
+    }
+    
     .bottom-bar {
         display: flex;
         grid-template-columns: none;
@@ -1182,6 +1242,10 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 }
 
 @media (max-width: 600px) {
+    .heading-h1 {
+        font-size: 6em; /* Increased from 5.5em for better visibility */
+    }
+    
     .bottom-bar {
         display: flex;
         grid-template-columns: none;
@@ -1237,6 +1301,10 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 }
 
 @media (max-width: 420px) {
+    .heading-h1 {
+        font-size: 6em; /* Increased from 4.5em for better visibility */
+    }
+    
     .bottom-bar {
         display: flex;
         grid-template-columns: none;
@@ -1312,10 +1380,11 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     gap: 5em;
     flex-shrink: 0; /* Don't shrink, size based on content */
     box-sizing: border-box;
-    position: sticky;
-    top: 20vh; /* Stick at same position as padding-top */
+    /* Sticky positioning handled by stickyColumn.js for smooth scroll compatibility */
+    position: relative;
     align-self: flex-start;
     height: fit-content;
+    padding-bottom: 12em; /* Add bottom padding to move up with right column */
 }
 
 .enterprise-right {
@@ -1362,7 +1431,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     border: none;
     background: none;
     cursor: pointer;
-    transition: all 250ms ease;
+    transition: color 250ms ease;
     text-transform: uppercase;
     font-family: var(--label-font);
     font-weight: var(--label-weight);
@@ -1376,13 +1445,22 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
 .btn-primary:hover,
 .btn-secondary:hover {
-    opacity: 0.8;
+    color: var(--primary-lightest);
 }
 
 .btn-primary img,
 .btn-secondary img {
     width: 1.2em;
     height: 1.2em;
+    transition: filter 250ms ease;
+    /* Base filter to match primary-light color */
+    filter: brightness(0) saturate(100%) invert(72%) sepia(24%) saturate(1039%) hue-rotate(303deg) brightness(102%) contrast(98%);
+}
+
+.btn-primary:hover img,
+.btn-secondary:hover img {
+    /* Filter to match primary-lightest color */
+    filter: brightness(0) saturate(100%) invert(93%) sepia(12%) saturate(679%) hue-rotate(301deg) brightness(103%) contrast(101%);
 }
 
 .enterprise-right {
@@ -1401,15 +1479,30 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     height: 0.8em;
     width: auto;
     vertical-align: baseline;
-    margin-left: 0.4em;
+    margin-left: 0.2em; /* Reduced by 50% from 0.4em */
 }
 
 .enterprise-right .ornament-em-dash {
     height: 0.5em;
     width: auto;
     vertical-align: baseline;
-    margin-left: 0.2em;
-    margin-right: 0.2em;
+    margin-left: 0.1em; /* Reduced by 50% from 0.2em */
+    margin-right: 0.1em; /* Reduced by 50% from 0.2em */
+}
+
+/* Text Reveal Effect - Section 3 Right Column */
+.enterprise-right .body-default .text-reveal-word {
+    display: inline;
+    white-space: normal;
+    color: var(--text-primary) !important;
+    transition: opacity 0.1s ease;
+}
+
+/* Ensure ornaments within word spans display correctly */
+.enterprise-right .body-default .text-reveal-word .ornament,
+.enterprise-right .body-default .text-reveal-word .ornament-em-dash {
+    display: inline;
+    vertical-align: baseline;
 }
 
 /* Responsive adjustments for Enterprise section */
@@ -1419,13 +1512,24 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
         flex-direction: column;
         gap: 3em;
         padding-top: 15vh;
-        padding-left: calc((100% / 12) + 0.5em);
-        padding-right: calc((100% / 12) + 0.5em);
+        padding-left: 0; /* Remove side padding for full width */
+        padding-right: 0; /* Remove side padding for full width */
     }
     
-    .enterprise-left,
+    .enterprise-left {
+        grid-column: auto; /* Reset grid column on mobile */
+        position: static !important; /* Disable sticky positioning */
+        transform: none !important; /* Disable any transform from stickyColumn.js */
+        padding-bottom: 0; /* Remove bottom padding on mobile */
+    }
+    
     .enterprise-right {
         grid-column: auto; /* Reset grid column on mobile */
+        width: 100%; /* Full width on mobile */
+    }
+    
+    .enterprise-buttons {
+        flex-direction: row; /* Buttons in row layout on mobile */
     }
     
     .enterprise-headings .heading-h2 {
@@ -1445,34 +1549,41 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 @media (max-width: 768px) {
     .section-content--enterprise {
         padding-top: 12vh;
-        padding-left: 1.5em;
-        padding-right: 1.5em;
-        padding-bottom: 2em;
-        gap: 2.5em;
+        padding-left: 0; /* Remove side padding for full width */
+        padding-right: 0; /* Remove side padding for full width */
+        padding-bottom: 6em; /* Increased to 3x (was 2em) */
+        gap: 4em; /* Gap between left and right columns */
     }
     
     .enterprise-left {
-        gap: 2em;
+        gap: 2em; /* Gap between headings and buttons */
+        position: static !important; /* Ensure sticky is disabled */
+        transform: none !important;
+    }
+    
+    .enterprise-headings {
+        gap: 0.5em; /* Gap between H2 and H3 headings */
     }
     
     .enterprise-headings .heading-h2 {
-        font-size: 3.75em; /* 3.5em + 7% */
+        font-size: 4.5em; /* Increased from 3.75em for better visibility */
     }
     
     .enterprise-headings .heading-h3,
     .enterprise-headings .heading-h3-regular {
-        font-size: 3.3em; /* 3em + 10% */
+        font-size: 4.2em; /* Increased from 3.9em for better visibility */
     }
     
     .enterprise-buttons {
-        flex-direction: column;
-        gap: 1em;
+        flex-direction: row; /* Keep buttons in row on mobile */
+        gap: 1.5em; /* Increased gap between buttons */
+        flex-wrap: wrap; /* Allow wrapping if needed */
     }
     
     .btn-primary,
     .btn-secondary {
-        width: 100%;
-        text-align: center;
+        width: auto; /* Auto width instead of 100% */
+        text-align: left; /* Left align text */
     }
     
     .enterprise-right .body-default {

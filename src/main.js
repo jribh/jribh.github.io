@@ -886,9 +886,10 @@ function moveJoint(mouse, joint, degreeLimit, dt, inactive, resizing, returnProg
   const mx = (mouse && typeof mouse.x === 'number') ? mouse.x : cx;
   const my = (mouse && typeof mouse.y === 'number') ? mouse.y : cy;
 
-  // Apply head movement restriction smoothly tied to scroll progress from section 1 to 2
-  const scrollProgressNormalized = Math.min(currentScrollProgress * 3, 1.0); // Normalize 0-1/3 to 0-1
-  const restrictionProgress = Math.max(0, scrollProgressNormalized - 0); // Start restriction immediately when scrolling begins
+  // Apply head movement restriction smoothly tied to scroll progress in sections 2 and 3
+  // Calculate progress through sections 2-3 (from 1/3 to 2/3 of total scroll)
+  const scrollProgressNormalized = Math.max(0, Math.min((currentScrollProgress - 1/3) * 3, 1.0)); // Normalize 1/3-2/3 to 0-1
+  const restrictionProgress = scrollProgressNormalized; // Apply restriction during sections 2-3
   const restrictionMultiplier = 1.0 - (restrictionProgress * (1.0 - headMovementRestriction));
   const effectiveDegreeLimit = degreeLimit * restrictionMultiplier;
 
@@ -1557,26 +1558,31 @@ function computeExposureForScroll(scrollProgress) {
 }
 
 // Determine glass effect configuration based on scroll progress
+// Helper to get current scroll position from either smooth scroll or window.scrollY
+function getCurrentScrollPosition() {
+  return window.smoothScroll?.scrollCurrent ?? window.scrollY;
+}
+
 function getGlassModeForProgress(scrollProgress) {
   
   if (scrollProgress <= 1/3) {
     // First third: transitioning from page 1 to page 2
-    // Enable split-screen mode with left side getting increasing glass effect
-    const localProgress = scrollProgress * 3.0; // Normalize to 0-1 for this transition
+    // No glass effect yet
+    return {
+      splitScreen: false,
+      boundary: 0.5,
+      effectProgress: 0.0,
+      rightSideProgress: 0.0
+    };
+  } else if (scrollProgress <= 2/3) {
+    // Second third: transitioning from page 2 to page 3
+    // Left side gets glass effect
+    const localProgress = (scrollProgress - 1/3) * 3.0; // Normalize to 0-1 for this transition
     return {
       splitScreen: true,
       boundary: 0.5, // Split at 50% (left half gets effect)
       effectProgress: localProgress,
       rightSideProgress: 0.0 // Right side has no effect yet
-    };
-  } else if (scrollProgress <= 2/3) {
-    // Second third: transitioning from page 2 to page 3
-    // Keep left side glass only, no change to right side
-    return {
-      splitScreen: true,
-      boundary: 0.5, // Keep boundary at 50%
-      effectProgress: 1.0, // Left side maintains full effect
-      rightSideProgress: 0.0 // Right side still has no effect
     };
   } else {
     // Final third: transitioning from page 3 to page 4
@@ -1593,7 +1599,7 @@ function getGlassModeForProgress(scrollProgress) {
 
 // Initialize effects based on current scroll position (for page reloads)
 function initializeScrollEffectsFromCurrentPosition() {
-  const scrollY = window.scrollY;
+  const scrollY = getCurrentScrollPosition();
   const sectionHeight = window.innerHeight;
   const totalSections = 4; // Now we have 4 sections
   const scrollProgress = Math.min(scrollY / (sectionHeight * (totalSections - 1)), 1.0); // Normalize to 0-1 across all sections
@@ -1638,7 +1644,7 @@ function updateReededGlassProgress(progress) {
 }
 
 function handleScroll() {
-  const scrollY = window.scrollY;
+  const scrollY = getCurrentScrollPosition();
   
   // Get actual section elements and their positions
   const sections = document.querySelectorAll('.content-section');
@@ -1714,7 +1720,12 @@ function handleScroll() {
 }
 
 // Use default scroll behavior - no snapping
-window.addEventListener('scroll', handleScroll, { passive: true });
+// Monitor custom smooth scroll position
+function monitorScrollEffects() {
+  handleScroll();
+  requestAnimationFrame(monitorScrollEffects);
+}
+monitorScrollEffects();
 
 // Configuration functions for scroll effects
 window.setScrollRefractionMultiplier = function(multiplier) {
