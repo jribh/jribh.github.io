@@ -112,23 +112,46 @@ function updateNavbarOnScroll() {
 	const scrollPosition = window.scrollY + (window.innerHeight / 2); // middle of viewport
 	
 	let currentSection = 'home'; // default to first section
+	let currentSectionIndex = 0;
 	
 	sections.forEach((section, index) => {
 		const sectionTop = section.offsetTop;
 		const sectionBottom = sectionTop + section.offsetHeight;
 		
 		if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
-			// Determine section key based on index
-			const sectionKeys = ['home', 'about', 'work', 'contact'];
-			currentSection = sectionKeys[index] || 'home';
+			currentSectionIndex = index;
+			// Map section indices to navigation keys
+			// Section 0 -> home (first dot)
+			// Sections 1, 2, 3 -> about (second dot)
+			// Section 4 -> work (third dot)
+			if (index === 0) {
+				currentSection = 'home';
+			} else if (index >= 1 && index <= 3) {
+				currentSection = 'about';
+			} else if (index === 4) {
+				currentSection = 'work';
+			} else {
+				currentSection = 'contact';
+			}
 		}
 	});
 	
 	// Update navbar visual state based on current section
-	if (currentSection === 'home') {
+	// Primary state only for home (section 0)
+	if (currentSectionIndex === 0) {
 		navbar.classList.remove('navbar--secondary');
 	} else {
 		navbar.classList.add('navbar--secondary');
+	}
+	
+	// Update dark overlay based on sections 4 and 5 (indices 3 and 4)
+	const darkOverlay = document.getElementById('dark-overlay');
+	if (darkOverlay) {
+		if (currentSectionIndex === 3 || currentSectionIndex === 4) {
+			darkOverlay.classList.add('is-visible');
+		} else {
+			darkOverlay.classList.remove('is-visible');
+		}
 	}
 	
 	// Update active states in navigation

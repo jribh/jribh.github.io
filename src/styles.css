@@ -61,8 +61,6 @@ body {
     font-size: 16px;
     font-family: var(--font-body);
     color: var(--text-primary);
-    scroll-behavior: smooth;
-    scroll-snap-type: y mandatory;
     cursor: none !important; /* hide default cursor */
     
     /* 12-column grid system with 0.5em gutters */
@@ -558,6 +556,60 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     text-transform: uppercase; /* tight capital headings */
 }
 
+/* Primary color variant for H2 */
+.heading-h2--primary {
+    color: var(--primary-main);
+}
+
+/* Primary lightest color variant for H2 */
+.heading-h2--lightest {
+    color: var(--primary-lightest);
+}
+
+/* Work section overlay styling */
+.work-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.work-overlay {
+    position: absolute;
+    color: var(--primary-main);
+    white-space: nowrap;
+}
+
+.work-overlay--crafting {
+    top: 0.7em;
+    left: -2.1em;
+}
+
+.work-overlay--and {
+    bottom: 0.85em;
+    left: 0.3em;
+}
+
+.work-overlay--for-people {
+    bottom: 0.6em;
+    right: -1.6em;
+}
+
+.work-comma {
+    position: absolute;
+    font-family: var(--font-heading-serif);
+    font-style: italic;
+    font-weight: 400; /* Regular */
+    font-variation-settings: 'opsz' 144, 'SOFT' 0, 'WONK' 1;
+    color: var(--primary-main);
+}
+
+.work-comma--1 {
+    margin-left: 0.15em;
+}
+
+.work-comma--2 {
+    margin-left: 0.15em;
+}
+
 .heading-h3 {
     font-family: var(--font-heading-serif);
     font-style: italic;
@@ -583,7 +635,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     font-family: var(--font-body);
     font-weight: 500; /* Medium */
     font-size: 2.25em; /* 36px */
-    line-height: 1.5; /* Auto */
+    line-height: normal; /* Browser default */
     letter-spacing: 0; /* 0% */
 }
 
@@ -663,6 +715,19 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     gap: 0.5em;
 }
 
+/* Remove height constraint for section 3 (enterprise section) */
+.content-section[data-section="3"] {
+    height: auto;
+    min-height: 100vh;
+}
+
+/* Remove height constraint for sections 5 and 6 */
+.content-section[data-section="5"],
+.content-section[data-section="6"] {
+    height: auto;
+    min-height: 100vh;
+}
+
 /* Section content container */
 .section-content {
     position: relative;
@@ -675,6 +740,21 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     gap: 3vh; /* Spacing between rows */
     box-sizing: border-box;
     grid-column: 1 / -1;
+}
+
+/* Centered content variant for section 5 */
+.section-content--centered {
+    align-items: center; /* Horizontally center */
+    justify-content: center; /* Vertically center */
+    text-align: center;
+}
+
+/* Gradient heading for 'Work that lands.' */
+.heading-h1--gradient-work {
+    background: linear-gradient(135deg, #882016 0%, #F25A4C 55%, #FFA1AB 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 /* Section rows */
@@ -846,6 +926,24 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .section-tagline {
         font-size: 1em;
     }
+    
+    /* Reduce typography sizes for larger screens */
+    .heading-h1 {
+        font-size: 9.5em; /* Reduced from 11.25em */
+    }
+    
+    .heading-h2 {
+        font-size: 6.375em; /* Reduced from 7.5em */
+    }
+    
+    .heading-h3,
+    .heading-h3-regular {
+        font-size: 5.85em; /* Reduced from 6.875em */
+    }
+    
+    .body-default {
+        font-size: 2em; /* Reduced from 2.25em */
+    }
 }
 
 #head-container {
@@ -857,6 +955,23 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     height: 100vh;
     pointer-events: none;
     grid-column: 1 / -1; /* Span all columns */
+}
+
+#dark-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 800ms ease;
+    z-index: 2;
+}
+
+#dark-overlay.is-visible {
+    opacity: 1;
 }
 
 .loading-overlay {
@@ -1187,7 +1302,8 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     padding-right: calc((100% / 12) * 2 + 0.5em); /* Padding to end at column 11 */
     box-sizing: border-box;
     width: 100%;
-    height: 100%;
+    min-height: 100vh; /* Allow content to extend beyond viewport */
+    height: auto;
 }
 
 .enterprise-left {
@@ -1196,6 +1312,10 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     gap: 5em;
     flex-shrink: 0; /* Don't shrink, size based on content */
     box-sizing: border-box;
+    position: sticky;
+    top: 20vh; /* Stick at same position as padding-top */
+    align-self: flex-start;
+    height: fit-content;
 }
 
 .enterprise-right {
@@ -1205,6 +1325,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
+    gap: 2em; /* Gap between paragraphs */
     box-sizing: border-box;
 }
 
@@ -1274,6 +1395,21 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 .enterprise-right .body-default {
     color: var(--text-primary);
     margin: 0;
+}
+
+.enterprise-right .ornament {
+    height: 0.8em;
+    width: auto;
+    vertical-align: baseline;
+    margin-left: 0.4em;
+}
+
+.enterprise-right .ornament-em-dash {
+    height: 0.5em;
+    width: auto;
+    vertical-align: baseline;
+    margin-left: 0.2em;
+    margin-right: 0.2em;
 }
 
 /* Responsive adjustments for Enterprise section */

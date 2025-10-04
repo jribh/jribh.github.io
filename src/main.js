@@ -1532,8 +1532,6 @@ if (IS_TOUCH_DEVICE) {
 
 // Handle scroll to gradually apply reeded glass effect
 let currentSection = 0;
-let isScrolling = false;
-let scrollTimeout;
 let currentScrollProgress = 0;
 let baseExposure = 1.0; // Store the base exposure value
 let scrollRefractionMultiplier = 3.0; // Configurable refraction multiplier
@@ -1639,51 +1637,50 @@ function updateReededGlassProgress(progress) {
   // Note: Exposure is now handled directly in scroll handlers for better timing
 }
 
-function snapToSection(sectionIndex) {
-  const targetY = sectionIndex * window.innerHeight;
-  const totalSections = 4;
-  const targetProgress = sectionIndex / (totalSections - 1); // Normalize to 0-1 across all sections
-  // Exposure will be driven by handleScroll() as the window scrolls; avoid conflicting tweens here
-  
-  window.scrollTo({
-    top: targetY,
-    behavior: 'smooth'
-  });
-  currentSection = sectionIndex;
-  
-  // Smoothly animate reeded glass progress using GSAP
-  gsap.to({ progress: currentScrollProgress }, {
-    progress: targetProgress,
-    duration: 0.8,
-    ease: "power2.out",
-    onUpdate: function() {
-      currentScrollProgress = this.targets()[0].progress;
-      
-      // Get glass mode configuration for current progress
-      const glassModeConfig = getGlassModeForProgress(currentScrollProgress);
-      
-      // Update reeded glass but skip exposure changes since we're handling it above
-      if (_reedEffect) {
-        setReededScrollProgress(_reedEffect, glassModeConfig.effectProgress);
-        setReededScrollRefractionMultiplier(_reedEffect, scrollRefractionMultiplier);
-        setReededSplitScreenMode(_reedEffect, glassModeConfig.splitScreen, glassModeConfig.boundary, glassModeConfig.rightSideProgress);
-      }
-      // Update gradient background colors during smooth transition
-      updateGradientColorsForScroll(currentScrollProgress);
-      // Update saturation during smooth transition
-      updateSaturationForScroll(currentScrollProgress);
-      // Exposure remains constant throughout scrolling
-    }
-  });
-}
-
 function handleScroll() {
-  if (isScrolling) return;
-  
   const scrollY = window.scrollY;
-  const sectionHeight = window.innerHeight;
-  const totalSections = 4;
-  const scrollProgress = Math.min(scrollY / (sectionHeight * (totalSections - 1)), 1.0); // Normalize to 0-1 across all sections
+  
+  // Get actual section elements and their positions
+  const sections = document.querySelectorAll('.content-section');
+  if (sections.length < 4) return;
+  
+  // Calculate actual section boundaries
+  const section1End = sections[0].offsetTop + sections[0].offsetHeight;
+  const section2End = sections[1].offsetTop + sections[1].offsetHeight;
+  const section3Start = sections[2].offsetTop;
+  const section3End = sections[2].offsetTop + sections[2].offsetHeight;
+  const section4Start = sections[3].offsetTop;
+  
+  // Determine scroll progress based on actual section positions
+  let scrollProgress = 0;
+  
+  if (scrollY <= section1End) {
+    // Section 1 -> 2 transition (first third: 0 to 1/3)
+    scrollProgress = (scrollY / section1End) * (1/3);
+  } else if (scrollY <= section2End) {
+    // Section 2 -> 3 transition (second third: 1/3 to 2/3)
+    const progressInSection2 = (scrollY - section1End) / (section2End - section1End);
+    scrollProgress = (1/3) + (progressInSection2 * (1/3));
+  } else if (scrollY <= section3End) {
+    // Within section 3 - keep at 2/3 until near the end
+    // Only start the transition to section 4 in the last 100vh of section 3
+    const transitionZoneHeight = Math.min(window.innerHeight, section3End - section3Start);
+    const transitionStart = section3End - transitionZoneHeight;
+    
+    if (scrollY < transitionStart) {
+      // Still in section 3, before transition zone
+      scrollProgress = 2/3;
+    } else {
+      // In transition zone - section 3 -> 4 (2/3 to 1)
+      const progressInTransition = (scrollY - transitionStart) / transitionZoneHeight;
+      scrollProgress = (2/3) + (progressInTransition * (1/3));
+    }
+  } else {
+    // In section 4 or beyond
+    scrollProgress = 1.0;
+  }
+  
+  scrollProgress = Math.min(scrollProgress, 1.0);
   
   // Update reeded glass smoothly based on scroll position
   currentScrollProgress = scrollProgress;
@@ -1704,48 +1701,19 @@ function handleScroll() {
   // Update saturation based on scroll position
   updateSaturationForScroll(scrollProgress);
   
-  // Exposure remains constant throughout scrolling
-  
-  // Determine target section for snapping
-  const newSection = Math.round(scrollY / sectionHeight);
-  const targetSection = Math.max(0, Math.min(3, newSection)); // Now max section is 3 (4 total sections)
-  
-  // Clear any existing timeout
-  clearTimeout(scrollTimeout);
-  
-  // Set a timeout to snap to the nearest section after scrolling stops
-  scrollTimeout = setTimeout(() => {
-    if (targetSection !== currentSection) {
-      snapToSection(targetSection);
-    }
-  }, 150); // Small delay to allow for scroll completion
-}
-
-function handleWheel(e) {
-  e.preventDefault();
-  
-  if (isScrolling) return;
-  
-  const delta = e.deltaY;
-  let targetSection = currentSection;
-  
-  if (delta > 0 && currentSection < 3) {
-    targetSection = currentSection + 1; // Scroll down to next section
-  } else if (delta < 0 && currentSection > 0) {
-    targetSection = currentSection - 1; // Scroll up to previous section
-  }
-  
-  if (targetSection !== currentSection) {
-    isScrolling = true;
-    snapToSection(targetSection);
-    
-    setTimeout(() => {
-      isScrolling = false;
-    }, 1000); // Allow smooth scrolling and glass animation to complete
+  // Update current section for reference
+  if (scrollY < section1End) {
+    currentSection = 0;
+  } else if (scrollY < section2End) {
+    currentSection = 1;
+  } else if (scrollY < section3End) {
+    currentSection = 2;
+  } else {
+    currentSection = 3;
   }
 }
 
-window.addEventListener('wheel', handleWheel, { passive: false });
+// Use default scroll behavior - no snapping
 window.addEventListener('scroll', handleScroll, { passive: true });
 
 // Configuration functions for scroll effects
