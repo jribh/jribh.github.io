@@ -8,11 +8,27 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Typography families used for design tokens -->
-    <link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Fraunces:ital,wght@1,400;1,500;1,600&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Fraunces:ital,opsz,wght,SOFT,WONK@1,9..144,100..900,0..100,0..1&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="src/styles.css">
     <title>Jribh Shandilya | Interaction Design</title>
 </head>
 <body>
+
+<!-- Grid Guides Overlay (for development - remove or hide in production) -->
+<!-- <div class="grid-guides">
+    <div class="grid-column"></div>
+    <div class="grid-column"></div>
+    <div class="grid-column"></div>
+    <div class="grid-column"></div>
+    <div class="grid-column"></div>
+    <div class="grid-column"></div>
+    <div class="grid-column"></div>
+    <div class="grid-column"></div>
+    <div class="grid-column"></div>
+    <div class="grid-column"></div>
+    <div class="grid-column"></div>
+    <div class="grid-column"></div>
+</div> -->
 
 <!-- Custom Cursor -->
 <div class="custom-cursor">
@@ -29,9 +45,58 @@
     </section>
     
     <section class="content-section" data-section="2">
+        <div class="section-content">
+            <!-- Row 1: Heading (left aligned) -->
+            <div class="section-row section-row--top">
+                <h2 class="heading-h2 section-heading">EYE CANDY</h2>
+            </div>
+            
+            <!-- Row 2: SVG graphics (center aligned) -->
+            <div class="section-row section-row--middle">
+                <!-- Desktop: Two separate SVGs -->
+                <img src="src/assets/beyond.svg" alt="Beyond" class="section-graphic section-graphic--left section-graphic--desktop" />
+                <img src="src/assets/pretty.svg" alt="Pretty" class="section-graphic section-graphic--right section-graphic--desktop" />
+                
+                <!-- Mobile: Single combined SVG -->
+                <img src="src/assets/beyond_pretty_mobile.svg" alt="Beyond Pretty" class="section-graphic section-graphic--mobile" />
+            </div>
+            
+            <!-- Row 3: Tagline (right aligned) -->
+            <div class="section-row section-row--bottom">
+                <p class="text-label section-tagline">Designing beautiful products<br>that work, and work well.</p>
+            </div>
+        </div>
     </section>
     
     <section class="content-section" data-section="3">
+        <div class="section-content section-content--enterprise">
+            <!-- Left Column -->
+            <div class="enterprise-left">
+                <!-- Row 1: Headings -->
+                <div class="enterprise-headings">
+                    <h2 class="heading-h2">ENTERPRISE</h2>
+                    <h3 class="heading-h3-regular">And then some.</h3>
+                </div>
+                
+                <!-- Row 2: Buttons -->
+                <div class="enterprise-buttons">
+                    <button class="btn-primary text-label">CONTACT ME<img src="src/assets/arrow-right.svg" alt="" /></button>
+                    <button class="btn-secondary text-label">GET MY RESUME<img src="src/assets/download.svg" alt="" /></button>
+                </div>
+            </div>
+            
+            <!-- Right Column -->
+            <div class="enterprise-right">
+                <p class="body-default">Hi. I'm Jribh. I delve into problems like a pessimist, and solve them like an optimist. For the user and the business</p>
+                <p class="body-default">Keeping it simple  solutions as well as philosophy         with products that reduce user frustration and make you money</p>
+                <p class="body-default">I research, prototype UIs and (now vibe      ) code, whatever's needed to get it out there. End-to-end</p>
+                <p class="body-default">As a Senior Interaction Designer at DE Shaw, a $70B+ hedge fund, I craft beautiful high-density enterprise applications, trading tools and design systems across desktops and mobile</p>
+                <p class="body-default">Oh, and yes, I like to draw animals (mostly big cats)</p>
+            </div>
+        </div>
+    </section>
+    
+    <section class="content-section" data-section="4">
     </section>
 </div>
 
@@ -73,6 +138,7 @@
 </nav>
 
 <script type="module" src="./src/cursor.js"></script>
+<script type="module" src="./src/gridToggle.js"></script>
 <script type="module" src="./src/main.js"></script>
 <script type="module" src="./src/index.js"></script>
 

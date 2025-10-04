@@ -1561,20 +1561,29 @@ function computeExposureForScroll(scrollProgress) {
 // Determine glass effect configuration based on scroll progress
 function getGlassModeForProgress(scrollProgress) {
   
-  if (scrollProgress <= 0.5) {
-    // First half: transitioning from page 1 to page 2
+  if (scrollProgress <= 1/3) {
+    // First third: transitioning from page 1 to page 2
     // Enable split-screen mode with left side getting increasing glass effect
-    const localProgress = scrollProgress * 2.0; // Normalize to 0-1 for this transition
+    const localProgress = scrollProgress * 3.0; // Normalize to 0-1 for this transition
     return {
       splitScreen: true,
       boundary: 0.5, // Split at 50% (left half gets effect)
       effectProgress: localProgress,
       rightSideProgress: 0.0 // Right side has no effect yet
     };
+  } else if (scrollProgress <= 2/3) {
+    // Second third: transitioning from page 2 to page 3
+    // Keep left side glass only, no change to right side
+    return {
+      splitScreen: true,
+      boundary: 0.5, // Keep boundary at 50%
+      effectProgress: 1.0, // Left side maintains full effect
+      rightSideProgress: 0.0 // Right side still has no effect
+    };
   } else {
-    // Second half: transitioning from page 2 to page 3
+    // Final third: transitioning from page 3 to page 4
     // Right side gradually gets glass effect while left side maintains full effect
-    const localProgress = (scrollProgress - 0.5) * 2.0; // Normalize to 0-1 for this transition
+    const localProgress = (scrollProgress - 2/3) * 3.0; // Normalize to 0-1 for this transition
     return {
       splitScreen: true, // Keep split-screen mode
       boundary: 0.5, // Keep boundary at 50%
@@ -1588,7 +1597,7 @@ function getGlassModeForProgress(scrollProgress) {
 function initializeScrollEffectsFromCurrentPosition() {
   const scrollY = window.scrollY;
   const sectionHeight = window.innerHeight;
-  const totalSections = 3; // Now we have 3 sections
+  const totalSections = 4; // Now we have 4 sections
   const scrollProgress = Math.min(scrollY / (sectionHeight * (totalSections - 1)), 1.0); // Normalize to 0-1 across all sections
   
   // Set the current scroll progress and section
@@ -1632,7 +1641,7 @@ function updateReededGlassProgress(progress) {
 
 function snapToSection(sectionIndex) {
   const targetY = sectionIndex * window.innerHeight;
-  const totalSections = 3;
+  const totalSections = 4;
   const targetProgress = sectionIndex / (totalSections - 1); // Normalize to 0-1 across all sections
   // Exposure will be driven by handleScroll() as the window scrolls; avoid conflicting tweens here
   
@@ -1673,7 +1682,7 @@ function handleScroll() {
   
   const scrollY = window.scrollY;
   const sectionHeight = window.innerHeight;
-  const totalSections = 3;
+  const totalSections = 4;
   const scrollProgress = Math.min(scrollY / (sectionHeight * (totalSections - 1)), 1.0); // Normalize to 0-1 across all sections
   
   // Update reeded glass smoothly based on scroll position
@@ -1699,7 +1708,7 @@ function handleScroll() {
   
   // Determine target section for snapping
   const newSection = Math.round(scrollY / sectionHeight);
-  const targetSection = Math.max(0, Math.min(2, newSection)); // Now max section is 2 (3 total sections)
+  const targetSection = Math.max(0, Math.min(3, newSection)); // Now max section is 3 (4 total sections)
   
   // Clear any existing timeout
   clearTimeout(scrollTimeout);
@@ -1720,7 +1729,7 @@ function handleWheel(e) {
   const delta = e.deltaY;
   let targetSection = currentSection;
   
-  if (delta > 0 && currentSection < 2) {
+  if (delta > 0 && currentSection < 3) {
     targetSection = currentSection + 1; // Scroll down to next section
   } else if (delta < 0 && currentSection > 0) {
     targetSection = currentSection - 1; // Scroll up to previous section
