@@ -1648,23 +1648,29 @@ function handleScroll() {
   
   // Get actual section elements and their positions
   const sections = document.querySelectorAll('.content-section');
-  if (sections.length < 4) return;
+  if (sections.length < 6) return;
   
-  // Calculate actual section boundaries
+  // Calculate actual section boundaries (we now have 6 sections)
   const section1End = sections[0].offsetTop + sections[0].offsetHeight;
   const section2End = sections[1].offsetTop + sections[1].offsetHeight;
   const section3Start = sections[2].offsetTop;
   const section3End = sections[2].offsetTop + sections[2].offsetHeight;
   const section4Start = sections[3].offsetTop;
+  const section4End = sections[3].offsetTop + sections[3].offsetHeight;
+  const section5Start = sections[4].offsetTop;
+  const section5End = sections[4].offsetTop + sections[4].offsetHeight;
+  const section6Start = sections[5].offsetTop;
+  const section6End = sections[5].offsetTop + sections[5].offsetHeight;
   
   // Determine scroll progress based on actual section positions
+  // We maintain the original 0-1 range for sections 1-4, then extend for sections 5-6
   let scrollProgress = 0;
   
   if (scrollY <= section1End) {
-    // Section 1 -> 2 transition (first third: 0 to 1/3)
+    // Section 1 -> 2 transition (0 to 1/3)
     scrollProgress = (scrollY / section1End) * (1/3);
   } else if (scrollY <= section2End) {
-    // Section 2 -> 3 transition (second third: 1/3 to 2/3)
+    // Section 2 -> 3 transition (1/3 to 2/3)
     const progressInSection2 = (scrollY - section1End) / (section2End - section1End);
     scrollProgress = (1/3) + (progressInSection2 * (1/3));
   } else if (scrollY <= section3End) {
@@ -1681,8 +1687,14 @@ function handleScroll() {
       const progressInTransition = (scrollY - transitionStart) / transitionZoneHeight;
       scrollProgress = (2/3) + (progressInTransition * (1/3));
     }
+  } else if (scrollY <= section4End) {
+    // In section 4 - maintain progress at 1.0
+    scrollProgress = 1.0;
+  } else if (scrollY <= section5End) {
+    // In section 5 - maintain progress at 1.0
+    scrollProgress = 1.0;
   } else {
-    // In section 4 or beyond
+    // In section 6 - maintain progress at 1.0
     scrollProgress = 1.0;
   }
   
@@ -1694,11 +1706,28 @@ function handleScroll() {
   // Get glass mode configuration for current progress
   const glassModeConfig = getGlassModeForProgress(scrollProgress);
   
+  // Detect section 6 for special camera/model positioning
+  // Trigger effects once section 6 comes into view (binary on/off)
+  const inSection6 = scrollY >= (section5End - window.innerHeight * 0.2);
+  
+  // Debug: Log when we're in section 6
+  if (inSection6 && currentSection !== 5) {
+    console.log(`Section 6 in view! Triggering effects...`);
+  }
+  
   // Update reeded glass effects
   if (_reedEffect) {
-    setReededScrollProgress(_reedEffect, glassModeConfig.effectProgress);
+    // In section 6, dial back reeded glass to section 1 levels (progress = 0)
+    // Completely remove glass effect when in section 6
+    const effectiveProgress = inSection6 ? 0 : glassModeConfig.effectProgress;
+    setReededScrollProgress(_reedEffect, effectiveProgress);
+    
+    // Also disable split screen mode in section 6
+    const effectiveSplitScreen = inSection6 ? false : glassModeConfig.splitScreen;
+    const effectiveRightProgress = inSection6 ? 0 : glassModeConfig.rightSideProgress;
+    
     setReededScrollRefractionMultiplier(_reedEffect, scrollRefractionMultiplier);
-    setReededSplitScreenMode(_reedEffect, glassModeConfig.splitScreen, glassModeConfig.boundary, glassModeConfig.rightSideProgress);
+    setReededSplitScreenMode(_reedEffect, effectiveSplitScreen, glassModeConfig.boundary, effectiveRightProgress);
   }
   
   // Update gradient background colors
@@ -1707,6 +1736,9 @@ function handleScroll() {
   // Update saturation based on scroll position
   updateSaturationForScroll(scrollProgress);
   
+  // Section 6: Move camera left and rotate model to face left
+  updateSection6Effects(inSection6);
+  
   // Update current section for reference
   if (scrollY < section1End) {
     currentSection = 0;
@@ -1714,8 +1746,47 @@ function handleScroll() {
     currentSection = 1;
   } else if (scrollY < section3End) {
     currentSection = 2;
-  } else {
+  } else if (scrollY < section4End) {
     currentSection = 3;
+  } else if (scrollY < section5End) {
+    currentSection = 4;
+  } else {
+    currentSection = 5;
+  }
+}
+
+// Section 6 camera and model animation
+let section6SceneTarget = { x: 0.35 }; // Default scene position (base)
+let section6ModelRotationTarget = 0;
+let section6AnimationProgress = 0; // 0..1 blend that eases symmetrically
+
+function updateSection6Effects(isActive) {
+  // Endpoints: always interpolate between the same two values.
+  // This keeps enter/exit speeds identical because the eased progress drives both directions.
+  const baseSceneX = 0.35;
+  const maxSceneDelta = 8.0;       // move right by 8 units at 100%
+  const maxModelRotY  = -0.315;    // ~-18° at 100% (negative = rotate to the right)
+
+  // Progress integrator (same constant both ways -> symmetric pace)
+  const progressSpeed = 0.017;     // 3x slower than earlier
+  const targetProgress = isActive ? 1 : 0;
+  section6AnimationProgress += (targetProgress - section6AnimationProgress) * progressSpeed;
+
+  // Ease-in-out cubic for a gentle start and finish (symmetric by definition)
+  const p = section6AnimationProgress;
+  const eased = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+
+  // Targets derived purely from eased progress (no branch-dependent jump)
+  const targetSceneX = baseSceneX + maxSceneDelta * eased;
+  const targetModelRotY = maxModelRotY * eased;
+
+  // Small smoothing toward targets to avoid micro-jitter; same both ways
+  const sceneLerp = 0.1;
+  scene.position.x = scene.position.x * (1 - sceneLerp) + targetSceneX * sceneLerp;
+
+  if (GLTFHead) {
+    const rotLerp = 0.1;
+    GLTFHead.rotation.y = GLTFHead.rotation.y * (1 - rotLerp) + targetModelRotY * rotLerp;
   }
 }
 

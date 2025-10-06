@@ -166,7 +166,7 @@ body {
     left: 0;
     width: 3em;
     height: 3em;
-    opacity: 0.8; /* text.tertiary opacity */
+    opacity: 1; /* text.tertiary opacity */
     transition: opacity 250ms ease;
     will-change: transform;
     transform-origin: center center;
@@ -759,6 +759,110 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     align-items: center; /* Horizontally center */
     justify-content: center; /* Vertically center */
     text-align: center;
+}
+
+/* Work section layout */
+.section-content--work {
+    grid-column: 2 / 12; /* Span from 2nd column to 11th column */
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+    gap: 6em; /* Gap between heading and cards container */
+    padding: 4em 0; /* Vertical padding only */
+}
+
+/* Work cards container */
+.work-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 4.5em; /* Gap between cards */
+    width: 100%;
+}
+
+/* Individual work card */
+.work-card {
+    background: var(--bg-card);
+    height: 36em;
+    border-radius: 3em;
+    width: 100%;
+}
+
+/* Big cats section */
+.big-cats-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6em;
+    width: 100%;
+    margin-top: 6em;
+}
+
+.big-cats-heading {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    background: linear-gradient(135deg, #882016 0%, #F25A4C 55%, #FFA1AB 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.big-cats-love {
+    font-family: var(--font-heading-serif);
+    font-size: 100px;
+    font-weight: 400;
+    line-height: var(--lh-heading);
+    font-style: italic;
+    text-transform: none;
+}
+
+/* Big cats grid - 2 rows of 4 images */
+.big-cats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 0.4em;
+    width: 100vw;
+    margin-left: calc(-1 * ((100vw - 100%) / 2));
+}
+
+.big-cat-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0;
+    display: block;
+}
+
+/* Instagram button */
+.btn-instagram {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4em;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 1em 2em;
+    margin: 0 auto;
+    transition: color 250ms ease;
+    color: var(--primary-light);
+}
+
+.btn-instagram:hover {
+    color: var(--primary-lightest);
+}
+
+.btn-instagram__icon {
+    width: 1.2em;
+    height: 1.2em;
+    transition: filter 250ms ease;
+    /* Base filter to match primary-light color */
+    filter: brightness(0) saturate(100%) invert(72%) sepia(24%) saturate(1039%) hue-rotate(303deg) brightness(102%) contrast(98%);
+}
+
+.btn-instagram:hover .btn-instagram__icon {
+    /* Filter to match primary-lightest color on hover */
+    filter: brightness(0) saturate(100%) invert(93%) sepia(12%) saturate(679%) hue-rotate(301deg) brightness(103%) contrast(101%);
 }
 
 /* Gradient heading for 'Work that lands.' */
@@ -1588,6 +1692,31 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     
     .enterprise-right .body-default {
         font-size: 1.5em;
+    }
+}
+
+/* Big cats section responsive adjustments */
+@media (max-width: 1440px) {
+    .big-cats-section {
+        gap: 3em;
+    }
+}
+
+@media (max-width: 1024px) {
+    .big-cats-section {
+        gap: 2em;
+    }
+}
+
+@media (max-width: 768px) {
+    .big-cats-section {
+        gap: 1.5em;
+    }
+    
+    .big-cats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+        gap: 0.4em;
     }
 }
   
