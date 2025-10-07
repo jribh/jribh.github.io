@@ -846,6 +846,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     margin: 0 auto;
     transition: color 250ms ease;
     color: var(--primary-light);
+    text-decoration: none;
 }
 
 .btn-instagram:hover {
@@ -1719,4 +1720,261 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
         gap: 0.4em;
     }
 }
+
+/* Contact Email Section (Section 6) */
+.content-section[data-section="6"] {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1em;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.content-section[data-section="6"] .section-content {
+    grid-column: 3 / 6; /* Columns 3 to 5 (3 columns wide) */
+    align-items: flex-start;
+    text-align: left;
+    justify-content: flex-start;
+    padding: 6em 0 0 0; /* 6em top padding, no other padding */
+}
+
+.content-section[data-section="6"] .heading-h2 {
+    margin: 0;
+    text-align: left;
+}
+
+.contact-email-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+}
+
+.contact-email-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.contact-email-link:hover {
+    color: var(--text-primary);
+}
+
+.contact-email-text {
+    color: inherit;
+}
+
+.contact-email-icon {
+    width: 1em;
+    height: 1em;
+    opacity: 0.5; /* text-secondary opacity */
+    transition: opacity 0.2s ease;
+}
+
+.contact-email-link:hover .contact-email-icon {
+    opacity: 1;
+}
+
+.contact-divider {
+    width: 1px;
+    height: 1em;
+    background-color: var(--text-tertiary);
+    margin: 0 0.25em;
+}
+
+.contact-copy-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s ease;
+    position: relative;
+    width: 1em;
+    height: 1em;
+}
+
+.contact-copy-icon,
+.contact-check-icon {
+    width: 1em;
+    height: 1em;
+    transition: opacity 0.2s ease;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.contact-copy-icon {
+    opacity: 0.5; /* text-secondary opacity */
+}
+
+.contact-copy-btn:hover .contact-copy-icon {
+    opacity: 1;
+}
+
+.contact-copy-btn:active .contact-copy-icon {
+    opacity: 0.7;
+}
+
+.contact-check-icon {
+    opacity: 1; /* Full opacity for green checkmark */
+    display: none; /* Hidden by default, shown via JavaScript on copy */
+}
+
+/* Contact Form */
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5em;
+    margin-top: 2em;
+    width: 100%;
+    max-width: 35em;
+}
+
+.contact-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+}
+
+.contact-form-label {
+    color: var(--text-primary);
+    padding-left: 1.25em;
+    text-align: left;
+}
+
+.contact-form-input {
+    background: none;
+    border: 1px solid var(--text-secondary);
+    border-radius: 1em;
+    padding: 1em 1.25em;
+    color: var(--text-primary);
+    font-family: inherit;
+    transition: border-color 0.2s ease;
+    cursor: text;
+}
+
+.contact-form-input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+.contact-form-input:hover {
+    border-color: var(--text-primary);
+}
+
+.contact-form-input:focus {
+    outline: none;
+    border-color: var(--text-primary);
+}
+
+.contact-form-textarea {
+    resize: none;
+    min-height: 8em;
+    font-family: inherit;
+}
+
+.contact-form-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75em;
+    background: none;
+    border: none; /* stroke drawn via :after like GSAP demo */
+    border-radius: 1em;
+    padding: 1em 1.25em;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.contact-form-submit:hover { background: none; }
+
+.contact-form-submit:active { transform: none; }
+
+.contact-form-submit-icon { width: 1.25em; height: 1.25em; position: relative; z-index: 2; transition: filter 0.15s ease; }
+
+/* GSAP demo-inspired styles */
+.button { border: none; background: none; color: inherit; border-radius: 1em; }
+.button--stroke:after {
+    content: "";
+    position: absolute; inset: 0;
+    border: 0.125rem solid var(--text-primary);
+    border-radius: inherit;
+    pointer-events: none;
+}
+.button__label { position: relative; z-index: 2; }
+.button__flair {
+    position: absolute; inset: 0; pointer-events: none; z-index: 1;
+    transform: scale(0); transform-origin: 0 0; will-change: transform;
+}
+.button__flair:before {
+    content: ""; position: absolute; left: 0; top: 0; width: 170%; aspect-ratio: 1/1;
+    background-color: rgb(255 255 255 / 1); border-radius: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Darken label and icon when filled (on white flair) */
+.button.is-on-white .button__label { color: #111; }
+.button.is-on-white .contact-form-submit-icon { filter: invert(1); }
+
+/* Contact footer copy under form */
+.contact-footer {
+    margin-top: 8em; /* requested gap */
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    gap: 2em; /* 2em gap between paragraphs without margins/padding */
+}
+
+/* Remove default paragraph margins; spacing controlled via gap only */
+.contact-footer p { margin: 0; }
+
+.contact-footer__link {
+    color: var(--primary-main);
+    text-decoration: none;
+    transition: color 180ms ease, opacity 180ms ease;
+    display: inline-block;
+}
+.contact-footer__link:hover {
+    color: var(--text-primary);
+}
+
+/* Curtains Down block */
+.curtains-block {
+    margin-top: 7em; /* distance between footer and heading */
+    padding-bottom: 45vh; /* breathing space below */
+    z-index: 11000;
+}
+
+.curtains-text-1 {
+    color: var(--primary-main);
+}
+
+.curtains-text-2 {
+    color: var(--primary-light);
+}
+
+.curtains-logo {
+    width: 1.1em;
+    height: auto;
+    display: inline-block;
+    vertical-align: middle;
+    margin-top: -0.12em;
+    margin-right: 0.05em;
+    margin-left: 0.05em; /* tighter spacing around logo */
+}
+
+/* Keep the curtains heading visually above the overlay */
+.curtains-block { position: relative; z-index: 12000; }
+
+/* Ensure logo inside curtains remains fully visible */
+.curtains-block .heading-h2 { position: relative; z-index: 12001; }
   

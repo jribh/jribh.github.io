@@ -130,11 +130,11 @@
                     <img src="src/assets/big-cat-7.png" alt="Big Cat 7" class="big-cat-image" />
                     <img src="src/assets/big-cat-8.png" alt="Big Cat 8" class="big-cat-image" />
                 </div>
-                <button class="btn-instagram text-label">
+                <a href="https://www.instagram.com/waititshere/" target="_blank" rel="noopener noreferrer" class="btn-instagram text-label">
                     <img src="src/assets/insta-art-section-icon.svg" alt="" class="btn-instagram__icon" />
                     <span class="btn-instagram__text">More on instagram</span>
                     <img src="src/assets/arrow-up-right-art-section-icon.svg" alt="" class="btn-instagram__icon" />
-                </button>
+                </a>
             </div>
         </div>
     </section>
@@ -142,6 +142,55 @@
     <section class="content-section" data-section="6">
         <div class="section-content section-content--centered">
             <h2 class="heading-h2 heading-h2--primary">LET'S TALK</h2>
+            <div class="contact-email-wrapper">
+                <a href="mailto:jribhshan@gmail.com" class="contact-email-link body-small">
+                    <span class="contact-email-text">jribhshan@gmail.com</span>
+                    <img src="src/assets/arrow-up-right.svg" alt="" class="contact-email-icon" />
+                </a>
+                <span class="contact-divider"></span>
+                <button class="contact-copy-btn" aria-label="Copy email address" data-email="jribhshan@gmail.com">
+                    <img src="src/assets/copy.svg" alt="" class="contact-copy-icon" />
+                    <img src="src/assets/checkmark.svg" alt="" class="contact-check-icon" />
+                </button>
+            </div>
+            
+            <form class="contact-form">
+                <div class="contact-form-field">
+                    <label for="contact-name" class="contact-form-label body-small">Your name</label>
+                    <input type="text" id="contact-name" name="name" class="contact-form-input body-small" required />
+                </div>
+                
+                <div class="contact-form-field">
+                    <label for="contact-email" class="contact-form-label body-small">Your email</label>
+                    <input type="email" id="contact-email" name="email" class="contact-form-input body-small" required />
+                </div>
+                
+                <div class="contact-form-field">
+                    <label for="contact-message" class="contact-form-label body-small">Your Message</label>
+                    <textarea id="contact-message" name="message" class="contact-form-input contact-form-textarea body-small" rows="5" required></textarea>
+                </div>
+                
+                <button type="submit" class="contact-form-submit button button--stroke text-label" data-block="button">
+                    <span class="button__flair"></span>
+                    <span class="button__label">SEND</span>
+                    <img src="src/assets/paper-plane-send.svg" alt="" class="contact-form-submit-icon" />
+                </button>
+            </form>
+
+            <div class="contact-footer">
+                <p class="body-default">© 2026</p>
+                <p class="body-default">Made by me.</p>
+                <p class="body-default">Built the head in Fusion 360, gave it materials and animations in Blender, shipped it out as a GLTF, lit it with HDRIs and added the fluted glass in Three.js, sketched the structure in Figma, then vibe + coded everything else until it worked.</p>
+                <p class="body-default">
+                    <a href="mailto:jribhshan@gmail.com" class="contact-footer__link">Email</a> me and connect with me on
+                    <a href="https://www.linkedin.com/in/jribh-shandilya-820361125/" target="_blank" rel="noopener" class="contact-footer__link">LinkedIn</a>.
+                </p>
+                <p class="body-default">Thanks for visiting.</p>
+            </div>
+            
+            <div class="curtains-block">
+                <h2 class="heading-h2"><span class="curtains-text-1">Curtains</span><br><span class="curtains-text-2">Down</span><img src="src/assets/logo.svg" alt="Logo" class="curtains-logo" /></h2>
+            </div>
         </div>
     </section>
 </div>
@@ -188,6 +237,8 @@
 <script type="module" src="./src/cursor.js"></script>
 <script type="module" src="./src/gridToggle.js"></script>
 <script type="module" src="./src/textReveal.js"></script>
+<script type="module" src="./src/contactCopy.js"></script>
+<script type="module" src="./src/gsapButtonFlair.js"></script>
 <script type="module" src="./src/main.js"></script>
 <script type="module" src="./src/index.js"></script>
 

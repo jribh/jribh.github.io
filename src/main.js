@@ -376,8 +376,9 @@ function positionGradientBackgroundFromFrustum() {
   if (!_bgGrad) return;
   const fw = (camera.right - camera.left);
   const fh = (camera.top - camera.bottom);
-  // Add slight bleed so no edges show if there are tiny rounding differences
-  const bleed = 1.06;
+  // Increase bleed significantly to cover scene movement in section 6 (scene moves +8 units)
+  // Need extra coverage on the left side when scene shifts right
+  const bleed = 1.4; // Increased from 1.06 to ensure full coverage
   _bgGrad.scale.set(fw * bleed, fh * bleed, 1);
   // Counter the scene's position so the background stays centered on the camera
   const cx = (camera.left + camera.right) * 0.5;
@@ -1708,23 +1709,38 @@ function handleScroll() {
   
   // Detect section 6 for special camera/model positioning
   // Trigger effects once section 6 comes into view (binary on/off)
-  const inSection6 = scrollY >= (section5End - window.innerHeight * 0.2);
+  const inSection6 = scrollY >= (section5End - window.innerHeight * 0.4);
   
-  // Debug: Log when we're in section 6
+  // Reeded glass removal: Start fading out earlier and over a longer distance
+  // Start removing glass 1.5 viewports before section 5 ends
+  // Complete removal over 1.8 viewports (well before model starts moving)
+  const glassRemovalStart = section5End - (window.innerHeight * 1.5);
+  const glassRemovalDistance = window.innerHeight * 1.8;
+  
+  let glassRemovalProgress = 0;
+  if (scrollY >= glassRemovalStart) {
+    glassRemovalProgress = Math.min((scrollY - glassRemovalStart) / glassRemovalDistance, 1.0);
+  }
+  
+  // Debug: Log when we're in transition zone
   if (inSection6 && currentSection !== 5) {
     console.log(`Section 6 in view! Triggering effects...`);
   }
   
+  if (glassRemovalProgress > 0 && glassRemovalProgress < 1) {
+    console.log(`Glass removal progress: ${glassRemovalProgress.toFixed(3)}`);
+  }
+  
   // Update reeded glass effects
   if (_reedEffect) {
-    // In section 6, dial back reeded glass to section 1 levels (progress = 0)
-    // Completely remove glass effect when in section 6
-    const effectiveProgress = inSection6 ? 0 : glassModeConfig.effectProgress;
+    // Use scroll-based glass removal progress instead of binary trigger
+    // Interpolate from current glass effect to 0 (section 1 level) based on scroll
+    const effectiveProgress = glassModeConfig.effectProgress * (1 - glassRemovalProgress);
     setReededScrollProgress(_reedEffect, effectiveProgress);
     
-    // Also disable split screen mode in section 6
-    const effectiveSplitScreen = inSection6 ? false : glassModeConfig.splitScreen;
-    const effectiveRightProgress = inSection6 ? 0 : glassModeConfig.rightSideProgress;
+    // Also fade out split screen mode gradually
+    const effectiveSplitScreen = glassRemovalProgress < 1 ? glassModeConfig.splitScreen : false;
+    const effectiveRightProgress = glassModeConfig.rightSideProgress * (1 - glassRemovalProgress);
     
     setReededScrollRefractionMultiplier(_reedEffect, scrollRefractionMultiplier);
     setReededSplitScreenMode(_reedEffect, effectiveSplitScreen, glassModeConfig.boundary, effectiveRightProgress);
@@ -1764,7 +1780,7 @@ function updateSection6Effects(isActive) {
   // Endpoints: always interpolate between the same two values.
   // This keeps enter/exit speeds identical because the eased progress drives both directions.
   const baseSceneX = 0.35;
-  const maxSceneDelta = 8.0;       // move right by 8 units at 100%
+  const maxSceneDelta = 10.0;      // move right by 10 units at 100%
   const maxModelRotY  = -0.315;    // ~-18° at 100% (negative = rotate to the right)
 
   // Progress integrator (same constant both ways -> symmetric pace)
@@ -2011,4 +2027,16 @@ async function startStartupSequence(){
   _chinGain = 0;
   _chinStartMs = null;
   allowBreathing = true;
+}
+
+// Add Intersection Observer for curtains block (bottom-bar) to adjust exposure
+let curtainsBlock = document.querySelector('.bottom-bar');
+if (curtainsBlock) {
+  let observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      let targetExposure = entry.isIntersecting ? baseExposure * 0.5 : baseExposure;
+      gsap.to(renderer, { toneMappingExposure: targetExposure, duration: 1.2, ease: 'power2.out' });
+    });
+  }, { threshold: 0.5 });
+  observer.observe(curtainsBlock);
 }
