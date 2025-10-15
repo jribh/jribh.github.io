@@ -118,7 +118,7 @@ class SmoothScroll {
     // Normalize wheel delta across browsers
     let delta = e.deltaY;
     
-    // Increased multiplier for faster scroll
+    // Multiplier for scroll speed
     const wheelMultiplier = 1.0;
     delta *= wheelMultiplier;
     
@@ -190,20 +190,47 @@ class SmoothScroll {
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       anchor.addEventListener('click', (e) => {
         const href = anchor.getAttribute('href');
-        if (href === '#') return;
+        if (href === '#' || href === '') return;
         
         e.preventDefault();
         const target = document.querySelector(href);
         if (target) {
-          const targetTop = target.offsetTop;
-          this.scrollTo(targetTop);
+          // For touch devices, use native scrolling
+          if (this.isTouchDevice) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } else {
+            // For smooth scroll, calculate target position relative to content container
+            const targetTop = target.offsetTop;
+            this.scrollTo(targetTop);
+          }
         }
       });
     });
   }
 
-  scrollTo(target) {
-    this.scrollTarget = target;
+  scrollTo(target, duration = 1000) {
+    // Smoothly animate to target position
+    const start = this.scrollTarget;
+    const distance = target - start;
+    const startTime = performance.now();
+
+    const animate = (currentTime) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // Easing function for smooth animation (ease-in-out)
+      const easeProgress = progress < 0.5
+        ? 4 * progress * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+      
+      this.scrollTarget = start + (distance * easeProgress);
+      
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+    
+    requestAnimationFrame(animate);
   }
 
   start() {

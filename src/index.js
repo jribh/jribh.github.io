@@ -44,6 +44,27 @@ function initNavbar() {
 		});
 	});
 
+	// Add click handler for center logo to scroll to top
+	const logo = document.querySelector('.navbar__logo');
+	if (logo) {
+		logo.style.cursor = 'pointer';
+		logo.tabIndex = 0; // Make focusable
+		logo.addEventListener('click', () => {
+			if (window.smoothScroll && typeof window.smoothScroll.scrollTo === 'function') {
+				window.smoothScroll.scrollTo(0, 800);
+			} else {
+				window.scrollTo({ top: 0, behavior: 'smooth' });
+			}
+			setActive('home');
+		});
+		logo.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				logo.click();
+			}
+		});
+	}
+
 	// set active from hash if present
 	const hash = location.hash.replace('#', '');
 	if (hash) {
@@ -179,6 +200,16 @@ function updateNavbarOnScroll(scrollY = null) {
 			darkOverlay.classList.add('is-visible');
 		} else {
 			darkOverlay.classList.remove('is-visible');
+		}
+		
+		// Make overlay fully black in section 5 (index 4 = work section)
+		// Fade out slowly when transitioning to section 6 (index 5 = contact section)
+		if (currentSectionIndex === 4) {
+			// Section 5 (work) - fully black
+			darkOverlay.classList.add('is-fully-black');
+		} else {
+			// All other sections - semi-transparent (0.5 opacity)
+			darkOverlay.classList.remove('is-fully-black');
 		}
 	}
 	

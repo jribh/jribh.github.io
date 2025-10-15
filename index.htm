@@ -42,7 +42,7 @@
 </div>
 
 <div id="content">
-    <section class="content-section" data-section="1">
+    <section id="home" class="content-section" data-section="1">
     </section>
     
     <section class="content-section" data-section="2">
@@ -69,7 +69,7 @@
         </div>
     </section>
     
-    <section class="content-section" data-section="3">
+    <section id="about" class="content-section" data-section="3">
         <div class="section-content section-content--enterprise">
             <!-- Left Column -->
             <div class="enterprise-left">
@@ -107,10 +107,12 @@
             </div>
         </div>
     </section>
+
+    <!-- While scrolling down, use intersection observer to check when 'Curtains Down' comes into the screen, and begin covering the threejs scene with the reeded glass effect (similar to the one we are having in section 4). Map the covering effect with the scroll such that by the time the page is fully scrolled to the bottom, the full effect is there, i.e. the full scene is covered with the gla -->
     
-    <section class="content-section" data-section="5">
+    <section id="work" class="content-section" data-section="5">
         <div class="section-content section-content--work">
-            <h1 class="heading-h1 heading-h1--gradient-work">Work that lands.</h1>
+            <h1 id="work-header" class="heading-h1 heading-h1--gradient-work">Work that lands.</h1>
             <div class="work-cards">
                 <div class="work-card"></div>
                 <div class="work-card"></div>
@@ -139,7 +141,7 @@
         </div>
     </section>
     
-    <section class="content-section" data-section="6">
+    <section id="contact" class="content-section" data-section="6">
         <div class="section-content section-content--centered">
             <h2 class="heading-h2 heading-h2--primary">LET'S TALK</h2>
             <div class="contact-email-wrapper">
