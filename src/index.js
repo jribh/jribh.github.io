@@ -189,12 +189,21 @@ function updateNavbarOnScroll(scrollY = null) {
 	}
 	
 	// Update dark overlay based on sections 4 and 5 (indices 3 and 4)
-	// On mobile (<=1024px), also show overlay for section 3 (index 2)
+	// On mobile (<=1024px), also show overlay for section 3 (index 2) and section 6 (index 5)
+	// On desktop, hide overlay in section 6 (index 5 = contact section)
 	const darkOverlay = document.getElementById('dark-overlay');
 	if (darkOverlay) {
 		const isMobile = window.innerWidth <= 1024;
-		const showOverlay = (currentSectionIndex === 3 || currentSectionIndex === 4) || 
-		                    (isMobile && currentSectionIndex === 2);
+		
+		// Show overlay logic:
+		// Desktop: sections 4 and 5 only (indices 3 and 4)
+		// Mobile: sections 3, 4, 5, and 6 (indices 2, 3, 4, and 5)
+		let showOverlay;
+		if (isMobile) {
+			showOverlay = currentSectionIndex === 2 || currentSectionIndex === 3 || currentSectionIndex === 4 || currentSectionIndex === 5;
+		} else {
+			showOverlay = currentSectionIndex === 3 || currentSectionIndex === 4;
+		}
 		
 		if (showOverlay) {
 			darkOverlay.classList.add('is-visible');
@@ -203,13 +212,55 @@ function updateNavbarOnScroll(scrollY = null) {
 		}
 		
 		// Make overlay fully black in section 5 (index 4 = work section)
-		// Fade out slowly when transitioning to section 6 (index 5 = contact section)
-		if (currentSectionIndex === 4) {
+		// On mobile, also keep it fully black in section 6 (index 5 = contact section)
+		const shouldBeFullyBlack = currentSectionIndex === 4 || (isMobile && currentSectionIndex === 5);
+		const isCurrentlyFullyBlack = darkOverlay.classList.contains('is-fully-black');
+		
+		if (shouldBeFullyBlack && !isCurrentlyFullyBlack) {
 			// Section 5 (work) - fully black
+			// Section 6 (contact) on mobile - fully black
 			darkOverlay.classList.add('is-fully-black');
-		} else {
+			
+			// Pause animation 300ms after overlay becomes fully black
+			// (800ms background-color transition + 300ms buffer = 1100ms total delay)
+			if (window.pauseAnimation && window.animationPauseTimeout != null) {
+				clearTimeout(window.animationPauseTimeout);
+			}
+			if (window.pauseAnimation) {
+				window.animationPauseTimeout = setTimeout(() => {
+					window.pauseAnimation();
+				}, 1100);
+			}
+			
+			// Clear any pending resume timeout since we're going black
+			if (window.animationResumeTimeout != null) {
+				clearTimeout(window.animationResumeTimeout);
+				window.animationResumeTimeout = null;
+			}
+		} else if (!shouldBeFullyBlack && isCurrentlyFullyBlack) {
 			// All other sections - semi-transparent (0.5 opacity)
-			darkOverlay.classList.remove('is-fully-black');
+			
+			// Resume animation 300ms before overlay starts fading
+			// (opacity transition is 1200ms, start 300ms early)
+			if (window.resumeAnimation && window.animationResumeTimeout != null) {
+				clearTimeout(window.animationResumeTimeout);
+			}
+			if (window.resumeAnimation) {
+				window.animationResumeTimeout = setTimeout(() => {
+					window.resumeAnimation();
+				}, 0); // Resume immediately so scene is rendering before fade starts
+			}
+			
+			// Clear any pending pause timeout since we're going transparent
+			if (window.animationPauseTimeout != null) {
+				clearTimeout(window.animationPauseTimeout);
+				window.animationPauseTimeout = null;
+			}
+			
+			// Remove the class after a small delay to let resume happen first
+			setTimeout(() => {
+				darkOverlay.classList.remove('is-fully-black');
+			}, 50);
 		}
 	}
 	

@@ -1865,7 +1865,43 @@ positionGradientBackgroundFromFrustum();
 _applyRendererPixelRatio();
 applyEffectQuality();
 
+// Animation pause state for performance optimization
+let isAnimationPaused = false;
+let animationPauseTimeout = null;
+let animationResumeTimeout = null;
+
+function pauseAnimation() {
+  if (!isAnimationPaused) {
+    isAnimationPaused = true;
+    console.log('Three.js animation paused (overlay fully black)');
+    // Trigger resume guard to prevent performance system from degrading quality
+    // during the pause (prevents misinterpreting pause as performance drop)
+    if (typeof _triggerResumeGuard === 'function') {
+      _triggerResumeGuard();
+    }
+  }
+}
+
+function resumeAnimation() {
+  if (isAnimationPaused) {
+    isAnimationPaused = false;
+    console.log('Three.js animation resumed');
+    // Trigger resume guard to allow scene to stabilize after resuming
+    // without the performance system making unnecessary changes
+    if (typeof _triggerResumeGuard === 'function') {
+      _triggerResumeGuard();
+    }
+    // Restart the animation loop
+    requestAnimationFrame(animate);
+  }
+}
+
 function animate() {
+    // Skip rendering if paused for performance
+    if (isAnimationPaused) {
+      return;
+    }
+  
     const delta = clock.getDelta();
   // Adaptive performance update (hybrid DPR + effect tier)
   perfAdaptiveUpdate(delta);
@@ -2040,3 +2076,9 @@ if (curtainsBlock) {
   }, { threshold: 0.5 });
   observer.observe(curtainsBlock);
 }
+
+// Expose pause/resume functions and timeout variables for performance optimization
+window.pauseAnimation = pauseAnimation;
+window.resumeAnimation = resumeAnimation;
+window.animationPauseTimeout = null;
+window.animationResumeTimeout = null;

@@ -53,6 +53,9 @@ class SmoothScroll {
       window.addEventListener('scroll', () => {
         this.scrollCurrent = window.scrollY;
       }, { passive: true });
+
+      // Still handle anchor links with custom animated scroll to avoid instant jumps
+      this.setupAnchorLinks();
       
       return;
     }
@@ -195,17 +198,68 @@ class SmoothScroll {
         e.preventDefault();
         const target = document.querySelector(href);
         if (target) {
-          // For touch devices, use native scrolling
+          const targetTop = target.offsetTop;
+          
+          // Use custom smooth animation for both touch and non-touch devices
           if (this.isTouchDevice) {
-            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Animated scroll for touch devices
+            this.animateScrollTo(targetTop, 1000);
           } else {
-            // For smooth scroll, calculate target position relative to content container
-            const targetTop = target.offsetTop;
+            // Custom smooth scroll for desktop
             this.scrollTo(targetTop);
           }
         }
       });
     });
+  }
+
+  // Custom animated scroll that works on touch devices
+  animateScrollTo(target, duration = 1000) {
+    const start = window.scrollY;
+    const distance = target - start;
+    const startTime = performance.now();
+
+    const animate = (currentTime) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // Easing function for smooth animation (ease-in-out cubic)
+      const easeProgress = progress < 0.5
+        ? 4 * progress * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+      
+      const currentPosition = start + (distance * easeProgress);
+      window.scrollTo(0, currentPosition);
+      
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+    
+    requestAnimationFrame(animate);
+  }
+
+  // Global handler to intercept anchor clicks early on touch devices
+  // Guards against default hash navigation before our per-anchor listeners attach
+  static installGlobalAnchorInterceptor(instance) {
+    if (!instance || !instance.isTouchDevice) return;
+    if (window.__anchorInterceptorInstalled) return;
+    window.__anchorInterceptorInstalled = true;
+
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest && e.target.closest('a[href^="#"]');
+      if (!link) return;
+      const href = link.getAttribute('href');
+      if (!href || href === '#') return;
+
+      const target = document.querySelector(href);
+      if (!target) return;
+
+      // Prevent default jump and route through our animator
+      e.preventDefault();
+      const targetTop = target.offsetTop;
+      instance.animateScrollTo(targetTop, 1000);
+    }, true); // capture to intercept before default
   }
 
   scrollTo(target, duration = 1000) {

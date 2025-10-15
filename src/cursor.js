@@ -27,21 +27,6 @@ function initCustomCursor() {
     // Track if text field is focused
     let isTextFieldFocused = false;
 
-    // Set up Intersection Observer for Curtains Down block
-    const curtainsBlock = document.querySelector('.curtains-block');
-    if (curtainsBlock) {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                isCurtainsInView = entry.isIntersecting;
-            });
-        }, {
-            threshold: 0, // Trigger as soon as any part enters viewport
-            rootMargin: '0px'
-        });
-        
-        observer.observe(curtainsBlock);
-    }
-
     // Track focus/blur on text fields
     const textFieldSelectors = 'input[type="text"], input[type="email"], input[type="password"], textarea, input:not([type="button"]):not([type="submit"]):not([type="reset"])';
     
