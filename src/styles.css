@@ -928,9 +928,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
-    padding-top: 20vh;
-    padding-left: calc((100% / 12) * 2 + 0.5em); /* Padding to start at column 3 */
-    padding-right: calc((100% / 12) * 2 + 0.5em); /* Padding to end at column 11 */
+    padding: 4em calc((100% / 12) * 2 + 0.5em);
     box-sizing: border-box;
     width: 100%;
     height: auto;
@@ -1340,26 +1338,24 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
 /* Large laptops/desktops (<=1920px) */
 @media (width <= 1920px) {
-    .section-heading { font-size: 5.5em; }
+    .content-section[data-section="2"] .section-heading { font-size: 5.5em; }
     .section-graphic { max-height: 40vh; }
+    .heading-h3, .heading-h3-regular { font-size: 6.2em; }
+    .enterprise-right { width: calc((100% / 8) * 2.5 + 0.5em); }
 }
 
 /* Medium laptops (<=1440px) */
 @media (width <= 1440px) {
-    .heading-h1 { font-size: 9em; }
-    .heading-h2 { font-size: 5.5em; }
-    .heading-h3, .heading-h3-regular { font-size: 4.95em; }
+    .heading-h1 { font-size: 10em; }
+    .heading-h2 { font-size: 6.5em; }
+    .heading-h3, .heading-h3-regular { font-size: 5.3em; }
+
     body { font-size: 14px; }
 
-    .section-heading { font-size: 4.5em; }
+    .content-section[data-section="2"] .section-heading { font-size: 5em; }
     .section-tagline { font-size: 0.9em; }
     
-    .bottom-bar {
-        bottom: 2em;
-        padding-left: 3em;
-        padding-right: 3em;
-    }
-
+    .bottom-bar { bottom: 2em; padding-left: 3em; padding-right: 3em; }
     .bottom-bar__waveform { height: 1.8em; }
     .bottom-bar__icon { width: 1.4em; height: 1.4em; }
     .side-nav { right: 3em; }
@@ -1370,9 +1366,8 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
 /* 1280px and below */
 @media (width <= 1280px) {
-    .heading-h1 { font-size: 8em; }
-    .heading-h2 { font-size: 4.5em; }
-    .heading-h3, .heading-h3-regular { font-size: 4.125em; }
+    .heading-h2 { font-size: 5.8em; }
+    .heading-h3, .heading-h3-regular { font-size: 4.7em; }
 
     .navbar { gap: 1.75em; padding-inline: 2em; }
     .navbar__logo-hero { height: 7em; }
@@ -1386,6 +1381,8 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .side-nav__dot { width: 0.35em; height: 0.35em; }
     .side-nav__dot.is-active::before, .side-nav__dot:hover::before { width: 1.05em; height: 1.05em; }
 
+    .content-section[data-section="2"] .section-heading { font-size: 4.5em; }
+
     .section-graphic { max-height: 32vh; }
     .content-section[data-section="6"] .section-content { 
         grid-column: 3 / 7;
@@ -1395,8 +1392,9 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 /* 1024px and below */
 @media (width <= 1024px) {
     .heading-h1 { font-size: 7.2em; }
-    .heading-h2 { font-size: 4em; }
-    .heading-h3, .heading-h3-regular { font-size: 3.575em; }
+    .heading-h2 { font-size: 5.4em; }
+    .heading-h3, .heading-h3-regular { font-size: 5em; }
+
     .body-default { font-size: 1.8em; }
     
     .bottom-bar { bottom: 1.5em; padding-left: 2em; padding-right: 2em; }
@@ -1405,46 +1403,39 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .side-nav { right: 2em; gap: 0.125em; }
     .side-nav__dot { width: 0.325em; height: 0.325em; }
     .side-nav__dot.is-active::before, .side-nav__dot:hover::before { width: 0.975em; height: 0.975em; }
+
     .section-content { padding: 0 calc((100% / 12) + 0.5em); gap: 2.5vh; }
     
     .section-content--enterprise {
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
-        gap: 4em;
-        padding-top: 4em;
-        padding-bottom: 4em;
+        gap: 5em;
+        padding-top: 2em;
+        padding-bottom: 2em;
     }
     .enterprise-left {
         grid-column: auto;
         position: static !important;
         transform: none !important;
         padding-bottom: 0;
+        gap: 2em;
     }
-    .enterprise-right { grid-column: auto; width: 100%; }
     .enterprise-buttons { flex-direction: row; }
-    .heading-h2 { font-size: 5.35em; }
-    .enterprise-headings .heading-h3, .enterprise-headings .heading-h3-regular { font-size: 4.4em; }
+    .enterprise-headings .heading-h3 { font-size: 4.4em; }
         
     .section-tagline { font-size: 0.85em; }
     .section-graphic { max-height: 24vh; }
     .navbar__logo-hero { height: 4em; }
 
-    .enterprise-left { gap: 2em; }
-    .content-section[data-section="3"] .enterprise-left { padding-bottom: 0 !important; }
-    .enterprise-headings { gap: 0.75em; }
-    .content-section[data-section="3"] .enterprise-right { margin-top: 0; }
-
+    .content-section[data-section="3"] .enterprise-right { width: 100%;}
     .content-section[data-section="6"] .section-content {
         grid-column: 3 / 11; /* Columns 3 to 11 (3rd to 3rd-last) */
         padding-left: 0;
         padding-right: 0;
     }
 
-    .contact-form {
-        max-width: none;
-    }
-
+    .contact-form { max-width: none; }
     .curtains-block { padding-bottom: 20vh; }
 
 }
@@ -1466,8 +1457,8 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     }
     .bottom-bar__left, .bottom-bar__right { display: none; }
     .navbar {
-        display: flex !important;
-        width: 100% !important;
+        display: flex;
+        width: 100%;
         max-width: 100%;
         justify-content: space-around;
         gap: 0;
@@ -1475,7 +1466,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
         padding-block: 1.5em;
         margin-left: 0;
     }
-    .navbar__logo, .navbar__logo-hero { display: none !important; }
+    .navbar__logo, .navbar__logo-hero { display: none; }
     .side-nav { display: none; }
 
     .content-section { padding-left: 1em; padding-right: 1em; }
@@ -1511,18 +1502,14 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .section-row--bottom { display: none; }
     .section-graphic--mobile { display: block; }
     .section-graphic--desktop { display: none; }
-    .section-heading { font-size: 3em; }
+    .content-section[data-section="2"] .section-heading { font-size: 3em; }
     .section-tagline { font-size: 0.75em; }
     
     .section-content--enterprise {
-        padding-top: 12vh;
-        padding-left: 0;
-        padding-right: 0;
-        padding-bottom: 6em;
+        padding: 2em 0;
         gap: 4em;
     }
     .enterprise-left { gap: 2em; position: static !important; transform: none !important; }
-    .enterprise-headings { gap: 0.5em; }
     .enterprise-headings .heading-h3, .enterprise-headings .heading-h3-regular { font-size: 4.2em; }
     .enterprise-buttons { flex-direction: row; gap: 1.5em; flex-wrap: wrap; }
     .btn-primary, .btn-secondary { width: auto; text-align: left; }
