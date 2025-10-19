@@ -227,6 +227,71 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     transition: background 800ms ease;
 }
 
+/* Fine-tune these values to customize the scrollbar appearance */
+:root {
+    /* Thumb thickness (visible bar, excluding padding) */
+    --scrollbar-thumb-thickness: 8px;
+    
+    /* Padding around the thumb INSIDE the track. Set to 1em per request. */
+    --scrollbar-thumb-padding: 0.5em;
+
+    /* Track width automatically = thumb thickness + left/right padding */
+    --scrollbar-track-width: calc(var(--scrollbar-thumb-thickness) + (2 * var(--scrollbar-thumb-padding)));
+    
+    /* Track (background) colors */
+    --scrollbar-track-bg: rgba(0, 0, 0, 0.0);
+    --scrollbar-track-border: rgba(255, 255, 255, 0.0);
+    
+    /* Thumb (draggable part) colors */
+    --scrollbar-thumb-bg: rgba(255, 255, 255, 0.2);
+    --scrollbar-thumb-hover-bg: rgba(255, 255, 255, 0.3);
+    --scrollbar-thumb-active-bg: rgba(255, 255, 255, 0.6);
+    
+    /* Thumb styling */
+    --scrollbar-thumb-radius: 6px;
+    
+    /* Transitions */
+    --scrollbar-transition: background 200ms ease;
+}
+
+#smooth-scroll-scrollbar {
+    width: var(--scrollbar-track-width) !important; /* Overrides inline width from JS */
+}
+
+#smooth-scroll-scrollbar::-webkit-scrollbar {
+    /* Track width equals visible thumb thickness + 2x padding */
+    width: var(--scrollbar-track-width);
+}
+
+#smooth-scroll-scrollbar::-webkit-scrollbar-track {
+    background: var(--scrollbar-track-bg);
+    border-left: 1px solid var(--scrollbar-track-border);
+}
+
+#smooth-scroll-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb-bg);
+    background-clip: padding-box; /* Keep background inside border to create visual padding */
+    border-radius: var(--scrollbar-thumb-radius);
+    border: var(--scrollbar-thumb-padding) solid transparent; /* This is the 1em padding */
+    transition: var(--scrollbar-transition);
+    /* Ensure the visible thickness = --scrollbar-thumb-thickness */
+    box-sizing: border-box;
+}
+
+#smooth-scroll-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover-bg);
+    background-clip: padding-box;
+}
+
+#smooth-scroll-scrollbar::-webkit-scrollbar-thumb:active {
+    background: var(--scrollbar-thumb-active-bg);
+    background-clip: padding-box;
+}
+
+/* Firefox note: Firefox doesn't support ::-webkit-scrollbar. If needed later,
+   add a separate ruleset using scrollbar-width/scrollbar-color behind a
+   non-blocking @supports check to avoid build-time warnings. */
+
 #artboard {
     top:0;
     pointer-events: none;
@@ -253,6 +318,9 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     display: flex;
     flex-direction: column;
     z-index: 10;
+    /* Hide on initial page load until JavaScript animates it in */
+    opacity: 0;
+    visibility: hidden;
 }
 
 .side-nav__dot {
@@ -329,6 +397,9 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     padding-right: 4em;
     z-index: 10;
     pointer-events: none; /* allow clicks to pass through container */
+    /* Hide on initial page load until JavaScript animates it in */
+    opacity: 0;
+    visibility: hidden;
 }
 
 /* Allow clicks on interactive elements */
@@ -401,7 +472,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     border-radius: 0;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
-    z-index: 10;
+    z-index: 1000;
     white-space: nowrap; /* keep single line */
     isolation: isolate; /* create stacking context */
     /* Smooth transitions between Primary and Secondary states */
@@ -487,6 +558,8 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     pointer-events: auto;
     /* Smooth transition */
     transition: opacity 400ms cubic-bezier(0.4, 0, 0.2, 1);
+    /* Hide on initial page load until JavaScript animates it in */
+    visibility: hidden;
 }
 
 /* Hide hero logo in secondary state */
@@ -808,17 +881,77 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     position: relative;
 }
 
-/* Row 3: Bottom row with tagline (right aligned) */
 .section-row--bottom {
     display: flex;
     justify-content: flex-end;
     align-items: center;
 }
 
-.section-heading {
+.content-section[data-section="2"] .section-content {
+    gap: 1em;
+    grid-column: 2 / -2;;
+}
+
+.content-section[data-section="2"] .section-row--middle {
+    margin-left: -0.4em;
+    margin-bottom: -1em;
+}
+
+.content-section[data-section="2"] .section-heading {
+    font-family: 'Roboto Flex', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    font-size: 6.5em;
+    font-weight: 500;
+    font-style: normal;
+    text-transform: none;
+    letter-spacing: 0;
+    line-height: 1.04;
+    font-optical-sizing: none;
+    font-variation-settings:
+        'wght' 560,
+        'opsz' 120,
+        'wdth' 52,
+        'slnt' 0,
+        'GRAD' 0,
+        'YTUC' 760;
     color: var(--primary-light);
     margin: 0;
-    font-size: 6.5em; /* Default size for medium-large screens */
+}
+
+.content-section[data-section="2"] .section-word {
+    font-family: 'Roboto Flex', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    font-size: 28em;
+    font-weight: 400;
+    font-style: normal;
+    letter-spacing: 0;
+    line-height: 0.85;
+    font-optical-sizing: none;
+    font-variation-settings:
+        'wght' 320,
+        'opsz' 144,
+        'wdth' 27,
+        'slnt' 0,
+        'GRAD' 95,
+        'YOPQ' 79,
+        'XTRA' 468,
+        'YTUC' 760,
+        'YTLC' 514,
+        'YTAS' 750;
+    margin: 0;
+    display: inline-block;
+    white-space: nowrap;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+.content-section[data-section="2"] .section-word--left {
+    background-image: linear-gradient(90deg, #892017 0%, #D64B3E 100%);
+}
+
+.content-section[data-section="2"] .section-word--right {
+    background-image: linear-gradient(90deg, #F56B63 0%, #FFA1AB 100%);
+    padding-right: 0.006em;
 }
 
 .section-tagline {
@@ -831,18 +964,48 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     font-size: 1em;
 }
 
-/* Section graphics styling */
-.section-graphic {
-    max-height: 42vh;
+/* Section 2 Animation - Character wrapping */
+.content-section[data-section="2"] .char {
+    display: inline-block;
+    position: relative;
+    will-change: transform, opacity;
 }
 
-/* Hide mobile SVG by default, show desktop SVGs */
-.section-graphic--mobile {
-    display: none;
+.content-section[data-section="2"] .char-space {
+    width: 0.3em; /* Space width for wrapped spaces */
 }
 
-.section-graphic--desktop {
-    display: block;
+/* Clip containers to hide letters before they animate in (CodePen style) */
+.content-section[data-section="2"] .section-heading,
+.content-section[data-section="2"] .section-word {
+    overflow: hidden; /* Clip letters that are below baseline before animation */
+    display: inline-block;
+}
+
+/* Ensure row containers don't clip horizontally */
+.content-section[data-section="2"] .section-row--top,
+.content-section[data-section="2"] .section-row--middle,
+.content-section[data-section="2"] .section-row--bottom {
+    overflow: visible; /* Allow full width of animated text */
+}
+
+/* Use solid colors for BEYOND and PRETTY instead of gradients */
+.content-section[data-section="2"] .section-word--left {
+    color: #d42414; /* Solid color for BEYOND */
+    -webkit-text-fill-color: #d42414;
+    background-image: none;
+}
+
+.content-section[data-section="2"] .section-word--right {
+    color: #fe6153; /* Solid color for PRETTY */
+    -webkit-text-fill-color: #fe6153;
+    background-image: none;
+}
+
+/* Ensure chars inherit solid color */
+.content-section[data-section="2"] .section-word .char {
+    color: inherit;
+    -webkit-text-fill-color: inherit;
 }
 
 #head-container {
@@ -928,7 +1091,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 4em calc((100% / 12) * 2 + 0.5em);
+    padding: 10em calc((100% / 12) * 2 + 0.5em) 4em;
     box-sizing: border-box;
     width: 100%;
     height: auto;
@@ -1339,9 +1502,12 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 /* Large laptops/desktops (<=1920px) */
 @media (width <= 1920px) {
     .content-section[data-section="2"] .section-heading { font-size: 5.5em; }
-    .section-graphic { max-height: 40vh; }
     .heading-h3, .heading-h3-regular { font-size: 6.2em; }
+     .body-default { font-size: 1.8em; }
     .enterprise-right { width: calc((100% / 8) * 2.5 + 0.5em); }
+    .content-section[data-section="2"] .section-content {
+        grid-column: 1 / -1;
+    }
 }
 
 /* Medium laptops (<=1440px) */
@@ -1382,8 +1548,8 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .side-nav__dot.is-active::before, .side-nav__dot:hover::before { width: 1.05em; height: 1.05em; }
 
     .content-section[data-section="2"] .section-heading { font-size: 4.5em; }
+    .content-section[data-section="2"] .section-word { font-size: 24em; }
 
-    .section-graphic { max-height: 32vh; }
     .content-section[data-section="6"] .section-content { 
         grid-column: 3 / 7;
     }
@@ -1425,7 +1591,6 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .enterprise-headings .heading-h3 { font-size: 4.4em; }
         
     .section-tagline { font-size: 0.85em; }
-    .section-graphic { max-height: 24vh; }
     .navbar__logo-hero { height: 4em; }
 
     .content-section[data-section="3"] .enterprise-right { width: 100%;}
@@ -1434,6 +1599,9 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
         padding-left: 0;
         padding-right: 0;
     }
+
+    .content-section[data-section="2"] .section-heading { font-size: 3.5em; }
+    .content-section[data-section="2"] .section-word { font-size: 20em; }
 
     .contact-form { max-width: none; }
     .curtains-block { padding-bottom: 20vh; }
@@ -1444,6 +1612,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 @media (width <= 768px) {
     .heading-h1 { font-size: 6.75em; }
     .heading-h2 { font-size: 5em; }
+    .body-default { font-size: 1.6em; }
     
     #dark-overlay { background-color: rgba(0, 0, 0, 0.75); }
     
@@ -1479,7 +1648,6 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     }
     
     .section-content--centered { text-align: center; align-items: center; }
-    .content-section[data-section="2"] .heading-h2 { font-size: 3em; }
     .content-section[data-section="4"] { padding-top: 8em; padding-bottom: 8em; min-height: 0; }
     .content-section[data-section="4"] .section-content { padding: 0; }
     .content-section[data-section="4"] .heading-h2 { text-align: center; font-size: 4em; }
@@ -1500,9 +1668,15 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .section-row--top { justify-content: center; }
     .section-row--middle { justify-content: center; }
     .section-row--bottom { display: none; }
-    .section-graphic--mobile { display: block; }
-    .section-graphic--desktop { display: none; }
+
     .content-section[data-section="2"] .section-heading { font-size: 3em; }
+    .content-section[data-section="2"] .section-row--middle {
+        margin: 0;
+        gap: 1.2em;
+    }
+    .content-section[data-section="2"] .section-word {
+        font-size: 12em;
+    }
     .section-tagline { font-size: 0.75em; }
     
     .section-content--enterprise {
@@ -1532,4 +1706,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 /* 600px and below */
 @media (width <= 600px) {
     .heading-h1 { font-size: 5.4em; }
+    .content-section[data-section="2"] .section-word {
+        font-size: 10em;
+    }
 }

@@ -219,6 +219,11 @@ function initCustomCursor() {
         const cursorCenterY = cursorRect.top + cursorRect.height / 2;
         
         clickableElements.forEach((el) => {
+            // Skip navbar and bottom-bar elements to prevent interference with their styles
+            if (el.closest('.navbar') || el.closest('.bottom-bar')) {
+                return;
+            }
+            
             const rect = el.getBoundingClientRect();
             const isOver = (
                 cursorCenterX >= rect.left &&

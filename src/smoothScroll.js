@@ -71,6 +71,65 @@ class SmoothScroll {
     document.body.style.width = '100%';
     document.body.style.overflow = 'hidden';
     
+    // Create a fake scrollbar container
+    this.scrollbarContainer = document.createElement('div');
+    this.scrollbarContainer.id = 'smooth-scroll-scrollbar';
+    this.scrollbarContainer.style.cssText = `
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 20px;
+      height: 100vh;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      z-index: 9999;
+      pointer-events: auto;
+    `;
+    
+    // Create inner content for scrollbar (needs to be taller to create scrollbar)
+    this.scrollbarInner = document.createElement('div');
+    this.scrollbarInner.id = 'smooth-scroll-scrollbar-inner';
+    this.scrollbarInner.style.cssText = `
+      width: 1px;
+      height: ${this.content.scrollHeight}px;
+      pointer-events: none;
+    `;
+    
+    this.scrollbarContainer.appendChild(this.scrollbarInner);
+    document.body.appendChild(this.scrollbarContainer);
+    
+    // Prevent wheel events on scrollbar - pass through to main scroll handler
+    this.scrollbarContainer.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // Manually trigger the main wheel handler
+      this.onWheel(e);
+    }, { passive: false });
+    
+    // Track if user is dragging the scrollbar thumb
+    this.isScrollbarScrolling = false;
+    this.scrollbarContainer.addEventListener('mousedown', () => {
+      this.isScrollbarScrolling = true;
+    }, { passive: true });
+    
+    document.addEventListener('mouseup', () => {
+      this.isScrollbarScrolling = false;
+    }, { passive: true });
+    
+    // Listen to scrollbar scroll events (for dragging the thumb)
+    this.scrollbarContainer.addEventListener('scroll', (e) => {
+      if (this.isScrollbarScrolling) {
+        this.scrollTarget = this.scrollbarContainer.scrollTop;
+      }
+    }, { passive: true });
+    
+    // Update scrollbar height on resize
+    this.updateScrollbarHeight = () => {
+      if (this.scrollbarInner && this.content) {
+        this.scrollbarInner.style.height = `${this.content.scrollHeight}px`;
+      }
+    };
+    
     // Listen for wheel events
     window.addEventListener('wheel', this.onWheel.bind(this), { passive: false });
     
@@ -111,6 +170,7 @@ class SmoothScroll {
     
     // Refresh ScrollTrigger on resize
     window.addEventListener('resize', () => {
+      this.updateScrollbarHeight();
       ScrollTrigger.refresh();
     });
   }
@@ -179,6 +239,11 @@ class SmoothScroll {
     
     // Apply transform with GPU acceleration
     this.content.style.transform = `translate3d(0, -${rounded}px, 0)`;
+    
+    // Sync scrollbar position with smooth scroll (but not when user is actively scrolling it)
+    if (this.scrollbarContainer && !this.isScrollbarScrolling && Math.abs(this.scrollbarContainer.scrollTop - rounded) > 1) {
+      this.scrollbarContainer.scrollTop = rounded;
+    }
     
     // Update ScrollTrigger with current scroll position
     ScrollTrigger.update();
@@ -310,6 +375,12 @@ class SmoothScroll {
     
     if (this.content) {
       this.content.style.transform = '';
+    }
+    
+    if (this.scrollbarContainer) {
+      this.scrollbarContainer.remove();
+      this.scrollbarContainer = null;
+      this.scrollbarInner = null;
     }
     
     ScrollTrigger.scrollerProxy(this.content, null);

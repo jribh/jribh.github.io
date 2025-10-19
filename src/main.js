@@ -223,6 +223,9 @@ let _vignettePass = null;
 let _bgGrad = null;
 // Black bottom cover plane for portrait phones
 let _bottomCover = null;
+// Store default background glow intensities for startup animation
+let _bgGlow1Default = 0.9;
+let _bgGlow2Default = 0.55;
 
 function ensureBottomCover(){
   if (_bottomCover) return _bottomCover;
@@ -1861,6 +1864,18 @@ composer.addPass(new EffectPass(camera, grainEffect));
 createGradientBackground();
 positionGradientBackgroundFromFrustum();
 
+// Dark startup: hide red glow gradients until lights turn on
+try {
+  if (_bgGrad && _bgGrad.material && _bgGrad.material.uniforms) {
+    const u = _bgGrad.material.uniforms;
+    // Capture defaults from shader uniforms (in case they change in code)
+    if (typeof u.uGlowIntensity?.value === 'number') _bgGlow1Default = u.uGlowIntensity.value;
+    if (typeof u.uGlow2Intensity?.value === 'number') _bgGlow2Default = u.uGlow2Intensity.value;
+    if (u.uGlowIntensity) u.uGlowIntensity.value = 0.0;
+    if (u.uGlow2Intensity) u.uGlow2Intensity.value = 0.0;
+  }
+} catch (e) { /* no-op */ }
+
 // Apply initial DPR & quality (ensures correct sizing before first frame bursts heavy effects)
 _applyRendererPixelRatio();
 applyEffectQuality();
@@ -1993,6 +2008,24 @@ function delay(ms){ return new Promise(res=>setTimeout(res, ms)); }
 async function startStartupSequence(){
   const tl = gsap.timeline();
 
+  // Hide navigation elements initially for startup reveal
+  const bottomBar = document.querySelector('.bottom-bar');
+  const sideNav = document.querySelector('.side-nav'); // Parent container for side dots
+  const sideNavDots = document.querySelectorAll('.side-nav__dot');
+  const navbarLinks = document.querySelectorAll('.navbar__link');
+  const navbarLogoHero = document.querySelector('.navbar__logo-hero'); // Hero logo for section 1
+  const bottomBarLeft = document.querySelector('.bottom-bar__left');
+  const bottomBarRight = document.querySelector('.bottom-bar__right');
+  
+  // Note: CSS already hides these with opacity: 0 and visibility: hidden
+  // We just need to set GSAP initial states for the transforms
+  gsap.set(navbarLinks, { opacity: 0, y: 8 });
+  // Disable CSS transition on hero logo to prevent clash with GSAP animation
+  if (navbarLogoHero) navbarLogoHero.style.transition = 'none';
+  gsap.set(navbarLogoHero, { opacity: 0 }); // Only hide hero logo opacity (no scale transform)
+  gsap.set(bottomBarLeft, { opacity: 0, x: -12 });
+  gsap.set(bottomBarRight, { opacity: 0, x: 12 });
+
   // Phase 1: fade from black to show model+bg (dark)
   tl.to(blackoutEl, { opacity: 0, duration: ms(LOADING_FADE_OUT_MS), ease: 'power1.inOut', onComplete: ()=>{ blackoutEl?.remove(); blackoutEl = null; } }, 0);
   tl.to(theCanvas, { opacity: 1, duration: 0.6, ease: 'power1.inOut' }, 0);
@@ -2000,12 +2033,33 @@ async function startStartupSequence(){
 
   // Phase 2 setup at ~0.62s
   tl.call(() => {
-    renderer.toneMappingExposure = 0.14;
+    renderer.toneMappingExposure = 0.5; // 50% reduced exposure (darker scene)
+    if (hueSatEffect) hueSatEffect.saturation = -0.75; // 75% saturation (more desaturated)
     eyeMeshes.forEach(m=>{ if (m.material){ m.material.emissiveIntensity = 0.5; m.material.color.set(0x000000); }});
   }, null, 0.62);
 
   // Phase 3: eyes on after 1s
   tl.add('eyesOn', 1.62);
+  
+  // Restore exposure and saturation when lights turn on
+  tl.to(renderer, { toneMappingExposure: 1.0, duration: 0.4, ease: 'power1.out' }, 'eyesOn');
+  if (hueSatEffect) {
+    tl.to(hueSatEffect, { saturation: -0.25, duration: 0.4, ease: 'power1.out' }, 'eyesOn');
+  }
+  // Bring in background red glows smoothly at the same moment
+  tl.call(() => {
+    try {
+      if (_bgGrad && _bgGrad.material && _bgGrad.material.uniforms) {
+        const u = _bgGrad.material.uniforms;
+        // Animate via gsap on uniforms' value for smooth transition
+        if (u.uGlowIntensity) gsap.to(u.uGlowIntensity, { value: _bgGlow1Default, duration: 0.6, ease: 'power1.out' });
+        if (u.uGlow2Intensity) gsap.to(u.uGlow2Intensity, { value: _bgGlow2Default, duration: 0.6, ease: 'power1.out' });
+      }
+    } catch (e) { /* ignore */ }
+  }, null, 'eyesOn');
+  // Fade in the background element to its normal opacity in sync with lights-on
+  if (bgEl) tl.to(bgEl, { opacity: 0.75, duration: 0.6, ease: 'power1.out' }, 'eyesOn');
+  
   eyeMeshes.forEach(m=>{
     // Adjust target eye intensity based on scroll position
     const baseTargetEI = 6; 
@@ -2023,12 +2077,79 @@ async function startStartupSequence(){
     tl.to(l, { intensity: finalI, duration: 0.4, ease: 'power1.out' }, 'eyesOn');
   });
 
+  // Reveal navigation elements with classy staggered animations at end of Phase 3
+  tl.add('navReveal', 'eyesOn+=1.0'); // Start 1s after lights turn on
+  
+  // Bottom bar container fades in first
+  tl.to(bottomBar, { 
+    opacity: 1, 
+    visibility: 'visible',
+    duration: 1.2, // in seconds
+    ease: 'power2.out' 
+  }, 'navReveal');
+  
+  // Navbar links fade up with stagger (left to right)
+  tl.to(navbarLinks, { 
+    opacity: 1, 
+    y: 0,
+    duration: 1.2,
+    ease: 'power2.out',
+    stagger: 0.12 // 3x of 40ms
+  }, 'navReveal+=0.24'); // 3x of 80ms
+  
+  // Hero logo fades in smoothly (only for section 1)
+  tl.to(navbarLogoHero, { 
+    opacity: 1,
+    visibility: 'visible', // Make visible when animating in
+    duration: 3.2,
+    ease: 'power2.out',
+    onComplete: () => {
+      // Re-enable CSS transition after GSAP animation completes
+      // This allows the scroll-based hiding/showing to work smoothly
+      if (navbarLogoHero) navbarLogoHero.style.transition = '';
+      // Clear inline opacity to let CSS take control
+      gsap.set(navbarLogoHero, { clearProps: 'opacity' });
+    }
+  }, 'navReveal+=0.36'); // 3x of 120ms
+  
+  // Bottom bar left section slides in from left
+  tl.to(bottomBarLeft, { 
+    opacity: 1, 
+    x: 0,
+    duration: 1.2,
+    ease: 'power2.out'
+  }, 'navReveal+=0.18'); // 3x of 60ms
+  
+  // Bottom bar right section slides in from right
+  tl.to(bottomBarRight, { 
+    opacity: 1, 
+    x: 0,
+    duration: 1.2,
+    ease: 'power2.out'
+  }, 'navReveal+=0.18'); // 3x of 60ms
+  
+  // Side nav container becomes visible first (set both opacity and visibility)
+  tl.to(sideNav, { 
+    opacity: 1,
+    visibility: 'visible',
+    duration: 1.5,
+  }, 'navReveal+=0.45'); // 3x of 150ms
+  
+  // Side nav dots fade in with stagger (top to bottom)
+  tl.to(sideNavDots, { 
+    opacity: 1,
+    visibility: 'visible',
+    duration: 2.4,
+    ease: 'power2.out',
+    stagger: 0.15 // 3x of 50ms
+  }, 'navReveal+=0.45'); // 3x of 150ms
+
   // Phase 4: exposure/background 800ms after eyes
   tl.add('phase4', 'eyesOn+=0.8');
   // Keep exposure constant throughout scrolling
   const startupTargetExposure = baseExposure;
   tl.to(renderer, { toneMappingExposure: startupTargetExposure, duration: 1.6, ease: 'power1.inOut' }, 'phase4');
-  tl.to(bgEl, { opacity: 0.75, duration: 1.8, ease: 'power1.inOut' }, 'phase4');
+  // Background glows and opacity are already handled at 'eyesOn'
 
   // Phase 5: chin settle 100ms after Phase 4 starts
   if (chin) {

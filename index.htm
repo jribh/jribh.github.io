@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Typography families used for design tokens -->
     <link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Fraunces:ital,opsz,wght,SOFT,WONK@1,9..144,100..900,0..100,0..1&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Variable font: Roboto Flex with full axis support (opsz, wdth, wght, slnt, GRAD, YOPQ, XTRA, YTUC, YTLC, YTAS) -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wdth,wght,slnt,GRAD,YOPQ,XTRA,YTUC,YTLC,YTAS@8..144,25..151,100..1000,0..10,0..100,25..135,323..603,700..900,416..570,649..854&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="src/styles.css">
     <title>Jribh Shandilya | Interaction Design</title>
 </head>
@@ -47,22 +49,13 @@
     
     <section class="content-section" data-section="2">
         <div class="section-content">
-            <!-- Row 1: Heading (left aligned) -->
             <div class="section-row section-row--top">
-                <h2 class="heading-h2 section-heading">EYE CANDY</h2>
+                <h2 class="section-heading">EYE CANDY</h2>
             </div>
-            
-            <!-- Row 2: SVG graphics (center aligned) -->
             <div class="section-row section-row--middle">
-                <!-- Desktop: Two separate SVGs -->
-                <img src="src/assets/beyond.svg" alt="Beyond" class="section-graphic section-graphic--left section-graphic--desktop" />
-                <img src="src/assets/pretty.svg" alt="Pretty" class="section-graphic section-graphic--right section-graphic--desktop" />
-                
-                <!-- Mobile: Single combined SVG -->
-                <img src="src/assets/beyond_pretty_mobile.svg" alt="Beyond Pretty" class="section-graphic section-graphic--mobile" />
+                <span class="section-word section-word--left" aria-hidden="false">BEYOND</span>
+                <span class="section-word section-word--right" aria-hidden="false">PRETTY</span>                
             </div>
-            
-            <!-- Row 3: Tagline (right aligned) -->
             <div class="section-row section-row--bottom">
                 <p class="text-label section-tagline">Designing beautiful products<br>that work, and work well.</p>
             </div>
@@ -237,6 +230,7 @@
 <script type="module" src="./src/cursor.js"></script>
 <script type="module" src="./src/gridToggle.js"></script>
 <script type="module" src="./src/textReveal.js"></script>
+<script type="module" src="./src/textAnimations.js"></script>
 <script type="module" src="./src/contactCopy.js"></script>
 <script type="module" src="./src/gsapButtonFlair.js"></script>
 <script type="module" src="./src/main.js"></script>
