@@ -143,6 +143,8 @@ function initScrollbar() {
 function updateNavbarOnScroll(scrollY = null) {
 	const navbar = document.querySelector('.navbar');
 	if (!navbar) return;
+	const heroLogo = document.querySelector('.navbar__logo-hero');
+	const smallLogo = document.querySelector('.navbar__logo');
 	
 	// Get scroll position from smooth scroll or parameter
 	if (scrollY === null) {
@@ -184,8 +186,14 @@ function updateNavbarOnScroll(scrollY = null) {
 	// Primary state only for home (section 0)
 	if (currentSectionIndex === 0) {
 		navbar.classList.remove('navbar--secondary');
+			// Force hero-only visibility in home
+			if (heroLogo) { heroLogo.style.visibility = 'visible'; heroLogo.style.pointerEvents = 'auto'; }
+			if (smallLogo) { smallLogo.style.visibility = 'hidden'; smallLogo.style.pointerEvents = 'none'; }
 	} else {
 		navbar.classList.add('navbar--secondary');
+			// Force small-only visibility in other sections
+			if (heroLogo) { heroLogo.style.visibility = 'hidden'; heroLogo.style.pointerEvents = 'none'; }
+			if (smallLogo) { smallLogo.style.visibility = 'visible'; smallLogo.style.pointerEvents = 'auto'; }
 	}
 	
 	// Update dark overlay based on sections 4 and 5 (indices 3 and 4)

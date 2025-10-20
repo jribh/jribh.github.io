@@ -566,6 +566,13 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 .navbar--secondary .navbar__logo-hero {
     opacity: 0;
     pointer-events: none;
+    visibility: hidden; /* hard-hide to prevent overlap */
+}
+
+/* Hide small logo entirely in primary (home) state to avoid overlap */
+.navbar:not(.navbar--secondary) .navbar__logo {
+    visibility: hidden;
+    pointer-events: none;
 }
 
 /* Typography styles (from Figma) */
