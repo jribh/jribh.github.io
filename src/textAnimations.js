@@ -37,10 +37,44 @@ class TextAnimations {
       const tagline = section2.querySelector('.section-tagline');
 
       // Split and animate EYE CANDY - triggers earlier
+    // ========== SECTION 4 ANIMATIONS ==========
+    const section4 = document.querySelector('[data-section="4"]');
+    if (section4) {
+      const workWrapper = section4.querySelector('.work-wrapper');
+      const workLines = section4.querySelectorAll('.work-line'); // Each line within H2
+      const workOverlays = section4.querySelectorAll('.work-wrapper .work-overlay'); // Crafting / and / for people
+
+      // 1) Animate each line independently with scroll triggers and y-movement
+      workLines.forEach((line, index) => {
+        const startPosition = 80 - (index * 1.5); // Stagger triggers: 80%, 78%, 76%, etc... Increase the first number to trigger earlier
+        this.createAnimationPreserve(line, {
+          start: `top ${startPosition}%`,
+          duration: 0.6,
+          stagger: 0.02,
+        });
+      });
+
+      // 2) Animate work overlays with beautiful fade in - different triggers for 'Crafting' vs others
+      if (workOverlays && workOverlays.length) {
+        // Set initial hidden state
+        gsap.set(workOverlays, { autoAlpha: 0 });
+        
+        workOverlays.forEach((overlay, index) => {
+          // 'Crafting' (first overlay) triggers later at 60%, others at 75%
+          const startPosition = index === 0 ? 'top 60%' : 'top 75%';
+          this.createScrollTriggerAnimation(overlay, {
+            start: startPosition,
+            duration: 2,
+            ease: 'expo.out',
+            delay: index * 0.1, // Slight stagger for multiple overlays
+          });
+        });
+      }
+    }
       if (eyeCandyHeading) {
         this.createAnimation(eyeCandyHeading, {
-          start: 'top 50%', // Animate further up
-          duration: 0.8,
+          start: 'top 70%', // Decrease to trigger further up in the viewport
+          duration: 0.6,
           stagger: 0.02,
         });
       }
@@ -48,52 +82,34 @@ class TextAnimations {
       // Split and animate BEYOND - triggers further up
       if (beyondWord) {
         this.createAnimation(beyondWord, {
-          start: 'top 45%', // Further up than before
-          duration: 1.2,
-          stagger: 0.05, // Slightly more stagger
+          start: 'top 50%', // Decrease to trigger further up in the viewport
+          duration: 0.8,
+          stagger: 0.04, // Slightly more stagger
         });
-        
-        // Animate GRAD property for BEYOND
-        this.animateGradProperty(beyondWord);
       }
 
       // Split and animate PRETTY - triggers even further up
       if (prettyWord) {
         this.createAnimation(prettyWord, {
-          start: 'top 38%', // Even further up (center of viewport)
-          duration: 1.2,
-          stagger: 0.05,
+          start: 'top 45%', // Decrease to trigger further up in the viewport
+          duration: 0.8,
+          stagger: 0.04,
+          onComplete: () => {
+            // Trigger tagline animation 500ms after PRETTY finishes
+            setTimeout(() => {
+              this.animateTagline(tagline);
+            }, 900);
+          },
+          onReverse: () => {
+            // Hide tagline when row 2 reverses
+            this.hideTagline(tagline);
+          }
         });
-        
-        // Animate GRAD property for PRETTY
-        this.animateGradProperty(prettyWord);
       }
 
-      // Animate tagline - beautiful fade with subtle y, skew, and blur
+      // Set up tagline but don't animate it yet
       if (tagline) {
-        // Ensure starting hidden and remove any previous trigger
         gsap.set(tagline, { autoAlpha: 0 });
-        if (tagline._st) {
-          tagline._st.kill();
-        }
-
-        tagline._st = ScrollTrigger.create({
-          trigger: tagline,
-          start: 'top 75%', // enters when top of tagline is near bottom of viewport
-          scroller: '#content',
-          onEnter: () => {
-            if (tagline._tl) tagline._tl.kill();
-            tagline._tl = gsap.fromTo(
-              tagline,
-              { autoAlpha: 0, y: 24, skewY: 2, filter: 'blur(6px)' },
-              { autoAlpha: 1, y: 0, skewY: 0, filter: 'blur(0px)', duration: 1, ease: 'expo.out', overwrite: 'auto' }
-            );
-          },
-          onLeaveBack: () => {
-            if (tagline._tl) tagline._tl.kill();
-            gsap.to(tagline, { autoAlpha: 0, y: 24, skewY: 2, filter: 'blur(6px)', duration: 0.35, ease: 'power2.in', overwrite: 'auto' });
-          },
-        });
       }
     }
 
@@ -108,65 +124,59 @@ class TextAnimations {
       // 1. ENTERPRISE text - letter-by-letter fade like EYE CANDY
       if (enterpriseHeading) {
         this.createAnimation(enterpriseHeading, {
-          start: 'top 50%',
-          duration: 0.8,
-          stagger: 0.03,
+          start: 'top 70%', // Decrease to trigger further up in the viewport
+          duration: 0.4,
+          stagger: 0.02,
         });
       }
 
-      // 2. "And then some." - scramble text effect
+      // 2. "And then some." - letter-by-letter animation like EYE CANDY
       if (subtitleHeading) {
-        this.createScrambleAnimation(subtitleHeading, {
-          start: 'top 60%',
-          duration: 1.2,
+        this.createAnimation(subtitleHeading, {
+          start: 'top 60%', // Slightly higher trigger than ENTERPRISE
+          duration: 0.4,
+          stagger: 0.02,
         });
       }
 
-      // 3. Buttons - beautiful fade with y movement
+      // 3. CTAs - animate based on scroll trigger
+      if (buttons) {
+        this.createScrollTriggerAnimation(buttons, {
+          start: 'top 70%', // Trigger after "And then some"
+          duration: 1,
+          ease: 'expo.out',
+        });
+      }
+
+      // 4. Right column - animate based on scroll trigger
+      if (rightColumn) {
+        this.createScrollTriggerAnimation(rightColumn, {
+          start: 'top 36%', // Trigger after CTAs
+          duration: 1.4,
+          ease: 'expo.out',
+        });
+      }
+
+      // Set up CTAs and right column initially hidden
       if (buttons) {
         gsap.set(buttons, { autoAlpha: 0 });
-        if (buttons._st) buttons._st.kill();
-
-        buttons._st = ScrollTrigger.create({
-          trigger: buttons,
-          start: 'top 65%',
-          scroller: '#content',
-          onEnter: () => {
-            if (buttons._tl) buttons._tl.kill();
-            buttons._tl = gsap.fromTo(
-              buttons,
-              { autoAlpha: 0, y: 40, filter: 'blur(4px)' },
-              { autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: 1.2, ease: 'expo.out', overwrite: 'auto' }
-            );
-          },
-          onLeaveBack: () => {
-            if (buttons._tl) buttons._tl.kill();
-            gsap.to(buttons, { autoAlpha: 0, y: 40, filter: 'blur(4px)', duration: 0.4, ease: 'power2.in', overwrite: 'auto' });
-          },
-        });
       }
-
-      // 4. Right column - beautiful fade with y movement
       if (rightColumn) {
         gsap.set(rightColumn, { autoAlpha: 0 });
-        if (rightColumn._st) rightColumn._st.kill();
+      }
+    }
 
-        rightColumn._st = ScrollTrigger.create({
-          trigger: rightColumn,
-          start: 'top 65%',
-          scroller: '#content',
-          onEnter: () => {
-            if (rightColumn._tl) rightColumn._tl.kill();
-            rightColumn._tl = gsap.fromTo(
-              rightColumn,
-              { autoAlpha: 0, y: 40, filter: 'blur(4px)' },
-              { autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: 1.2, ease: 'expo.out', delay: 0.2, overwrite: 'auto' }
-            );
-          },
-          onLeaveBack: () => {
-            if (rightColumn._tl) rightColumn._tl.kill();
-            gsap.to(rightColumn, { autoAlpha: 0, y: 40, filter: 'blur(4px)', duration: 0.4, ease: 'power2.in', overwrite: 'auto' });
-          },
+    // ========== SECTION 5 ANIMATIONS ==========
+    const section5 = document.querySelector('[data-section="5"]');
+    if (section5) {
+      const workHeading = section5.querySelector('.heading-h1--gradient-work');
+
+      // Animate h1 with same style as section 4 h2 lines
+      if (workHeading) {
+        this.createAnimationPreserve(workHeading, {
+          start: 'top 60%',
+          duration: 1,
+          stagger: 0.02,
         });
       }
     }
@@ -196,6 +206,8 @@ class TextAnimations {
       duration = 0.6,
       stagger = 0.02,
       delay = 0,
+      onComplete = null,
+      onReverse = null,
     } = options;
 
     // Track state to prevent rapid toggle flicker
@@ -215,6 +227,8 @@ class TextAnimations {
             clearTimeout(reverseTimeout);
             reverseTimeout = null;
           }
+          // Call onComplete callback if provided
+          if (onComplete) onComplete();
         },
         onLeaveBack: () => {
           // Only reverse if we've been visible for at least 200ms (debounce rapid scrolling)
@@ -223,6 +237,8 @@ class TextAnimations {
               if (element.anim && element.anim.scrollTrigger) {
                 element.anim.reverse();
               }
+              // Call onReverse callback if provided
+              if (onReverse) onReverse();
             }, 200);
           }
         },
@@ -339,33 +355,297 @@ class TextAnimations {
     return element.querySelectorAll('.char');
   }
 
-  animateGradProperty(element) {
-    // Create a smooth looping GRAD animation between -50 and 95
-    const gradObj = { value: 95 }; // Start at default GRAD value
-    
-    gsap.to(gradObj, {
-      value: -70,
-      duration: 2.8,
-      ease: 'sine.inOut',
-      repeat: -1,
-      yoyo: true,
-      onUpdate: () => {
-        // Update the font-variation-settings with the new GRAD value
-        const currentSettings = `
-          'wght' 320,
-          'opsz' 144,
-          'wdth' 27,
-          'slnt' 0,
-          'GRAD' ${Math.round(gradObj.value)},
-          'YOPQ' 79,
-          'XTRA' 468,
-          'YTUC' 760,
-          'YTLC' 514,
-          'YTAS' 750
-        `;
-        element.style.fontVariationSettings = currentSettings;
+  // --- Section 4 specific: preserve <br> and nested spans while splitting text nodes into .char spans ---
+  splitElementPreserveLineBreaks(element) {
+    const createdChars = [];
+
+    const splitTextNode = (node) => {
+      const text = node.textContent;
+      const frag = document.createDocumentFragment();
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        const span = document.createElement('span');
+        span.className = ch === ' ' ? 'char char-space' : 'char';
+        span.textContent = ch === ' ' ? ' ' : ch;
+        frag.appendChild(span);
+        createdChars.push(span);
+      }
+      node.parentNode.replaceChild(frag, node);
+    };
+
+    const walk = (node) => {
+      // If it's a text node and not empty, split it
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (node.textContent.trim() === '' && node.textContent.indexOf(' ') === node.textContent.length - 1) {
+          // leave pure trailing spaces alone; still split to preserve layout spacing
+        }
+        splitTextNode(node);
+        return;
+      }
+      // If it's an element node
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        // Do not alter <br> elements
+        if (node.tagName === 'BR') return;
+        // Recurse into children
+        // Use Array.from to avoid live collection issues when we mutate
+        Array.from(node.childNodes).forEach(walk);
+      }
+    };
+
+    walk(element);
+    return createdChars;
+  }
+
+  createAnimationPreserve(element, options = {}) {
+    // Reset if previously split by us
+    if (element.anim) {
+      element.anim.progress(1).kill();
+    }
+    // Restore original HTML if we split before
+    if (element._originalHTML) {
+      element.innerHTML = element._originalHTML;
+    } else {
+      // Store the original HTML once for restoration
+      element._originalHTML = element.innerHTML;
+    }
+
+    // Split while preserving <br> and nested structure
+    const chars = this.splitElementPreserveLineBreaks(element);
+    element.chars = chars;
+
+    const {
+      start = 'top 70%',
+      duration = 0.6,
+      stagger = 0.02,
+      delay = 0,
+      onComplete = null,       // kept for API parity
+      onReverse = null,
+      onEnterCompleteDelayMs = 0, // extra: delay after enter completes
+      onEnterAfterDelay = null,   // extra: callback after the above delay
+    } = options;
+
+    let hasEntered = false;
+    let reverseTimeout = null;
+
+    // We animate chars like other headings
+    element.anim = gsap.from(chars, {
+      scrollTrigger: {
+        trigger: element,
+        start: start,
+        scroller: '#content',
+        onEnter: () => {
+          hasEntered = true;
+          if (reverseTimeout) {
+            clearTimeout(reverseTimeout);
+            reverseTimeout = null;
+          }
+        },
+        onLeaveBack: () => {
+          if (hasEntered) {
+            reverseTimeout = setTimeout(() => {
+              if (element.anim && element.anim.scrollTrigger) {
+                element.anim.reverse();
+              }
+              if (onReverse) onReverse();
+            }, 200);
+          }
+        },
+        onEnterBack: () => {
+          if (reverseTimeout) {
+            clearTimeout(reverseTimeout);
+            reverseTimeout = null;
+          }
+          if (element.anim) {
+            element.anim.play();
+          }
+        }
+      },
+      duration: duration,
+      ease: 'circ.out',
+      y: 80,
+      opacity: 0,
+      stagger: stagger,
+      delay: delay,
+      onComplete: () => {
+        if (onEnterAfterDelay) {
+          setTimeout(() => {
+            if (onEnterAfterDelay) onEnterAfterDelay();
+          }, onEnterCompleteDelayMs);
+        }
+        if (onComplete) onComplete();
       }
     });
+
+    this.animatedElements.push(element);
+  }
+
+  animateTagline(tagline, onComplete = null) {
+    // Kill any existing animation
+    if (tagline._tl) tagline._tl.kill();
+    
+    // Animate tagline with beautiful fade, y movement, skew, and blur
+    tagline._tl = gsap.fromTo(
+      tagline,
+      { autoAlpha: 0, y: 24, skewY: 2, filter: 'blur(6px)' },
+      { 
+        autoAlpha: 1, 
+        y: 0, 
+        skewY: 0, 
+        filter: 'blur(0px)', 
+        duration: 1, 
+        ease: 'expo.out', 
+        overwrite: 'auto',
+        onComplete: onComplete
+      }
+    );
+  }
+
+  hideTagline(tagline) {
+    // Kill any existing animation
+    if (tagline._tl) tagline._tl.kill();
+    
+    // Hide tagline with reverse animation
+    gsap.to(tagline, { autoAlpha: 0, y: 24, skewY: 2, filter: 'blur(6px)', duration: 0.35, ease: 'power2.in', overwrite: 'auto' });
+  }
+
+  animateEnterpriseButtons(buttons, onComplete = null) {
+    // Kill any existing animation
+    if (buttons._tl) buttons._tl.kill();
+    
+    // Animate buttons with beautiful fade, y movement, skew, and blur (like tagline)
+    buttons._tl = gsap.fromTo(
+      buttons,
+      { autoAlpha: 0, y: 24, skewY: 2, filter: 'blur(6px)' },
+      { 
+        autoAlpha: 1, 
+        y: 0, 
+        skewY: 0, 
+        filter: 'blur(0px)', 
+        duration: 1, 
+        ease: 'expo.out', 
+        overwrite: 'auto',
+        onComplete: onComplete
+      }
+    );
+  }
+
+  animateEnterpriseRight(rightColumn) {
+    // Kill any existing animation
+    if (rightColumn._tl) rightColumn._tl.kill();
+    
+    // Animate right column with beautiful fade, y movement, skew, and blur (like tagline)
+    rightColumn._tl = gsap.fromTo(
+      rightColumn,
+      { autoAlpha: 0, y: 24, skewY: 2, filter: 'blur(6px)' },
+      { 
+        autoAlpha: 1, 
+        y: 0, 
+        skewY: 0, 
+        filter: 'blur(0px)', 
+        duration: 1, 
+        ease: 'expo.out', 
+        overwrite: 'auto'
+      }
+    );
+  }
+
+  hideEnterpriseButtons(buttons) {
+    // Kill any existing animation
+    if (buttons._tl) buttons._tl.kill();
+    
+    // Hide buttons with reverse animation
+    gsap.to(buttons, { autoAlpha: 0, y: 24, skewY: 2, filter: 'blur(6px)', duration: 0.35, ease: 'power2.in', overwrite: 'auto' });
+  }
+
+  hideEnterpriseRight(rightColumn) {
+    // Kill any existing animation
+    if (rightColumn._tl) rightColumn._tl.kill();
+    
+    // Hide right column with reverse animation
+    gsap.to(rightColumn, { autoAlpha: 0, y: 24, skewY: 2, filter: 'blur(6px)', duration: 0.35, ease: 'power2.in', overwrite: 'auto' });
+  }
+
+  createScrollTriggerAnimation(element, options = {}) {
+    const {
+      start = 'top 70%',
+      duration = 1,
+      ease = 'expo.out',
+    } = options;
+
+    // Track state to prevent rapid toggle flicker
+    let hasEntered = false;
+    let reverseTimeout = null;
+
+    // Kill any existing animation
+    if (element._tl) element._tl.kill();
+
+    // Create ScrollTrigger
+    element._st = ScrollTrigger.create({
+      trigger: element,
+      start: start,
+      scroller: '#content',
+      onEnter: () => {
+        hasEntered = true;
+        // Clear any pending reverse
+        if (reverseTimeout) {
+          clearTimeout(reverseTimeout);
+          reverseTimeout = null;
+        }
+        // Animate in
+        gsap.fromTo(
+          element,
+          { autoAlpha: 0, y: 24, skewY: 2, filter: 'blur(6px)' },
+          { 
+            autoAlpha: 1, 
+            y: 0, 
+            skewY: 0, 
+            filter: 'blur(0px)', 
+            duration: duration, 
+            ease: ease, 
+            overwrite: 'auto'
+          }
+        );
+      },
+      onLeaveBack: () => {
+        // Only reverse if we've been visible for at least 200ms (debounce rapid scrolling)
+        if (hasEntered) {
+          reverseTimeout = setTimeout(() => {
+            // Animate out
+            gsap.to(element, { 
+              autoAlpha: 0, 
+              y: 24, 
+              skewY: 2, 
+              filter: 'blur(6px)', 
+              duration: 0.35, 
+              ease: 'power2.in', 
+              overwrite: 'auto' 
+            });
+          }, 200);
+        }
+      },
+      onEnterBack: () => {
+        // Re-entering, clear the reverse timeout and animate back in
+        if (reverseTimeout) {
+          clearTimeout(reverseTimeout);
+          reverseTimeout = null;
+        }
+        gsap.fromTo(
+          element,
+          { autoAlpha: 0, y: 24, skewY: 2, filter: 'blur(6px)' },
+          { 
+            autoAlpha: 1, 
+            y: 0, 
+            skewY: 0, 
+            filter: 'blur(0px)', 
+            duration: duration, 
+            ease: ease, 
+            overwrite: 'auto'
+          }
+        );
+      },
+    });
+
+    this.animatedElements.push(element);
   }
 
   refresh() {
@@ -377,7 +657,10 @@ class TextAnimations {
       if (element.anim) {
         element.anim.kill();
       }
-      if (element.originalText) {
+      // Restore original content based on how it was split
+      if (element._originalHTML) {
+        element.innerHTML = element._originalHTML;
+      } else if (element.originalText) {
         element.textContent = element.originalText;
       }
     });

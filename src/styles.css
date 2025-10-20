@@ -613,6 +613,22 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     display: inline-block;
 }
 
+/* Work line containers for independent scroll animations */
+.work-line {
+    display: block;
+    overflow: hidden;
+}
+
+/* Character spans within work lines need inline-block for Y transforms */
+.work-line .char {
+    display: inline-block;
+    will-change: transform, opacity;
+}
+
+.work-line .char-space {
+    width: 0.15em; /* Space width for wrapped spaces */
+}
+
 .work-overlay {
     position: absolute;
     color: var(--primary-main);
@@ -621,34 +637,17 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
 .work-overlay--crafting {
     top: 0.7em;
-    left: -2.1em;
+    left: -2.0em;
 }
 
 .work-overlay--and {
     bottom: 0.85em;
-    left: 0.3em;
+    left: 0.4em;
 }
 
 .work-overlay--for-people {
     bottom: 0.6em;
-    right: -1.6em;
-}
-
-.work-comma {
-    position: absolute;
-    font-family: var(--font-heading-serif);
-    font-style: italic;
-    font-weight: 400; /* Regular */
-    font-variation-settings: 'opsz' 144, 'SOFT' 0, 'WONK' 1;
-    color: var(--primary-main);
-}
-
-.work-comma--1 {
-    margin-left: 0.15em;
-}
-
-.work-comma--2 {
-    margin-left: 0.15em;
+    right: -1.4em;
 }
 
 .heading-h3 {
@@ -719,6 +718,11 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 .content-section[data-section="4"] {
     height: auto;
     min-height: 100vh;
+}
+
+/* Moving the content slightly up for visual symmetry */
+.content-section[data-section="4"] .section-content {
+    transform: translateY(-2em);
 }
 
 /* Remove height constraint for sections 5 and 6 */
@@ -860,11 +864,9 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
 /* Gradient heading for 'Work that lands.' */
 .heading-h1--gradient-work {
-    background: linear-gradient(135deg, #882016 0%, #F25A4C 55%, #FFA1AB 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--primary-main);
     margin: 0;
+    letter-spacing: -0.06em; /* -3% - match base h1 letter spacing */
 }
 
 /* Section rows */
@@ -907,14 +909,14 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 .content-section[data-section="2"] .section-heading {
     font-family: 'Roboto Flex', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
     font-size: 6.5em;
-    font-weight: 500;
+    font-weight: 560;
     font-style: normal;
     text-transform: none;
     letter-spacing: 0;
     line-height: 1.04;
     font-optical-sizing: none;
     font-variation-settings:
-        'wght' 560,
+        'wght' 500,
         'opsz' 120,
         'wdth' 52,
         'slnt' 0,
@@ -952,12 +954,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     color: transparent;
 }
 
-.content-section[data-section="2"] .section-word--left {
-    background-image: linear-gradient(90deg, #892017 0%, #D64B3E 100%);
-}
-
 .content-section[data-section="2"] .section-word--right {
-    background-image: linear-gradient(90deg, #F56B63 0%, #FFA1AB 100%);
     padding-right: 0.006em;
 }
 
@@ -1114,7 +1111,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     position: relative;
     align-self: flex-start;
     height: fit-content;
-    padding-bottom: 12em; /* Add bottom padding to move up with right column */
+    padding-bottom: 15em; /* Add bottom padding to move up with right column */
 }
 
 .enterprise-right {
@@ -1137,10 +1134,11 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 .enterprise-headings .heading-h2 {
     color: var(--primary-main);
     margin: 0;
-    background: linear-gradient(135deg, #882016 0%, #F25A4C 55%, #FFA1AB 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    /* Removed gradient background and background-clip to make text visible for animation */
+    /* background: linear-gradient(135deg, #882016 0%, #F25A4C 55%, #FFA1AB 100%); */
+    /* -webkit-background-clip: text; */
+    /* -webkit-text-fill-color: transparent; */
+    /* background-clip: text; */
 }
 
 .enterprise-headings .heading-h3,
@@ -1228,6 +1226,42 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 .enterprise-right .body-default .text-reveal-word .ornament-em-dash {
     display: inline;
     vertical-align: baseline;
+}
+
+/* Clip containers to hide letters before they animate in (CodePen style) - Section 3 */
+.content-section[data-section="3"] .heading-h2,
+.content-section[data-section="3"] .heading-h3-regular {
+    overflow: hidden; /* Clip letters that are below baseline before animation */
+    display: inline-block;
+}
+
+/* Character wrapping for Section 3 headings */
+.content-section[data-section="3"] .heading-h2 .char,
+.content-section[data-section="3"] .heading-h3-regular .char {
+    display: inline-block;
+    position: relative;
+    will-change: transform, opacity;
+}
+
+.content-section[data-section="3"] .heading-h2 .char-space,
+.content-section[data-section="3"] .heading-h3-regular .char-space {
+    width: 0.3em; /* Space width for wrapped spaces */
+}
+
+/* Clip containers and character wrapping for Section 5 H1 (work header) */
+.content-section[data-section="5"] .heading-h1 {
+    overflow: hidden; /* Clip letters that start below baseline */
+    display: inline-block; /* Match CodePen reveal style */
+}
+
+.content-section[data-section="5"] .heading-h1 .char {
+    display: inline-block;
+    position: relative;
+    will-change: transform, opacity; /* Enable performant Y/opacity animation */
+}
+
+.content-section[data-section="5"] .heading-h1 .char-space {
+    width: 0.3em; /* Keep word spacing when wrapped into spans */
 }
 
 /* Big cats section responsive adjustments */
