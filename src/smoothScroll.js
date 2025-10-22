@@ -19,6 +19,9 @@ class SmoothScroll {
     this.velocity = 0;
     this.lastScrollTarget = 0;
     this.isTouchDevice = this.detectTouchDevice();
+    // One-way snap state
+    this.section2Top = 0; // computed after DOM ready
+    this.isAutoSnapping = false; // guard while animating snap
     this.init();
   }
 
@@ -63,6 +66,14 @@ class SmoothScroll {
     // Get initial scroll position
     this.scrollTarget = window.scrollY || 0;
     this.scrollCurrent = this.scrollTarget;
+
+    // Compute section 2 offset for one-way snapping
+    this.computeSection2Top = () => {
+      const sec2 = document.querySelector('.content-section[data-section="2"]');
+      // Fallback to viewport height if not found (section 1 is 100vh)
+      this.section2Top = sec2 ? sec2.offsetTop : window.innerHeight;
+    };
+    this.computeSection2Top();
     
     // Set up smooth scroll container
     document.body.style.position = 'fixed';
@@ -131,7 +142,7 @@ class SmoothScroll {
     };
     
     // Listen for wheel events
-    window.addEventListener('wheel', this.onWheel.bind(this), { passive: false });
+  window.addEventListener('wheel', this.onWheel.bind(this), { passive: false });
     
     // Listen for touchpad/touch events
     window.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: true });
@@ -170,6 +181,8 @@ class SmoothScroll {
     
     // Refresh ScrollTrigger on resize
     window.addEventListener('resize', () => {
+      // Recompute section 2 top in case viewport height/layout changed
+      this.computeSection2Top();
       this.updateScrollbarHeight();
       ScrollTrigger.refresh();
     });
@@ -184,7 +197,26 @@ class SmoothScroll {
     // Multiplier for scroll speed
     const wheelMultiplier = 1.0;
     delta *= wheelMultiplier;
-    
+
+    // One-way snap: if user scrolls down while within Section 1, snap to Section 2
+    // Conditions:
+    // - Not already auto-snapping
+    // - Downward scroll (delta > 0)
+    // - Current and target are both within Section 1 range (< section2Top)
+    if (!this.isAutoSnapping && delta > 0 && this.scrollCurrent < this.section2Top && this.scrollTarget < this.section2Top) {
+      this.isAutoSnapping = true;
+      // Animate to Section 2 top and release guard when done
+      this.scrollTo(this.section2Top, 700, () => {
+        this.isAutoSnapping = false;
+      });
+      return; // Skip default wheel handling
+    }
+
+    if (this.isAutoSnapping) {
+      // Ignore wheel input during snap animation
+      return;
+    }
+
     this.scrollTarget += delta;
     
     // Clamp scroll target
@@ -327,7 +359,7 @@ class SmoothScroll {
     }, true); // capture to intercept before default
   }
 
-  scrollTo(target, duration = 1000) {
+  scrollTo(target, duration = 1000, onComplete) {
     // Smoothly animate to target position
     const start = this.scrollTarget;
     const distance = target - start;
@@ -346,6 +378,8 @@ class SmoothScroll {
       
       if (progress < 1) {
         requestAnimationFrame(animate);
+      } else {
+        if (typeof onComplete === 'function') onComplete();
       }
     };
     

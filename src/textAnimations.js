@@ -56,9 +56,14 @@ class TextAnimations {
 
       // 2) Animate work overlays with beautiful fade in - different triggers for 'Crafting' vs others
       if (workOverlays && workOverlays.length) {
-        // Set initial hidden state
-        gsap.set(workOverlays, { autoAlpha: 0 });
-        
+        // Set initial hidden state (once) to avoid first-paint flicker
+        workOverlays.forEach((overlay) => {
+          if (!overlay._initSet) {
+            gsap.set(overlay, { autoAlpha: 0, y: 24, skewY: 2, filter: 'blur(6px)' });
+            overlay._initSet = true;
+          }
+        });
+
         workOverlays.forEach((overlay, index) => {
           // 'Crafting' (first overlay) triggers later at 60%, others at 75%
           const startPosition = index === 0 ? 'top 60%' : 'top 75%';
@@ -139,9 +144,9 @@ class TextAnimations {
         });
       }
 
-      // 3. CTAs - animate based on scroll trigger
+      // 3. CTAs - animate based on scroll trigger (only on downward scroll)
       if (buttons) {
-        this.createScrollTriggerAnimation(buttons, {
+        this.createScrollTriggerAnimationDownOnly(buttons, {
           start: 'top 70%', // Trigger after "And then some"
           duration: 1,
           ease: 'expo.out',
@@ -170,13 +175,150 @@ class TextAnimations {
     const section5 = document.querySelector('[data-section="5"]');
     if (section5) {
       const workHeading = section5.querySelector('.heading-h1--gradient-work');
+      const bigCatsHeading = section5.querySelector('.big-cats-heading');
 
-      // Animate h1 with same style as section 4 h2 lines
+      // Do NOT split characters for H1; simple fade + Y slide like work-overlays
       if (workHeading) {
-        this.createAnimationPreserve(workHeading, {
+        // Ensure normal HTML remains intact (no .char spans)
+        if (workHeading._originalHTML) {
+          workHeading.innerHTML = workHeading._originalHTML;
+          delete workHeading._originalHTML;
+        }
+        // One-time initial hidden state to prevent first-paint flash
+        if (!workHeading._initSet) {
+          gsap.set(workHeading, { autoAlpha: 0, y: 24, skewY: 2, filter: 'blur(10px)' });
+          workHeading._initSet = true;
+        }
+        // Animate via container animation
+        this.createScrollTriggerAnimation(workHeading, {
           start: 'top 60%',
-          duration: 1,
+          duration: 2,
+          ease: 'expo.out'
+        });
+      }
+
+      // Big Cats Heading - same beautiful fade in as h1
+      if (bigCatsHeading) {
+        // Ensure normal HTML remains intact (no .char spans)
+        if (bigCatsHeading._originalHTML) {
+          bigCatsHeading.innerHTML = bigCatsHeading._originalHTML;
+          delete bigCatsHeading._originalHTML;
+        }
+        // One-time initial hidden state to prevent first-paint flash
+        if (!bigCatsHeading._initSet) {
+          gsap.set(bigCatsHeading, { autoAlpha: 0, y: 24, skewY: 2, filter: 'blur(10px)' });
+          bigCatsHeading._initSet = true;
+        }
+        // Animate via container animation
+        this.createScrollTriggerAnimation(bigCatsHeading, {
+          start: 'top 50%',
+          duration: 2,
+          ease: 'expo.out'
+        });
+      }
+
+      // Instagram button - smooth fade in (entire button including icons)
+      const instagramButton = section5.querySelector('.btn-instagram');
+      if (instagramButton) {
+        if (!instagramButton._initSet) {
+          gsap.set(instagramButton, { autoAlpha: 0, y: 24, skewY: 2, filter: 'blur(6px)' });
+          instagramButton._initSet = true;
+        }
+        this.createScrollTriggerAnimation(instagramButton, {
+          start: 'top 80%',
+          duration: 1.4,
+          ease: 'expo.out'
+        });
+      }
+    }
+
+    // ========== SECTION 6 ANIMATIONS ==========
+    const section6 = document.querySelector('[data-section="6"]');
+    if (section6) {
+      const letsTalkHeading = section6.querySelector('.heading-h2--primary');
+      const contactEmailWrapper = section6.querySelector('.contact-email-wrapper');
+      const contactForm = section6.querySelector('.contact-form');
+      const contactFooter = section6.querySelector('.contact-footer');
+
+      // LET'S TALK text - letter-by-letter animation like ENTERPRISE
+      if (letsTalkHeading) {
+        this.createAnimation(letsTalkHeading, {
+          start: 'top 70%', // Same trigger as ENTERPRISE
+          duration: 0.4,
           stagger: 0.02,
+        });
+      }
+
+      // Contact email wrapper - pre-set hidden to avoid first-scroll flash, then animate in
+      if (contactEmailWrapper) {
+        if (!contactEmailWrapper._initSet) {
+          gsap.set(contactEmailWrapper, { autoAlpha: 0, y: 24, skewY: 2, filter: 'blur(6px)' });
+          contactEmailWrapper._initSet = true;
+        }
+        this.createScrollTriggerAnimation(contactEmailWrapper, {
+          start: 'top 75%',
+          duration: 1.2,
+          ease: 'expo.out'
+        });
+      }
+
+      // Contact form - pre-set hidden to avoid first-scroll flash, then animate in
+      if (contactForm) {
+        if (!contactForm._initSet) {
+          gsap.set(contactForm, { autoAlpha: 0, y: 24, skewY: 2, filter: 'blur(6px)' });
+          contactForm._initSet = true;
+        }
+        this.createScrollTriggerAnimation(contactForm, {
+          start: 'top 65%',
+          duration: 1.6,
+          ease: 'expo.out'
+        });
+      }
+
+      // Contact footer - pre-set hidden to avoid first-scroll flash, then animate in
+      if (contactFooter) {
+        if (!contactFooter._initSet) {
+          gsap.set(contactFooter, { autoAlpha: 0, y: 24, skewY: 2, filter: 'blur(6px)' });
+          contactFooter._initSet = true;
+        }
+        this.createScrollTriggerAnimation(contactFooter, {
+          start: 'top 60%',
+          duration: 1.6,
+          ease: 'expo.out'
+        });
+      }
+
+      // Curtains block - split text animation for each text span separately
+      const curtainsText1 = section6.querySelector('.curtains-text-1');
+      const curtainsText2 = section6.querySelector('.curtains-text-2');
+      
+      if (curtainsText1) {
+        this.createAnimation(curtainsText1, {
+          start: 'top 60%',
+          duration: 0.6,
+          stagger: 0.03,
+        });
+      }
+      
+      if (curtainsText2) {
+        this.createAnimation(curtainsText2, {
+          start: 'top 62%',
+          duration: 0.6,
+          stagger: 0.03,
+        });
+      }
+      
+      // Curtains logo - smooth fade in
+      const curtainsLogo = section6.querySelector('.curtains-logo');
+      if (curtainsLogo) {
+        if (!curtainsLogo._initSet) {
+          gsap.set(curtainsLogo, { autoAlpha: 0, y: 24, skewY: 2, filter: 'blur(6px)' });
+          curtainsLogo._initSet = true;
+        }
+        this.createScrollTriggerAnimation(curtainsLogo, {
+          start: 'top 65%',
+          duration: 1.6,
+          ease: 'expo.out'
         });
       }
     }
@@ -642,6 +784,78 @@ class TextAnimations {
             overwrite: 'auto'
           }
         );
+      },
+    });
+
+    this.animatedElements.push(element);
+  }
+
+  createScrollTriggerAnimationDownOnly(element, options = {}) {
+    const {
+      start = 'top 70%',
+      duration = 1,
+      ease = 'expo.out',
+    } = options;
+
+    // Track state to prevent rapid toggle flicker
+    let hasEntered = false;
+    let reverseTimeout = null;
+
+    // Kill any existing animation
+    if (element._tl) element._tl.kill();
+
+    // Create ScrollTrigger
+    element._st = ScrollTrigger.create({
+      trigger: element,
+      start: start,
+      scroller: '#content',
+      onEnter: () => {
+        hasEntered = true;
+        // Clear any pending reverse
+        if (reverseTimeout) {
+          clearTimeout(reverseTimeout);
+          reverseTimeout = null;
+        }
+        // Animate in
+        gsap.fromTo(
+          element,
+          { autoAlpha: 0, y: 24, skewY: 2, filter: 'blur(6px)' },
+          { 
+            autoAlpha: 1, 
+            y: 0, 
+            skewY: 0, 
+            filter: 'blur(0px)', 
+            duration: duration, 
+            ease: ease, 
+            overwrite: 'auto'
+          }
+        );
+      },
+      onLeaveBack: () => {
+        // Only reverse if we've been visible for at least 200ms (debounce rapid scrolling)
+        if (hasEntered) {
+          reverseTimeout = setTimeout(() => {
+            // Animate out
+            gsap.to(element, { 
+              autoAlpha: 0, 
+              y: 24, 
+              skewY: 2, 
+              filter: 'blur(6px)', 
+              duration: 0.35, 
+              ease: 'power2.in', 
+              overwrite: 'auto' 
+            });
+          }, 200);
+        }
+      },
+      onEnterBack: () => {
+        // Re-entering from top - just ensure it's visible without animation
+        if (reverseTimeout) {
+          clearTimeout(reverseTimeout);
+          reverseTimeout = null;
+        }
+        // Instantly set to visible state without animation
+        gsap.set(element, { autoAlpha: 1, y: 0, skewY: 0, filter: 'blur(0px)' });
       },
     });
 

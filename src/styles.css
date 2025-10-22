@@ -132,18 +132,27 @@ body {
     z-index: 10000;
     mix-blend-mode: difference;
     transition: none; /* no transition for position */
+    
+    /* CSS variables for cursor dimensions */
+    --cursor-width: 0.8em;
+    --cursor-height: 0.8em;
+    --cursor-radius: 50%;
+    --cursor-scale: 1;
 }
 
 .custom-cursor__circle {
-    width: 0.8em;
-    height: 0.8em;
-    border-radius: 50%;
+    width: var(--cursor-width);
+    height: var(--cursor-height);
+    border-radius: var(--cursor-radius);
     background-color: var(--text-primary);
+    opacity: 1; /* Explicit full opacity in default state */
     position: absolute;
     top: 0;
     left: 0;
-    transform: translate(-50%, -50%);
-    transition: width 250ms ease, height 250ms ease, background-color 250ms ease;
+    transform: translate(-50%, -50%) scale(var(--cursor-scale));
+    transition-property: width, height, border-radius, opacity, background-color, transform;
+    transition-duration: 100ms;
+    transition-timing-function: ease-out;
 }
 
 .custom-cursor__chevron {
@@ -159,10 +168,48 @@ body {
     color: white;
 }
 
+/* Locked (magnetic) state - iPadOS style */
+.custom-cursor--locked { 
+    mix-blend-mode: normal;
+}
+
+.custom-cursor--locked .custom-cursor__circle {
+    /* Expand/morph to target's rounded rect */
+    background-color: #fff;
+    opacity: 0.16;
+    /* Dimensions set via JS, transitions handled by base class */
+    transition-property: width, height, border-radius, left, top, background-color, opacity, transform;
+    transition-duration: 100ms;
+    transition-timing-function: ease-out;
+}
+
+.custom-cursor--locked .custom-cursor__chevron { opacity: 0; }
+
+/* Exiting state - morphing from CTA shape back to circle */
+/* Customize this state to control the transition appearance */
+.custom-cursor--exiting .custom-cursor__circle {
+    /* Lower opacity during transition to reduce bright flash */
+    opacity: 0.3;
+    /* Or use a dimmer color instead */
+    background-color: rgba(255, 255, 255, 0.4);
+    /* Border radius will transition from 0.6em → 50% */
+    /* Faster transition for quicker morph */
+    transition-property: width, height, border-radius, background-color, opacity;
+    transition-duration: 0ms; /* Adjust timing here */
+    transition-timing-function: ease-out;
+}
+
 /* Hover state - cursor over clickable elements */
 .custom-cursor--hover .custom-cursor__circle {
     width: 2.6em;
     height: 2.6em;
+    background-color: var(--text-primary);
+    opacity: 1;
+    /* Keep perfect circle */
+    border-radius: 50%;
+    transition-property: width, height, background-color, opacity;
+    transition-duration: 100ms;
+    transition-timing-function: ease-out;
 }
 
 .custom-cursor--hover .custom-cursor__chevron {
@@ -188,10 +235,72 @@ body {
     height: 2.4em;
 }
 
-/* Ensure inputs still show text cursor internally */
-input[type="text"], input[type="email"], input[type="password"], textarea {
-    cursor: text !important;
+/* Text selection state - cursor over text elements (headings, paragraphs) */
+.custom-cursor--text .custom-cursor__circle {
+    width: 0.2em;
+    height: 1.5em;
+    border-radius: 0.1em;
+    background-color: var(--text-primary);
+    opacity: 1;
+    transition-property: width, height, border-radius, background-color, opacity;
+    transition-duration: 100ms;
+    transition-timing-function: ease-out;
 }
+
+.custom-cursor--text .custom-cursor__chevron {
+    opacity: 0;
+}
+
+/* Magnetic target defaults (applied via JS with [data-magnetic]) */
+[data-magnetic] {
+    /* Use CSS variables so we don't clobber any existing transforms */
+    --mx: 0px;
+    --my: 0px;
+    --ms: 1;
+    transform: translate(var(--mx), var(--my)) scale(var(--ms)) !important;
+    will-change: transform;
+}
+
+/* CodePen-style magnetic behavior for <a> elements */
+a[data-magnetic] {
+    /* Map existing variables to CodePen-style names for <a> elements */
+    --scale: var(--ms, 1);
+    --translateX: var(--mx, 0px);
+    --translateY: var(--my, 0px);
+    /* Override the default transform with CodePen style */
+    transform: translate(var(--translateX), var(--translateY)) scale(var(--scale)) !important;
+    /* CodePen transition properties */
+    transition-duration: 0.1s;
+    transition-timing-function: ease-out;
+    transition-property: opacity;
+    /* Ensure proper positioning */
+    position: relative;
+    z-index: 1;
+}
+
+/* Different transition for non-hover state (CodePen style) */
+a[data-magnetic]:not(:hover) {
+    transition-property: transform, opacity;
+}
+
+/* Active state override (CodePen style) */
+a[data-magnetic]:active {
+    opacity: 1;
+    transform: translate(var(--translateX), var(--translateY)) scale(1) !important;
+}
+
+/* Reduced magnetic movement for navbar (50% of normal) */
+.navbar[data-magnetic] {
+    --mx: 0px;
+    --my: 0px;
+    transform: translate(var(--mx), var(--my)) !important;
+    transition: none !important; /* Disable transitions for magnetic movement */
+}
+
+/* Ensure inputs still show text cursor internally - DISABLED for custom cursor */
+/* input[type="text"], input[type="email"], input[type="password"], textarea {
+    cursor: text !important;
+} */
 
 body::-webkit-scrollbar {
     width: 0.8em;               /* width of the entire scrollbar */
@@ -340,8 +449,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 }
 
 /* Outline effect using pseudo-element for larger diameter ring */
-.side-nav__dot.is-active::before,
-.side-nav__dot:hover::before {
+.side-nav__dot.is-active::before {
     content: '';
     position: absolute;
     top: 50%;
@@ -375,10 +483,6 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 }
 
 .side-nav__dot.is-active::before {
-    border-color: var(--text-secondary);
-}
-
-.side-nav__dot:hover::before {
     border-color: var(--text-secondary);
 }
 
@@ -439,11 +543,9 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     justify-content: center;
     text-decoration: none;
     transition: opacity 200ms ease;
-    opacity: 0.9;
-}
-
-.bottom-bar__social:hover {
     opacity: 1;
+    padding: 0.8em;
+    margin: -0.8em;
 }
 
 .bottom-bar__icon {
@@ -521,6 +623,8 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     text-decoration: none;
     color: var(--text-secondary); /* inactive */
     transition: color 180ms ease, opacity 180ms ease;
+    padding: 0.7em 0.8em;
+    margin: -0.7em -0.8em;
 }
 .navbar__link:hover { color: var(--text-primary); }
 .navbar__link.is-active { color: var(--text-primary); }
@@ -531,8 +635,8 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     display: block;
     /* Primary state: hidden with margins */
     opacity: 0;
-    margin-left: 2em;
-    margin-right: 2em;
+    padding: 0.5em;
+    margin: -0.5em 1.5em;
     /* Smooth transitions */
     transition: opacity 400ms cubic-bezier(0.4, 0, 0.2, 1),
                 margin-left 400ms cubic-bezier(0.4, 0, 0.2, 1),
@@ -817,6 +921,14 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     margin-left: calc(-1 * ((100vw - 100%) / 2));
 }
 
+.big-cat-reveal-wrapper {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg-secondary);
+}
+
 .big-cat-image {
     width: 100%;
     height: 100%;
@@ -827,6 +939,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     display: block;
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
+    will-change: clip-path, transform;
 }
 
 /* Instagram button */
@@ -838,35 +951,27 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     background: transparent;
     border: none;
     cursor: pointer;
-    padding: 1em 2em;
+    padding: 0.6em 0.8em;
     margin: 0 auto;
     transition: color 250ms ease;
-    color: var(--primary-light);
+    color: var(--primary-main);
     text-decoration: none;
-}
-
-.btn-instagram:hover {
-    color: var(--primary-lightest);
 }
 
 .btn-instagram__icon {
     width: 1.2em;
     height: 1.2em;
     transition: filter 250ms ease;
-    /* Base filter to match primary-light color */
-    filter: brightness(0) saturate(100%) invert(72%) sepia(24%) saturate(1039%) hue-rotate(303deg) brightness(102%) contrast(98%);
-}
-
-.btn-instagram:hover .btn-instagram__icon {
-    /* Filter to match primary-lightest color on hover */
-    filter: brightness(0) saturate(100%) invert(93%) sepia(12%) saturate(679%) hue-rotate(301deg) brightness(103%) contrast(101%);
+    color: var(--primary-main)
 }
 
 /* Gradient heading for 'Work that lands.' */
 .heading-h1--gradient-work {
-    color: var(--primary-main);
+    background: linear-gradient(135deg, #882016 0%, #F25A4C 55%, #FFA1AB 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     margin: 0;
-    letter-spacing: -0.06em; /* -3% - match base h1 letter spacing */
 }
 
 /* Section rows */
@@ -1153,9 +1258,9 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     flex-wrap: wrap;
 }
 
-.btn-primary,
-.btn-secondary {
-    padding: 0;
+.btn-link {
+    padding: 0.6em 0.8em;
+    margin: -0.6em -0.8em;
     border: none;
     background: none;
     cursor: pointer;
@@ -1171,24 +1276,12 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     gap: 0.4em;
 }
 
-.btn-primary:hover,
-.btn-secondary:hover {
-    color: var(--primary-lightest);
-}
-
-.btn-primary img,
-.btn-secondary img {
+.btn-link img {
     width: 1.2em;
     height: 1.2em;
     transition: filter 250ms ease;
     /* Base filter to match primary-light color */
     filter: brightness(0) saturate(100%) invert(72%) sepia(24%) saturate(1039%) hue-rotate(303deg) brightness(102%) contrast(98%);
-}
-
-.btn-primary:hover img,
-.btn-secondary:hover img {
-    /* Filter to match primary-lightest color */
-    filter: brightness(0) saturate(100%) invert(93%) sepia(12%) saturate(679%) hue-rotate(301deg) brightness(103%) contrast(101%);
 }
 
 .enterprise-right {
@@ -1248,21 +1341,50 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     width: 0.3em; /* Space width for wrapped spaces */
 }
 
-/* Clip containers and character wrapping for Section 5 H1 (work header) */
-.content-section[data-section="5"] .heading-h1 {
-    overflow: hidden; /* Clip letters that start below baseline */
-    display: inline-block; /* Match CodePen reveal style */
-}
-
-.content-section[data-section="5"] .heading-h1 .char {
+/* Character wrapping for Section 6 headings */
+.content-section[data-section="6"] .heading-h2 .char {
     display: inline-block;
     position: relative;
-    will-change: transform, opacity; /* Enable performant Y/opacity animation */
+    will-change: transform, opacity;
 }
 
-.content-section[data-section="5"] .heading-h1 .char-space {
-    width: 0.3em; /* Keep word spacing when wrapped into spans */
+.content-section[data-section="6"] .heading-h2:nth-of-type(1) {
+    padding-right: 0.1em;
 }
+
+.content-section[data-section="6"] .heading-h2 .char-space {
+    width: 0.3em; /* Space width for wrapped spaces */
+}
+
+.content-section[data-section="6"] .heading-h2--primary {
+    overflow: hidden; /* Clip letters that are below baseline before animation */
+    display: inline-block;
+}
+
+/* Character wrapping for curtains block */
+.curtains-text-1,
+.curtains-text-2 {
+    overflow: hidden; /* Clip letters that are below baseline before animation */
+    display: inline-block;
+}
+
+.curtains-text-1 {
+    padding-right: 0.1em;
+}
+
+.curtains-text-1 .char,
+.curtains-text-2 .char {
+    display: inline-block;
+    position: relative;
+    will-change: transform, opacity;
+}
+
+.curtains-text-1 .char-space,
+.curtains-text-2 .char-space {
+    width: 0.3em; /* Space width for wrapped spaces */
+}
+
+/* (Removed Section 5 H1 split/clip rules to retain normal HTML structure) */
 
 /* Big cats section responsive adjustments */
 
@@ -1291,7 +1413,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 .contact-email-wrapper {
     display: flex;
     align-items: center;
-    gap: 0.5em;
+    gap: 1.2em;
 }
 
 .contact-email-link {
@@ -1301,6 +1423,8 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     color: var(--text-secondary);
     text-decoration: none;
     transition: color 0.2s ease;
+    padding:0.4em 0.8em;
+    margin: -0.4em -0.8em;
 }
 
 .contact-email-link:hover {
@@ -1312,8 +1436,8 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 }
 
 .contact-email-icon {
-    width: 1em;
-    height: 1em;
+    width: 1.3em;
+    height: 1.3em;
     opacity: 0.5; /* text-secondary opacity */
     transition: opacity 0.2s ease;
 }
@@ -1322,35 +1446,24 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     opacity: 1;
 }
 
-.contact-divider {
-    width: 1px;
-    height: 1em;
-    background-color: var(--text-tertiary);
-    margin: 0 0.25em;
-}
-
 .contact-copy-btn {
     background: none;
     border: none;
-    padding: 0;
+    padding: 0.6em;
+    margin: -0.6em;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     transition: opacity 0.2s ease;
     position: relative;
-    width: 1em;
-    height: 1em;
 }
 
 .contact-copy-icon,
 .contact-check-icon {
-    width: 1em;
-    height: 1em;
+    width: 1.3em;
+    height: 1.3em;
     transition: opacity 0.2s ease;
-    position: absolute;
-    top: 0;
-    left: 0;
 }
 
 .contact-copy-icon {
@@ -1434,7 +1547,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     padding: 1em 1.25em;
     color: var(--text-primary);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     width: 100%;
     position: relative;
     overflow: hidden;
@@ -1443,6 +1556,16 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 .contact-form-submit:hover { background: none; }
 
 .contact-form-submit:active { transform: none; }
+
+/* Ensure magnetic transform works on contact form submit button */
+.contact-form-submit[data-magnetic] {
+    transform: translate(var(--mx), var(--my)) scale(var(--ms)) !important;
+    transition: none !important; /* Disable transitions for magnetic movement */
+}
+
+.contact-form-submit[data-magnetic]:active {
+    transform: translate(var(--mx), var(--my)) scale(var(--ms)) !important;
+}
 
 .contact-form-submit-icon { width: 1.25em; height: 1.25em; position: relative; z-index: 2; transition: filter 0.15s ease; }
 
@@ -1487,9 +1610,8 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     text-decoration: none;
     transition: color 180ms ease, opacity 180ms ease;
     display: inline-block;
-}
-.contact-footer__link:hover {
-    color: var(--text-primary);
+    padding: 0.1em 0.3em;
+    margin: -0.1em -0.3em;
 }
 
 /* Curtains Down block */
@@ -1726,8 +1848,8 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     }
     .enterprise-left { gap: 2em; position: static !important; transform: none !important; }
     .enterprise-headings .heading-h3, .enterprise-headings .heading-h3-regular { font-size: 4.2em; }
-    .enterprise-buttons { flex-direction: row; gap: 1.5em; flex-wrap: wrap; }
-    .btn-primary, .btn-secondary { width: auto; text-align: left; }
+    .enterprise-buttons { flex-direction: row; gap: 2em; flex-wrap: wrap; }
+    .btn-link { width: auto; text-align: left; }
     
     .big-cats-section { gap: 1.5em; }
     .big-cats-grid {
