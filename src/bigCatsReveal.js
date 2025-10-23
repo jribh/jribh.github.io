@@ -73,7 +73,7 @@ function initBigCatsReveal() {
             trigger: '.big-cats-grid',
             scroller: getScroller(),
             start: isMobile ? 'top 85%' : 'top 75%',
-            end: isMobile ? 'top 65%' : 'top 15%',
+            end: isMobile ? 'top 35%' : 'top 15%',
             scrub: 1,
             invalidateOnRefresh: true,
             // markers: true,

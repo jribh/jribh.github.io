@@ -161,8 +161,9 @@ class TextAnimations {
 
       // 4. Right column - animate based on scroll trigger
       if (rightColumn) {
+        const rightColumnStart = window.innerWidth < 1024 ? 'top 70%' : 'top 36%';
         this.createScrollTriggerAnimation(rightColumn, {
-          start: 'top 36%', // Trigger after CTAs
+          start: rightColumnStart, // Trigger after CTAs
           duration: 1.4,
           ease: 'expo.out',
         });
@@ -287,8 +288,9 @@ class TextAnimations {
           gsap.set(contactFooter, { autoAlpha: 0, y: 24, skewY: 2, filter: 'blur(6px)' });
           contactFooter._initSet = true;
         }
+        const contactFooterStart = window.innerWidth < 1024 ? 'top 75%' : 'top 60%';
         this.createScrollTriggerAnimation(contactFooter, {
-          start: 'top 60%',
+          start: contactFooterStart,
           duration: 1.6,
           ease: 'expo.out'
         });
