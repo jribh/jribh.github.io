@@ -1769,6 +1769,16 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .contact-form { max-width: none; }
     .curtains-block { padding-bottom: 20vh; }
 
+    /* Fix character clipping on smaller screens by allowing overflow for animated text */
+    .content-section[data-section="2"] .section-word,
+    .content-section[data-section="3"] .heading-h2,
+    .content-section[data-section="3"] .heading-h3-regular,
+    .content-section[data-section="6"] .heading-h2--primary,
+    .curtains-text-1,
+    .curtains-text-2 {
+        overflow: visible; /* Prevent character clipping on mobile while maintaining animation */
+    }
+
 }
 
 /* 768px and below */
@@ -1851,7 +1861,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .enterprise-buttons { flex-direction: row; gap: 2em; flex-wrap: wrap; }
     .btn-link { width: auto; text-align: left; }
     
-    .big-cats-section { gap: 1.5em; }
+    .big-cats-section { gap: 2.5em; }
     .big-cats-grid {
         display: flex;
         flex-wrap: wrap;
@@ -1876,5 +1886,18 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .heading-h1 { font-size: 5.4em; }
     .content-section[data-section="2"] .section-word {
         font-size: 10em;
+    }
+    .content-section[data-section="2"] .section-content {
+        gap: 0.6em;
+    }
+
+    /* Additional overflow fix for very small screens */
+    .content-section[data-section="2"] .section-word,
+    .content-section[data-section="3"] .heading-h2,
+    .content-section[data-section="3"] .heading-h3-regular,
+    .content-section[data-section="6"] .heading-h2--primary,
+    .curtains-text-1,
+    .curtains-text-2 {
+        overflow: visible; /* Ensure no character clipping on very small screens */
     }
 }

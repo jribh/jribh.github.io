@@ -141,13 +141,28 @@ class TextAnimations {
         });
       }
 
-      // 2. "And then some." - letter-by-letter animation like EYE CANDY
+      // 2. "And then some." - letter-by-letter animation like EYE CANDY (desktop), simple fade on mobile
       if (subtitleHeading) {
-        this.createAnimation(subtitleHeading, {
-          start: 'top 60%', // Slightly higher trigger than ENTERPRISE
-          duration: 0.4,
-          stagger: 0.02,
-        });
+        const isSmallScreen = window.innerWidth < 1024;
+        if (isSmallScreen) {
+          // On small screens, use simple fade animation to prevent character-by-character wrapping
+          if (!subtitleHeading._initSet) {
+            gsap.set(subtitleHeading, { autoAlpha: 0, y: 24, skewY: 2, filter: 'blur(6px)' });
+            subtitleHeading._initSet = true;
+          }
+          this.createScrollTriggerAnimation(subtitleHeading, {
+            start: 'top 60%', // Slightly higher trigger than ENTERPRISE
+            duration: 1,
+            ease: 'expo.out',
+          });
+        } else {
+          // On larger screens, use character-by-character animation
+          this.createAnimation(subtitleHeading, {
+            start: 'top 60%', // Slightly higher trigger than ENTERPRISE
+            duration: 0.4,
+            stagger: 0.02,
+          });
+        }
       }
 
       // 3. CTAs - animate based on scroll trigger (only on downward scroll)
