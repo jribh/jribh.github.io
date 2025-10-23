@@ -1725,15 +1725,6 @@ function handleScroll() {
     glassRemovalProgress = Math.min((scrollY - glassRemovalStart) / glassRemovalDistance, 1.0);
   }
   
-  // Debug: Log when we're in transition zone
-  if (inSection6 && currentSection !== 5) {
-    console.log(`Section 6 in view! Triggering effects...`);
-  }
-  
-  if (glassRemovalProgress > 0 && glassRemovalProgress < 1) {
-    console.log(`Glass removal progress: ${glassRemovalProgress.toFixed(3)}`);
-  }
-  
   // Update reeded glass effects
   if (_reedEffect) {
     // Use scroll-based glass removal progress instead of binary trigger

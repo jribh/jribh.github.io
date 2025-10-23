@@ -1858,9 +1858,14 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
         width: calc(100% + 2em);
         margin-left: -1em;
     }
-    .big-cat-image {
+    .big-cat-reveal-wrapper {
         width: calc((100% - 0.4em) / 2);
         height: auto;
+        aspect-ratio: 1;
+    }
+    .big-cat-image {
+        width: 100%;
+        height: 100%;
         display: block;
         flex-shrink: 0;
     }

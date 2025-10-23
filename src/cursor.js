@@ -1,6 +1,16 @@
 // Custom Cursor Logic
 import smoothScroll from './smoothScroll.js';
 
+// Touch-device detection (phones/tablets)
+const IS_TOUCH_DEVICE = (function(){
+  try {
+    if (window.matchMedia && window.matchMedia('(pointer:coarse)').matches) return true;
+    if ('ontouchstart' in window) return true;
+    const ua = (navigator.userAgent || '').toLowerCase();
+    return /mobi|iphone|ipad|android|tablet/.test(ua);
+  } catch { return false; }
+})();
+
 function initCustomCursor() {
     const cursor = document.querySelector('.custom-cursor');
     if (!cursor) return;
@@ -225,15 +235,20 @@ function initCustomCursor() {
 
     // Apply [data-magnetic] and wire magnetic behavior
     const magneticElements = Array.from(document.querySelectorAll(magneticSelectors));
-    magneticElements.forEach((el) => el.setAttribute('data-magnetic', ''));
+    if (!IS_TOUCH_DEVICE) {
+        magneticElements.forEach((el) => el.setAttribute('data-magnetic', ''));
+    }
 
-    // Also add data-magnetic to navbar for transform support
+    // Also add data-magnetic to navbar for transform support (skip on touch devices)
     const navbar = document.querySelector('.navbar');
-    if (navbar) {
+    if (navbar && !IS_TOUCH_DEVICE) {
         navbar.setAttribute('data-magnetic', '');
     }
 
     function lockToTarget(target) {
+        // Skip magnetic behavior on touch devices
+        if (IS_TOUCH_DEVICE) return;
+
         // Cancel any ongoing return animation for this target only
         const existing = returnAnimMap.get(target);
         if (existing) {
@@ -268,6 +283,9 @@ function initCustomCursor() {
     }
 
     function updateMagneticOffsets(e) {
+        // Skip magnetic behavior on touch devices
+        if (IS_TOUCH_DEVICE) return;
+
         if (!isCursorLocked || !lockedTarget || !lockedRect) return;
         const x = e.clientX;
         const y = e.clientY;
@@ -300,6 +318,9 @@ function initCustomCursor() {
     }
 
     function unlockTarget(target) {
+        // Skip magnetic behavior on touch devices
+        if (IS_TOUCH_DEVICE) return;
+
         if (!isCursorLocked) return;
         // If leaving one target but immediately entering another, ignore unlock here
         if (target && lockedTarget && target !== lockedTarget) return;
@@ -390,25 +411,27 @@ function initCustomCursor() {
         cursor.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
     }
 
-    // Wire events for magnetic elements
-    magneticElements.forEach((el) => {
-        el.addEventListener('mouseenter', (ev) => {
-            // Ignore inputs/textareas inside form fields where text cursor is desired
-            if (ev.target.matches('input, textarea, select')) return;
-            lockToTarget(ev.currentTarget);
-        }, { passive: true });
+    // Wire events for magnetic elements (skip on touch devices)
+    if (!IS_TOUCH_DEVICE) {
+        magneticElements.forEach((el) => {
+            el.addEventListener('mouseenter', (ev) => {
+                // Ignore inputs/textareas inside form fields where text cursor is desired
+                if (ev.target.matches('input, textarea, select')) return;
+                lockToTarget(ev.currentTarget);
+            }, { passive: true });
 
-        el.addEventListener('mousemove', (ev) => {
-            if (!isCursorLocked) return;
-            // Keep rect up-to-date when content moves (smooth scroll)
-            lockedRect = ev.currentTarget.getBoundingClientRect();
-            updateMagneticOffsets(ev);
-        }, { passive: true });
+            el.addEventListener('mousemove', (ev) => {
+                if (!isCursorLocked) return;
+                // Keep rect up-to-date when content moves (smooth scroll)
+                lockedRect = ev.currentTarget.getBoundingClientRect();
+                updateMagneticOffsets(ev);
+            }, { passive: true });
 
-        el.addEventListener('mouseleave', (ev) => {
-            unlockTarget(ev.currentTarget);
-        }, { passive: true });
-    });
+            el.addEventListener('mouseleave', (ev) => {
+                unlockTarget(ev.currentTarget);
+            }, { passive: true });
+        });
+    }
 
     // Keep lock centered on scroll/resize
     const refreshLock = () => {

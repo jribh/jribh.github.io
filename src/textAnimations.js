@@ -15,6 +15,12 @@ class TextAnimations {
     this.init();
   }
 
+  // Get the correct scroller for ScrollTrigger based on device type
+  getScroller() {
+    // Check if smooth scroll is actually active (not just if the instance exists)
+    return (window.smoothScroll && window.smoothScroll.isRunning) ? '#content' : window;
+  }
+
   init() {
     // Wait for DOM to be ready and smooth scroll to initialize
     if (document.readyState === 'loading') {
@@ -292,9 +298,14 @@ class TextAnimations {
       const curtainsText1 = section6.querySelector('.curtains-text-1');
       const curtainsText2 = section6.querySelector('.curtains-text-2');
       
+      // Responsive start values for smaller screens
+      const isSmallScreen = window.innerWidth < 1024;
+      const curtainsText1Start = isSmallScreen ? 'top 75%' : 'top 60%';
+      const curtainsText2Start = isSmallScreen ? 'top 77%' : 'top 62%';
+      
       if (curtainsText1) {
         this.createAnimation(curtainsText1, {
-          start: 'top 60%',
+          start: curtainsText1Start,
           duration: 0.6,
           stagger: 0.03,
         });
@@ -302,13 +313,13 @@ class TextAnimations {
       
       if (curtainsText2) {
         this.createAnimation(curtainsText2, {
-          start: 'top 62%',
+          start: curtainsText2Start,
           duration: 0.6,
           stagger: 0.03,
         });
       }
       
-      // Curtains logo - smooth fade in
+      // Curtains logo - smooth fade in (same timing as curtains-text-2)
       const curtainsLogo = section6.querySelector('.curtains-logo');
       if (curtainsLogo) {
         if (!curtainsLogo._initSet) {
@@ -316,7 +327,7 @@ class TextAnimations {
           curtainsLogo._initSet = true;
         }
         this.createScrollTriggerAnimation(curtainsLogo, {
-          start: 'top 65%',
+          start: curtainsText2Start,
           duration: 1.6,
           ease: 'expo.out'
         });
@@ -361,7 +372,7 @@ class TextAnimations {
       scrollTrigger: {
         trigger: element,
         start: start,
-        scroller: '#content',
+        scroller: this.getScroller(),
         onEnter: () => {
           hasEntered = true;
           // Clear any pending reverse
@@ -431,7 +442,7 @@ class TextAnimations {
     element._st = ScrollTrigger.create({
       trigger: element,
       start: start,
-      scroller: '#content',
+      scroller: this.getScroller(),
       onEnter: () => {
         // Fade in and scramble
         gsap.set(element, { autoAlpha: 1 });
@@ -574,7 +585,7 @@ class TextAnimations {
       scrollTrigger: {
         trigger: element,
         start: start,
-        scroller: '#content',
+        scroller: this.getScroller(),
         onEnter: () => {
           hasEntered = true;
           if (reverseTimeout) {
@@ -725,7 +736,7 @@ class TextAnimations {
     element._st = ScrollTrigger.create({
       trigger: element,
       start: start,
-      scroller: '#content',
+      scroller: this.getScroller(),
       onEnter: () => {
         hasEntered = true;
         // Clear any pending reverse
@@ -808,7 +819,7 @@ class TextAnimations {
     element._st = ScrollTrigger.create({
       trigger: element,
       start: start,
-      scroller: '#content',
+      scroller: this.getScroller(),
       onEnter: () => {
         hasEntered = true;
         // Clear any pending reverse

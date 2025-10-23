@@ -13,7 +13,8 @@ gsap.registerPlugin(ScrollTrigger);
 
 // Get scroller element for ScrollTrigger
 const getScroller = () => {
-    return window.smoothScroll ? '#content' : window;
+    // Check if smooth scroll is actually active (not just if the instance exists)
+    return (window.smoothScroll && window.smoothScroll.isRunning) ? '#content' : window;
 };
 
 function initBigCatsReveal() {
@@ -47,8 +48,23 @@ function initBigCatsReveal() {
 
     // Build separate scrubbed timelines for each row
     const imagesArray = Array.from(document.querySelectorAll('.big-cats-grid .big-cat-image'));
-    const firstRow = imagesArray.slice(0, 4); // images 1-4
-    const secondRow = imagesArray.slice(4, 8); // images 5-8
+    
+    // Detect if we're in mobile layout (768px and below)
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    
+    let firstRow, secondRow, thirdRow, fourthRow;
+    
+    if (isMobile) {
+        // Mobile: 2 images per row, 4 rows total
+        firstRow = imagesArray.slice(0, 2);   // images 1-2
+        secondRow = imagesArray.slice(2, 4);  // images 3-4
+        thirdRow = imagesArray.slice(4, 6);   // images 5-6
+        fourthRow = imagesArray.slice(6, 8);  // images 7-8
+    } else {
+        // Desktop: 4 images per row, 2 rows total
+        firstRow = imagesArray.slice(0, 4);   // images 1-4
+        secondRow = imagesArray.slice(4, 8);  // images 5-8
+    }
 
     // First row timeline
     const tl1 = gsap.timeline({
@@ -56,9 +72,9 @@ function initBigCatsReveal() {
         scrollTrigger: {
             trigger: '.big-cats-grid',
             scroller: getScroller(),
-            start: 'top 70%',
-            end: 'top 10%',
-            scrub: 0.5,
+            start: isMobile ? 'top 85%' : 'top 75%',
+            end: isMobile ? 'top 65%' : 'top 15%',
+            scrub: 1,
             invalidateOnRefresh: true,
             // markers: true,
         },
@@ -84,15 +100,15 @@ function initBigCatsReveal() {
         },
     }, 0);
 
-    // Second row timeline - trigger further down
+    // Second row timeline
     const tl2 = gsap.timeline({
         defaults: { ease: 'power3.out' },
         scrollTrigger: {
             trigger: '.big-cats-grid',
             scroller: getScroller(),
-            start: 'top 40%',
-            end: 'top -30%',
-            scrub: 0.5,
+            start: isMobile ? 'top 65%' : 'top 45%',
+            end: isMobile ? 'top 45%' : 'top -25%',
+            scrub: 0.8,
             invalidateOnRefresh: true,
             // markers: true,
         },
@@ -117,6 +133,73 @@ function initBigCatsReveal() {
             from: 'start',
         },
     }, 0);
+
+    // Mobile only: Third and fourth row timelines
+    if (isMobile) {
+        const tl3 = gsap.timeline({
+            defaults: { ease: 'power3.out' },
+            scrollTrigger: {
+                trigger: '.big-cats-grid',
+                scroller: getScroller(),
+                start: 'top 45%',
+                end: 'top 25%',
+                scrub: 0.8,
+                invalidateOnRefresh: true,
+            },
+        });
+
+        tl3.to(thirdRow, {
+            clipPath: 'inset(0% 0% 0% 0%)',
+            webkitClipPath: 'inset(0% 0% 0% 0%)',
+            duration: 1,
+            stagger: {
+                each: 0.08,
+                from: 'start',
+            },
+        }, 0);
+
+        tl3.to(thirdRow, {
+            scale: 1,
+            duration: 1.1,
+            ease: 'power2.out',
+            stagger: {
+                each: 0.08,
+                from: 'start',
+            },
+        }, 0);
+
+        const tl4 = gsap.timeline({
+            defaults: { ease: 'power3.out' },
+            scrollTrigger: {
+                trigger: '.big-cats-grid',
+                scroller: getScroller(),
+                start: 'top 25%',
+                end: 'top 5%',
+                scrub: 0.8,
+                invalidateOnRefresh: true,
+            },
+        });
+
+        tl4.to(fourthRow, {
+            clipPath: 'inset(0% 0% 0% 0%)',
+            webkitClipPath: 'inset(0% 0% 0% 0%)',
+            duration: 1,
+            stagger: {
+                each: 0.08,
+                from: 'start',
+            },
+        }, 0);
+
+        tl4.to(fourthRow, {
+            scale: 1,
+            duration: 1.1,
+            ease: 'power2.out',
+            stagger: {
+                each: 0.08,
+                from: 'start',
+            },
+        }, 0);
+    }
 
     // Ensure ScrollTrigger calculates after DOM mutations
     ScrollTrigger.refresh();
