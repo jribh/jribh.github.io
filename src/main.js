@@ -1914,11 +1914,17 @@ function animate() {
     
     // Update wind animation with scroll-based speed reduction
     if (mixer) {
-      // Apply wind speed reduction immediately when entering section 2
-      const inSecondOrThirdSection = currentScrollProgress > 1/3; // True when in section 2 or 3
-      const windSpeedMultiplier = inSecondOrThirdSection ? 0.5 : 1.0; // Reduce to 50% in sections 2&3
+      // Gradually reduce wind speed from section 2 through section 3
+      let windSpeedMultiplier = 1.0; // Default full speed
+
+      if (currentScrollProgress > 1/3) { // Start slowing down at section 2
+        // Map scroll progress from 1/3 to 2/3 (sections 2-3) to speed multiplier from 1.0 to 0.5
+        const slowdownProgress = Math.min(1.0, (currentScrollProgress - 1/3) / (1/3)); // 0 to 1 over sections 2-3
+        windSpeedMultiplier = 1.0 - (slowdownProgress * 0.5); // Gradually reduce from 1.0 to 0.5
+      }
+
       const effectiveWindSpeed = WIND_BASE_TS * windSpeedMultiplier;
-      
+
       mixer.timeScale = effectiveWindSpeed;
       mixer.update(delta);   // breathing and wind
     }
@@ -1998,6 +2004,19 @@ function delay(ms){ return new Promise(res=>setTimeout(res, ms)); }
 
 async function startStartupSequence(){
   const tl = gsap.timeline();
+
+  // Set initial lower values for reeded glass parameters at startup
+  if (_reedEffect) {
+    const U = _reedEffect.uniforms;
+    // Set lower initial values for z depth, refraction, and gradient stops
+    U.get('depthD0').value = 204.5; // Higher than normal 198.5
+    U.get('depthD1').value = 208.5; // Higher than normal 201.5
+    U.get('uRefractPx').value = 6.0; // Lower than normal 12.0
+    U.get('gradientBlackStop1').value = 0.02; // Lower than normal 0.04
+    U.get('gradientBlackStop2').value = 0.275; // Lower than normal 0.55
+    U.get('gradientWhiteStop1').value = 0.14; // Lower than normal 0.28
+    U.get('gradientWhiteStop2').value = 0.425; // Lower than normal 0.85
+  }
 
   // Hide navigation elements initially for startup reveal
   const bottomBar = document.querySelector('.bottom-bar');
@@ -2141,6 +2160,18 @@ async function startStartupSequence(){
   const startupTargetExposure = baseExposure;
   tl.to(renderer, { toneMappingExposure: startupTargetExposure, duration: 1.6, ease: 'power1.inOut' }, 'phase4');
   // Background glows and opacity are already handled at 'eyesOn'
+
+  // Animate reeded glass parameters back to normal values in phase 4
+  if (_reedEffect) {
+    const U = _reedEffect.uniforms;
+    tl.to(U.get('depthD0'), { value: 198.5, duration: 1.6, ease: 'power1.inOut' }, 'phase4');
+    tl.to(U.get('depthD1'), { value: 201.5, duration: 1.6, ease: 'power1.inOut' }, 'phase4');
+    tl.to(U.get('uRefractPx'), { value: 12.0, duration: 1.6, ease: 'power1.inOut' }, 'phase4');
+    tl.to(U.get('gradientBlackStop1'), { value: 0.04, duration: 1.6, ease: 'power1.inOut' }, 'phase4');
+    tl.to(U.get('gradientBlackStop2'), { value: 0.55, duration: 1.6, ease: 'power1.inOut' }, 'phase4');
+    tl.to(U.get('gradientWhiteStop1'), { value: 0.28, duration: 1.6, ease: 'power1.inOut' }, 'phase4');
+    tl.to(U.get('gradientWhiteStop2'), { value: 0.85, duration: 1.6, ease: 'power1.inOut' }, 'phase4');
+  }
 
   // Phase 5: chin settle 100ms after Phase 4 starts
   if (chin) {
