@@ -7,6 +7,7 @@
     "*.png": ["@parcel/transformer-raw"],
     "*.jpg": ["@parcel/transformer-raw"],
     "*.svg": ["@parcel/transformer-raw"],
+    "*.mp3": ["@parcel/transformer-raw"],
     ".wasm": ["@parcel/transformer-raw"]
   }
 }

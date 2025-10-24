@@ -10,6 +10,7 @@ import { gsap } from 'gsap';
 import hdriUrl from './assets/hdri_bg.hdr';
 import modelUrl from './assets/head_packed.glb';
 import shadowMaskUrl from './assets/Head_Shadowmask.png';
+import bgAudioUrl from './assets/bg_audio.mp3';
 
 let headContainer = document.querySelector("#head-container");
 headContainer.style.overflow = "default";
@@ -2225,3 +2226,36 @@ window.pauseAnimation = pauseAnimation;
 window.resumeAnimation = resumeAnimation;
 window.animationPauseTimeout = null;
 window.animationResumeTimeout = null;
+
+// Audio control setup
+let bgAudio = null;
+let isAudioPlaying = false;
+
+function initAudioControl() {
+  bgAudio = new Audio(bgAudioUrl);
+  bgAudio.loop = true;
+  bgAudio.volume = 0.3; // Set to 30% volume for subtle background music
+  
+  const waveformIcon = document.querySelector('.bottom-bar__waveform');
+  if (waveformIcon) {
+    waveformIcon.style.cursor = 'pointer';
+    waveformIcon.addEventListener('click', toggleAudio);
+  }
+}
+
+function toggleAudio() {
+  if (!bgAudio) return;
+  
+  if (isAudioPlaying) {
+    bgAudio.pause();
+    isAudioPlaying = false;
+  } else {
+    bgAudio.play().catch(e => {
+      console.warn('Background audio failed to play:', e);
+    });
+    isAudioPlaying = true;
+  }
+}
+
+// Initialize audio control after startup
+setTimeout(initAudioControl, 100);
