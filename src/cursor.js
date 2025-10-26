@@ -182,10 +182,10 @@ function initCustomCursor() {
     animateChevron();
 
     // Define clickable selectors - comprehensive list for all interactive elements
-    const clickableSelectors = 'a, button, input, textarea, select, [role="button"], .navbar__link, .side-nav__dot, .bottom-bar__social, .work-card, .contact-form, .contact-email-link, .contact-copy-btn, .btn-primary, .btn-secondary, .btn-instagram, .contact-form-input, .contact-form-submit, .navbar__logo';
+    const clickableSelectors = 'a, button, input, textarea, select, [role="button"], .navbar__link, .side-nav__dot, .bottom-bar__social, .bottom-bar__visualizer, .work-card, .contact-form, .contact-email-link, .contact-copy-btn, .btn-primary, .btn-secondary, .btn-instagram, .contact-form-input, .contact-form-submit, .navbar__logo';
 
     // Magnetic targets (subset: nav links and buttons) as requested
-    const magneticSelectors = 'a, .navbar__link, button, .btn-link, .btn-instagram, .contact-form-submit, .side-nav__dot, .bottom-bar__social, .navbar__logo';
+    const magneticSelectors = 'a, .navbar__link, button, .btn-link, .btn-instagram, .contact-form-submit, .side-nav__dot, .bottom-bar__social, .bottom-bar__visualizer, .navbar__logo';
 
     // Text element selectors for text cursor behavior
     const textSelectors = 'h1, h2, h3, h4, h5, h6, p, input, textarea';

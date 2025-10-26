@@ -16,6 +16,18 @@ let headContainer = document.querySelector("#head-container");
 headContainer.style.overflow = "default";
 let currentTime;
 
+// Audio visualizer globals (declared early to avoid TDZ in animate)
+let bgAudio = null;
+let isAudioPlaying = false;
+let audioContext = null;
+let analyser = null;
+let gainNode = null;
+let dataArray = null;
+let visualizerCanvas = null;
+let visualizerCtx = null;
+let animationId = null;
+let barHeights = [];
+
 // Startup sequence state
 let startupActive = true;
 let allowHeadLook = false;
@@ -522,6 +534,177 @@ allLights.forEach(l => {
   l.intensity = l.intensity * 0.1; // start at 10% before eyes turn on
 });
 
+// Music-reactive lighting configuration — EXPOSED FOR EASY TUNING
+// Tip: You can change any of these at runtime with window.updateMusicReactiveConfig({...})
+const musicReactiveConfig = {
+  // 1) Analysis resolution and band selection
+  // Larger fftSize => more frequency resolution (must be a power of two: 32..32768)
+  fftSize: 256,
+  // Frequency “bins” to average for each band (indexes into analyser.getByteFrequencyData array)
+  bassBins: [0, 12], // Use lower bins for kick/bass (inclusive start, exclusive end)
+  midBins: [12, 32], // Use low-mid for synth body
+
+  // 2) Beat detection (for bright flashes on the main beat)
+  // Uses a simple z-score on the chosen band with a cooldown so not every beat triggers
+  beat: {
+    band: 'mid',       // Which band to listen to for beat flashes: 'bass' | 'mid'
+    thresholdZ: 1.6,    // Higher => fewer flashes; lower => more
+    minIntervalMs: 420, // Minimum time between flashes (ms). ~420ms ≈ 143 BPM
+    holdMs: 120,         // Time to hold max brightness after a trigger (ms)
+    decayMs: 800        // Time to fade from max back to 0 after hold (ms)
+  },
+
+  // 3) Continuous (non-beat) movement so lights breathe with music between flashes
+  // This keeps the scene alive even without major beat triggers
+  cont: {
+    bassGain: 0.5,    // Multiplier for bass continuous movement (0 => off, increase for more movement)
+    midGain: 0.3,     // Multiplier for mid continuous movement (increase to see synth leads)
+    hemAdd: 5        // Additive intensity for hemisphere light (base + this * level; increase for more breathing)
+  },
+
+  // 4) Flash amounts applied on each detected beat
+  flash: {
+    redMult: 1.2, // Multiplier applied to red spotlights on a beat (1 => no flash)
+    hemAdd: 12    // Additive intensity applied to hemisphere light on a beat (0 => no flash)
+  },
+
+  // 5) How quickly lights move toward their targets (0..1 where 1=instant, 0=never)
+  // Higher = snappier response, lower = smoother/delayed response
+  responsiveness: {
+    bass: 0.65,       // Bass light responsiveness (increase for snappier bass pulses)
+    mid: 0.6,         // Mid light responsiveness (increase for snappier synth reactions)
+    hem: 0.65         // Hemisphere responsiveness (increase for quicker scene breathing)
+  },
+
+  // 6) Debug: Set to true to see beat detection in console
+  debugBeats: false
+};
+
+// Music-reactive lighting setup
+// Note: Exclude cool/neutral lights and redUpperRightSpot as requested.
+const reactiveLights = {
+  bass: [underfacePointLight, redUnderHairSpot], // Low frequencies - red/warm
+  mid: [redFrontRightSpot, redLeftSpot, hemLight],         // Mid frequencies - side reds
+  ambient: [hemLight, overheadNeutralSpot]                            // Hemisphere ambient
+};
+
+// --- Simple beat detector state ---
+const _beatState = {
+  ema: 0,      // exponential moving average of band level
+  ema2: 0,     // exponential moving average of squared level (for variance)
+  init: false,
+  lastTrigger: 0,
+  flashStart: 0
+};
+
+// --- Base gradient glow intensities (set at startup) ---
+let _bgGlow1BaseIntensity = 0.9;  // uGlowIntensity base
+let _bgGlow2BaseIntensity = 0.55; // uGlow2Intensity base
+
+function _updateBeatDetector(level01, nowMs) {
+  // level01 is 0..1 normalized band level
+  const alpha = 0.08; // smoothing for EMA (lower = smoother)
+  if (!_beatState.init) {
+    _beatState.ema = level01;
+    _beatState.ema2 = level01 * level01;
+    _beatState.init = true;
+  } else {
+    _beatState.ema = (1 - alpha) * _beatState.ema + alpha * level01;
+    _beatState.ema2 = (1 - alpha) * _beatState.ema2 + alpha * level01 * level01;
+  }
+
+  const variance = Math.max(0, _beatState.ema2 - _beatState.ema * _beatState.ema);
+  const std = Math.sqrt(variance + 1e-6);
+  const z = std > 1e-5 ? (level01 - _beatState.ema) / std : 0;
+
+  const cfg = musicReactiveConfig.beat;
+  const elapsed = nowMs - _beatState.lastTrigger;
+  if (z >= cfg.thresholdZ && elapsed >= cfg.minIntervalMs) {
+    _beatState.lastTrigger = nowMs;
+    _beatState.flashStart = nowMs; // begin hold/decay window
+  }
+}
+
+function _getFlashLevel(nowMs) {
+  // Returns 0..1 where 1 is full flash during hold, then decays to 0
+  if (_beatState.flashStart === 0) return 0;
+  const cfg = musicReactiveConfig.beat;
+  const t = nowMs - _beatState.flashStart;
+  if (t <= cfg.holdMs) return 1;
+  const decayT = t - cfg.holdMs;
+  if (decayT >= cfg.decayMs) return 0;
+  return Math.max(0, 1 - decayT / cfg.decayMs);
+}
+
+function updateReactiveLighting() {
+  if (!isAudioPlaying || !analyser || !dataArray) return;
+
+  analyser.getByteFrequencyData(dataArray);
+
+  // --- Aggregate bands ---
+  const [b0, b1] = musicReactiveConfig.bassBins;
+  const [m0, m1] = musicReactiveConfig.midBins;
+  const bass = dataArray.slice(b0, b1).reduce((a, b) => a + b, 0) / Math.max(1, (b1 - b0));
+  const mid = dataArray.slice(m0, m1).reduce((a, b) => a + b, 0) / Math.max(1, (m1 - m0));
+  const bassNorm = Math.pow(bass / 255, 1.3); // slightly emphasize
+  const midNorm = Math.pow(mid / 255, 1.15);
+
+  // --- Beat detector (uses selected band) ---
+  const nowMs = performance.now();
+  const beatBandLevel = musicReactiveConfig.beat.band === 'mid' ? midNorm : bassNorm;
+  _updateBeatDetector(beatBandLevel, nowMs);
+  const flash = _getFlashLevel(nowMs); // 0..1
+
+  // --- Apply continuous modulation always ---
+  reactiveLights.bass.forEach(light => {
+    const base = lightFinalIntensities.get(light) || light.intensity;
+    // Continuous modulation based on bass level
+    const contMultiplier = 1 + bassNorm * musicReactiveConfig.cont.bassGain;
+    // Add flash on top when beat is detected
+    const flashMultiplier = flash * musicReactiveConfig.flash.redMult;
+    const target = base * (contMultiplier + flashMultiplier);
+    light.intensity += (target - light.intensity) * musicReactiveConfig.responsiveness.bass;
+  });
+
+  reactiveLights.mid.forEach(light => {
+    const base = lightFinalIntensities.get(light) || light.intensity;
+    // Continuous modulation based on mid level
+    const contMultiplier = 1 + midNorm * musicReactiveConfig.cont.midGain;
+    // Add flash on top when beat is detected
+    const flashMultiplier = flash * musicReactiveConfig.flash.redMult;
+    const target = base * (contMultiplier + flashMultiplier);
+    light.intensity += (target - light.intensity) * musicReactiveConfig.responsiveness.mid;
+  });
+
+  reactiveLights.ambient.forEach(light => {
+    const base = lightFinalIntensities.get(light) || light.intensity;
+    // Continuous modulation based on mid level (hemisphere follows mid)
+    const contAdd = midNorm * musicReactiveConfig.cont.hemAdd;
+    // Add flash on top when beat is detected
+    const flashAdd = flash * musicReactiveConfig.flash.hemAdd;
+    const target = base + contAdd + flashAdd;
+    light.intensity += (target - light.intensity) * musicReactiveConfig.responsiveness.hem;
+  });
+
+  // --- Modulate gradient background glow (center red glow behind neck) ---
+  if (_bgGrad && _bgGrad.material && _bgGrad.material.uniforms) {
+    const u = _bgGrad.material.uniforms;
+    // Primary glow (center red glow behind neck) follows mid level with continuous modulation at reduced intensity
+    const glowContMultiplier = 1 + midNorm * musicReactiveConfig.cont.midGain * 0.04; // 20% of previous modulation
+    const glowFlashAdd = flash * musicReactiveConfig.flash.hemAdd * 0.03; // 20% of previous flash
+    const glowTarget = _bgGlow1BaseIntensity * glowContMultiplier + glowFlashAdd;
+    if (u.uGlowIntensity) {
+      u.uGlowIntensity.value += (glowTarget - u.uGlowIntensity.value) * musicReactiveConfig.responsiveness.hem;
+    }
+  }
+}
+
+// Expose config updater for console tweaks
+window.updateMusicReactiveConfig = function(updates) {
+  Object.assign(musicReactiveConfig, updates);
+  console.log('Music reactive lighting config updated:', musicReactiveConfig);
+};
+
 // Call once before adding any RectAreaLight
 
 const pmremGenerator = new THREE.PMREMGenerator(renderer);
@@ -734,6 +917,9 @@ function manipulateModel(model, animations) {
 
     // === Bone references ===
     model.traverse(o => {
+        if (o.isBone) {
+            console.log('Bone name:', o.name);
+        }
         if (o.isBone && o.name === 'Chin') {
             chin = o;
             // Gate head look until startup finishes
@@ -1861,8 +2047,14 @@ try {
   if (_bgGrad && _bgGrad.material && _bgGrad.material.uniforms) {
     const u = _bgGrad.material.uniforms;
     // Capture defaults from shader uniforms (in case they change in code)
-    if (typeof u.uGlowIntensity?.value === 'number') _bgGlow1Default = u.uGlowIntensity.value;
-    if (typeof u.uGlow2Intensity?.value === 'number') _bgGlow2Default = u.uGlow2Intensity.value;
+    if (typeof u.uGlowIntensity?.value === 'number') {
+      _bgGlow1Default = u.uGlowIntensity.value;
+      _bgGlow1BaseIntensity = u.uGlowIntensity.value; // Set base intensity for music reactivity
+    }
+    if (typeof u.uGlow2Intensity?.value === 'number') {
+      _bgGlow2Default = u.uGlow2Intensity.value;
+      _bgGlow2BaseIntensity = u.uGlow2Intensity.value; // Set base intensity for music reactivity
+    }
     if (u.uGlowIntensity) u.uGlowIntensity.value = 0.0;
     if (u.uGlow2Intensity) u.uGlow2Intensity.value = 0.0;
   }
@@ -1946,6 +2138,11 @@ function animate() {
 
   // Advance reeded time and render
   if (_reedEffect) tickReededTime(_reedEffect, delta);
+
+  // Update music-reactive lighting (only if audio system initialized)
+  if (typeof isAudioPlaying !== 'undefined' && isAudioPlaying && analyser && dataArray) {
+    updateReactiveLighting();
+  }
 
   // --- Depth pass for reeded effect ---
   // Create depth RT lazily (once)
@@ -2227,35 +2424,207 @@ window.resumeAnimation = resumeAnimation;
 window.animationPauseTimeout = null;
 window.animationResumeTimeout = null;
 
-// Audio control setup
-let bgAudio = null;
-let isAudioPlaying = false;
+// Music Visualizer setup with smooth fade in/out (globals declared above)
+bgAudio = null;
+isAudioPlaying = false;
+audioContext = null;
+analyser = null;
+gainNode = null;
+dataArray = null;
+visualizerCanvas = null;
+visualizerCtx = null;
+animationId = null;
+// barHeights declared above
 
-function initAudioControl() {
+// Visualizer configuration (can be adjusted at runtime via window.updateVisualizerConfig())
+const visualizerConfig = {
+  numBars: 24,           // Number of frequency bars
+  barWidth: 0.4,         // Bar width as fraction of available space (0-1)
+  minBarHeightPx: 5,     // Minimum bar height in pixels
+};
+const AUDIO_FADE_MS = 1200; // Smooth fade duration for play/pause
+
+function initMusicVisualizer() {
+  visualizerCanvas = document.getElementById('music-visualizer');
+  if (!visualizerCanvas) return;
+
+  visualizerCtx = visualizerCanvas.getContext('2d');
+  visualizerCanvas.style.cursor = 'pointer';
+
+  // Initialize bar heights to a static diamond shape
+  barHeights = [];
+  for (let i = 0; i < visualizerConfig.numBars; i++) {
+    const center = Math.floor(visualizerConfig.numBars / 2);
+    const dist = Math.abs(i - center);
+    const shape = 1 - (dist / center); // taper at edges
+    barHeights[i] = Math.max(0.1, shape * 0.6);
+  }
+
+  // Setup audio element
   bgAudio = new Audio(bgAudioUrl);
   bgAudio.loop = true;
-  bgAudio.volume = 0.3; // Set to 30% volume for subtle background music
-  
-  const waveformIcon = document.querySelector('.bottom-bar__waveform');
-  if (waveformIcon) {
-    waveformIcon.style.cursor = 'pointer';
-    waveformIcon.addEventListener('click', toggleAudio);
+  bgAudio.preload = 'auto';
+  bgAudio.crossOrigin = 'anonymous';
+
+  // Click handler for play/pause
+  visualizerCanvas.addEventListener('click', toggleAudioVisualizer);
+
+  // Render initial static frame
+  renderStaticVisualizer();
+  // Set initial opacity based on play state
+  updateVisualizerOpacity();
+}
+
+function setupAudioContext() {
+  if (audioContext) return;
+  try {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioContext.createAnalyser();
+    // Use configurable FFT size for better beat sensitivity/resolution
+    analyser.fftSize = musicReactiveConfig.fftSize || 256;
+
+    gainNode = audioContext.createGain();
+    gainNode.gain.value = 0.0; // start muted; we'll fade in on play
+
+    const source = audioContext.createMediaElementSource(bgAudio);
+    // source -> gain -> analyser -> destination
+    source.connect(gainNode);
+    gainNode.connect(analyser);
+    analyser.connect(audioContext.destination);
+
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+  } catch (e) {
+    console.warn('Web Audio API not supported:', e);
   }
 }
 
-function toggleAudio() {
+function updateVisualizerOpacity() {
+  if (!visualizerCanvas) return;
+  visualizerCanvas.style.opacity = isAudioPlaying ? '1' : '0.8';
+}
+
+function toggleAudioVisualizer() {
   if (!bgAudio) return;
-  
+
   if (isAudioPlaying) {
-    bgAudio.pause();
+    // Freeze bars immediately and fade audio out
     isAudioPlaying = false;
+    updateVisualizerOpacity();
+    if (animationId) {
+      cancelAnimationFrame(animationId);
+      animationId = null;
+    }
+    smoothPause();
   } else {
-    bgAudio.play().catch(e => {
-      console.warn('Background audio failed to play:', e);
-    });
-    isAudioPlaying = true;
+    if (!audioContext) setupAudioContext();
+    smoothPlay()
+      .then(() => {
+        isAudioPlaying = true;
+        updateVisualizerOpacity();
+        visualizeAudio();
+      })
+      .catch(e => console.warn('Background audio failed to play:', e));
   }
 }
 
-// Initialize audio control after startup
-setTimeout(initAudioControl, 100);
+async function smoothPlay() {
+  if (!audioContext) setupAudioContext();
+  try { await audioContext.resume(); } catch {}
+  await bgAudio.play();
+  const now = audioContext.currentTime;
+  try {
+    gainNode.gain.cancelScheduledValues(now);
+    gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+    gainNode.gain.linearRampToValueAtTime(1.0, now + AUDIO_FADE_MS / 1000);
+  } catch {}
+}
+
+function smoothPause() {
+  if (!audioContext || !gainNode) { try { bgAudio.pause(); } catch {} return; }
+  const now = audioContext.currentTime;
+  try {
+    gainNode.gain.cancelScheduledValues(now);
+    gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+    gainNode.gain.linearRampToValueAtTime(0.0, now + AUDIO_FADE_MS / 1000);
+  } catch {}
+  setTimeout(() => { try { bgAudio.pause(); } catch {} }, AUDIO_FADE_MS + 30);
+}
+
+function renderStaticVisualizer() {
+  if (!visualizerCtx) return;
+  const width = visualizerCanvas.width;
+  const height = visualizerCanvas.height;
+  
+  // Calculate bar width and gap based on config
+  const barWidth = width * visualizerConfig.barWidth / visualizerConfig.numBars;
+  const totalGapWidth = width - (barWidth * visualizerConfig.numBars);
+  const gap = totalGapWidth / visualizerConfig.numBars;
+  
+  visualizerCtx.clearRect(0, 0, width, height);
+  for (let i = 0; i < visualizerConfig.numBars; i++) {
+    const x = i * (barWidth + gap) + gap / 2;
+    let barHeightNorm = barHeights[i] * height * 0.8;
+    // Ensure minimum bar height of 5px
+    const barHeight = Math.max(visualizerConfig.minBarHeightPx, barHeightNorm);
+    const y = (height - barHeight) / 2;
+    visualizerCtx.fillStyle = '#E8EFFF';
+    visualizerCtx.fillRect(x, y, barWidth, barHeight);
+  }
+}
+
+function visualizeAudio() {
+  if (!isAudioPlaying || !analyser) return;
+
+  animationId = requestAnimationFrame(visualizeAudio);
+  analyser.getByteFrequencyData(dataArray);
+
+  const width = visualizerCanvas.width;
+  const height = visualizerCanvas.height;
+  
+  // Calculate bar width and gap based on config
+  const barWidth = width * visualizerConfig.barWidth / visualizerConfig.numBars;
+  const totalGapWidth = width - (barWidth * visualizerConfig.numBars);
+  const gap = totalGapWidth / visualizerConfig.numBars;
+
+  visualizerCtx.clearRect(0, 0, width, height);
+
+  for (let i = 0; i < visualizerConfig.numBars; i++) {
+    const centerIndex = Math.floor(visualizerConfig.numBars / 2);
+    const distanceFromCenter = Math.abs(i - centerIndex);
+    const shapeFactor = 1 - (distanceFromCenter / centerIndex) * 0.6; // taper edges
+
+    const dataIndex = Math.min(i + 2, dataArray.length - 1);
+    const targetHeight = (dataArray[dataIndex] / 255) * shapeFactor;
+
+    // Smooth animation: interpolate between current and target
+    barHeights[i] += (targetHeight - barHeights[i]) * 0.25;
+
+    const x = i * (barWidth + gap) + gap / 2;
+    let barHeightNorm = barHeights[i] * height;
+    // Ensure minimum bar height of 5px
+    const barHeight = Math.max(visualizerConfig.minBarHeightPx, barHeightNorm);
+    const y = (height - barHeight) / 2;
+    visualizerCtx.fillStyle = '#E8EFFF';
+    visualizerCtx.fillRect(x, y, barWidth, barHeight);
+  }
+}
+
+// Expose configuration updater for console tweaks
+window.updateVisualizerConfig = function(config) {
+  Object.assign(visualizerConfig, config);
+  // Reinitialize bar heights array if numBars changed
+  if (config.numBars) {
+    barHeights = [];
+    for (let i = 0; i < visualizerConfig.numBars; i++) {
+      const center = Math.floor(visualizerConfig.numBars / 2);
+      const dist = Math.abs(i - center);
+      const shape = 1 - (dist / center);
+      barHeights[i] = Math.max(0.1, shape * 0.6);
+    }
+  }
+  if (!isAudioPlaying) renderStaticVisualizer();
+  console.log('Visualizer config updated:', visualizerConfig);
+};
+
+// Initialize visualizer after startup
+setTimeout(initMusicVisualizer, 100);
