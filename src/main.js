@@ -124,6 +124,23 @@ document.body.appendChild(blackoutEl);
 gsap.set(blackoutEl, { opacity: 0 });
 gsap.set(loadingContent, { opacity: 0, y: 16 });
 
+// Helper: build a fullscreen "vertical blinds" overlay for curtain-style transitions
+function createBlindsOverlay(stripeCount) {
+  const vw = window.visualViewport ? Math.floor(window.visualViewport.width) : window.innerWidth;
+  // Choose a sensible default by width bucket if not provided
+  const count = Math.max(1, stripeCount || (vw >= 1440 ? 1 : vw >= 1024 ? 1 : vw >= 600 ? 1 : 1));
+  const wrap = document.createElement('div');
+  wrap.className = 'blinds-overlay';
+  wrap.style.setProperty('--blinds-count', String(count));
+  for (let i = 0; i < count; i++) {
+    const s = document.createElement('div');
+    s.className = 'blinds-overlay__stripe';
+    wrap.appendChild(s);
+  }
+  document.body.appendChild(wrap);
+  return wrap;
+}
+
 let overlayActivated = false;
 const activateLoadingOverlay = () => {
   if (overlayActivated) return;
@@ -159,12 +176,18 @@ loadingManager.onProgress = (_url, itemsLoaded, itemsTotal) => {
 loadingManager.onLoad = () => {
   assetsReady = true;
   tweenLoadingBarWidth('100%', 0.5, 'power3.out');
+  // Fade out logo and progress bar after reaching 100%
+  gsap.to(logoImg, { opacity: 0, duration: 0.6, delay: 0.5, ease: 'power2.out' });
+  gsap.to(loadingBar, { opacity: 0, duration: 0.6, delay: 0.2, ease: 'power2.out' });
   tryStartStartupSequence();
 };
 
 loadingManager.onError = (url) => {
   console.warn(`Asset failed to load: ${url}`);
   tweenLoadingBarWidth('100%', 0.5, 'power3.out');
+  // Fade out logo and progress bar even on error
+  gsap.to(logoImg, { opacity: 0, duration: 0.8, delay: 1.0, ease: 'power2.out' });
+  gsap.to(loadingBar, { opacity: 0, duration: 0.8, delay: 1.0, ease: 'power2.out' });
   assetsReady = true;
   tryStartStartupSequence();
 };
@@ -662,7 +685,7 @@ function updateReactiveLighting() {
     const contMultiplier = 1 + bassNorm * musicReactiveConfig.cont.bassGain;
     // Add flash on top when beat is detected
     const flashMultiplier = flash * musicReactiveConfig.flash.redMult;
-    const target = base * (contMultiplier + flashMultiplier);
+    const target = base * (contMultiplier + flashMultiplier) * currentSpotlightIntensity;
     light.intensity += (target - light.intensity) * musicReactiveConfig.responsiveness.bass;
   });
 
@@ -672,7 +695,7 @@ function updateReactiveLighting() {
     const contMultiplier = 1 + midNorm * musicReactiveConfig.cont.midGain;
     // Add flash on top when beat is detected
     const flashMultiplier = flash * musicReactiveConfig.flash.redMult;
-    const target = base * (contMultiplier + flashMultiplier);
+    const target = base * (contMultiplier + flashMultiplier) * currentSpotlightIntensity;
     light.intensity += (target - light.intensity) * musicReactiveConfig.responsiveness.mid;
   });
 
@@ -917,9 +940,6 @@ function manipulateModel(model, animations) {
 
     // === Bone references ===
     model.traverse(o => {
-        if (o.isBone) {
-            console.log('Bone name:', o.name);
-        }
         if (o.isBone && o.name === 'Chin') {
             chin = o;
             // Gate head look until startup finishes
@@ -1730,6 +1750,54 @@ let scrollRefractionMultiplier = 3.0; // Configurable refraction multiplier
 let headMovementRestriction = 0.16; // 10% of normal movement when scrolling
 let baseEyeIntensity = 6.0; // Store the base eye emissive intensity
 let baseSaturation = -0.25; // Store the base saturation value
+let targetMusicVolume = 0.25; // Target music volume based on scroll section
+let currentMusicVolume = 0.25; // Current smoothly-interpolated music volume
+let targetVisualizerRange = 1.0; // Target visualizer range multiplier (1.0 = full range, 0.6 = 60% range)
+let currentVisualizerRange = 1.0; // Current smoothly-interpolated visualizer range
+let targetSpotlightIntensity = 1.0; // Spotlight intensity multiplier (1.0 = full, 0.4 = reduced)
+let currentSpotlightIntensity = 1.0; // Current smoothly-interpolated spotlight intensity
+
+// Update music volume based on current section
+function updateMusicVolumeForSection(section) {
+  // Sections 0-1 and section 6: normal volume (0.45), full visualizer range (1.0), and full spotlight intensity
+  // Sections 2-5: reduced volume (0.12), reduced visualizer range (0.6), and reduced spotlight intensity to 40%
+  if (section <= 1 || section === 5) { // section 5 is section 6 (0-indexed)
+    targetMusicVolume = 0.45; // Normal volume
+    targetVisualizerRange = 1.0;
+    targetSpotlightIntensity = 1.0; // Full spotlight intensity
+  } else {
+    targetMusicVolume = 0.4 * 0.3; // 0.12 total
+    targetVisualizerRange = 0.6; // 60% of normal range
+    targetSpotlightIntensity = 0.4; // Reduce spotlight intensity to 40%
+  }
+}
+
+// Smoothly interpolate and apply music volume
+function applyMusicVolumeSmoothing() {
+  if (!audioContext || !gainNode) return;
+  
+  // Effective target respects play/pause override
+  const desired = Math.max(0, Math.min(1, (volumeOverride ?? targetMusicVolume)));
+  const now = audioContext.currentTime;
+  try {
+    // Use exponential smoothing toward the target; calling each frame is fine.
+    gainNode.gain.setTargetAtTime(desired, now, VOLUME_SMOOTH_TC);
+  } catch {}
+}
+
+// Smoothly interpolate and apply visualizer range
+function applyVisualizerRangeSmoothing() {
+  // Smooth interpolation: lerp current toward target with a time constant
+  const lerpFactor = 0.08; // Smooth transition over ~1 second
+  currentVisualizerRange += (targetVisualizerRange - currentVisualizerRange) * lerpFactor;
+}
+
+// Smoothly interpolate and apply spotlight intensity
+function applySpotlightIntensitySmoothing() {
+  // Smooth interpolation: lerp current toward target with a time constant
+  const lerpFactor = 0.08; // Smooth transition over ~1 second
+  currentSpotlightIntensity += (targetSpotlightIntensity - currentSpotlightIntensity) * lerpFactor;
+}
 
 // Update saturation based on scroll progress
 function updateSaturationForScroll(scrollProgress) {
@@ -1821,8 +1889,6 @@ function initializeScrollEffectsFromCurrentPosition() {
   // Note: Initial exposure will be set correctly by the startup sequence based on currentScrollProgress
   
   // Exposure remains constant throughout scrolling
-  
-  console.log(`Initialized scroll effects: progress=${scrollProgress.toFixed(2)}, section=${currentSection}, baseExposure=${baseExposure}`);
 }
 
 function updateReededGlassProgress(progress) {
@@ -1950,6 +2016,9 @@ function handleScroll() {
   } else {
     currentSection = 5;
   }
+  
+  // Update music volume based on scroll section
+  updateMusicVolumeForSection(currentSection);
 }
 
 // Section 6 camera and model animation
@@ -2072,7 +2141,6 @@ let animationResumeTimeout = null;
 function pauseAnimation() {
   if (!isAnimationPaused) {
     isAnimationPaused = true;
-    console.log('Three.js animation paused (overlay fully black)');
     // Trigger resume guard to prevent performance system from degrading quality
     // during the pause (prevents misinterpreting pause as performance drop)
     if (typeof _triggerResumeGuard === 'function') {
@@ -2084,7 +2152,6 @@ function pauseAnimation() {
 function resumeAnimation() {
   if (isAnimationPaused) {
     isAnimationPaused = false;
-    console.log('Three.js animation resumed');
     // Trigger resume guard to allow scene to stabilize after resuming
     // without the performance system making unnecessary changes
     if (typeof _triggerResumeGuard === 'function') {
@@ -2144,6 +2211,15 @@ function animate() {
     updateReactiveLighting();
   }
 
+  // Apply smooth music volume transitions based on scroll section
+  applyMusicVolumeSmoothing();
+
+  // Apply smooth visualizer range transitions based on scroll section
+  applyVisualizerRangeSmoothing();
+
+  // Apply smooth spotlight intensity transitions based on scroll section
+  applySpotlightIntensitySmoothing();
+
   // --- Depth pass for reeded effect ---
   // Create depth RT lazily (once)
   if (!animate._depthRT) {
@@ -2202,6 +2278,15 @@ function delay(ms){ return new Promise(res=>setTimeout(res, ms)); }
 
 async function startStartupSequence(){
   const tl = gsap.timeline();
+  // Build blinds overlay for a curtain-style reveal (skipped for reduced motion)
+  let blindsWrap = null;
+  let blindsStripes = null;
+  if (!PREFERS_REDUCED_MOTION) {
+    blindsWrap = createBlindsOverlay();
+    blindsStripes = blindsWrap.querySelectorAll('.blinds-overlay__stripe');
+    // Stripes start fully covering the screen (full width)
+    gsap.set(blindsStripes, { scaleX: 1 });
+  }
 
   // Set initial lower values for reeded glass parameters at startup
   if (_reedEffect) {
@@ -2234,10 +2319,41 @@ async function startStartupSequence(){
   gsap.set(bottomBarLeft, { opacity: 0, x: -12 });
   gsap.set(bottomBarRight, { opacity: 0, x: 12 });
 
-  // Phase 1: fade from black to show model+bg (dark)
-  tl.to(blackoutEl, { opacity: 0, duration: ms(LOADING_FADE_OUT_MS), ease: 'power1.inOut', onComplete: ()=>{ blackoutEl?.remove(); blackoutEl = null; } }, 0);
+  // Phase 1: reveal model under a curtain/blinds overlay instead of a simple fade
+  // Keep loader visible while the blinds animate by removing only the loader's background
+  // (so we can see through), but retaining the logo/progress on top of the blinds.
+  if (blindsStripes && blindsStripes.length) {
+    tl.to(blackoutEl, { backgroundColor: 'rgba(0,0,0,0)', duration: 0.25, ease: 'power2.out' }, 0);
+  }
+  // Bring canvas up while blinds still cover the view
   tl.to(theCanvas, { opacity: 1, duration: 0.6, ease: 'power1.inOut' }, 0);
   tl.to(bgEl, { opacity: 0.1, duration: 0.45, ease: 'power1.inOut' }, 0);
+  // 3) Blinds move up to reveal the stage, staggered left to right
+  if (blindsStripes && blindsStripes.length) {
+    const stripeCount = blindsStripes.length;
+    const blindsStaggerDuration = 0.8 + (stripeCount * 0.09); // Total time for all stripes to finish animating
+    tl.add('blindsOpen', 0.0);
+    tl.to(blindsStripes, {
+      y: (index) => {
+        // Move each stripe upward by its full height (100vh)
+        return -window.innerHeight;
+      },
+      duration: 0.8,
+      ease: 'power1.in', // Ease in only—accelerate smoothly, stop abruptly
+      stagger: { 
+        each: 0.09, 
+        from: 0, // Left to right (index 0 first)
+        ease: 'linear' // Ease the stagger progression itself for fluid wave motion
+      }
+    }, 'blindsOpen');
+    // After blinds open completely, fade out and remove the loader, then remove blinds overlay
+    tl.to([loadingContent, blackoutEl], { opacity: 0, duration: ms(LOADING_FADE_OUT_MS), ease: 'power1.inOut' }, `blindsOpen+=${blindsStaggerDuration - 0.2}`);
+    tl.call(() => { try { blackoutEl?.remove(); blackoutEl = null; } catch {} }, null, `blindsOpen+=${blindsStaggerDuration}`);
+    tl.call(() => { try { blindsWrap?.remove(); } catch {} }, null, `blindsOpen+=${blindsStaggerDuration + 0.05}`);
+  } else {
+    // Reduced motion fallback: original quick fade
+    tl.to(blackoutEl, { opacity: 0, duration: ms(LOADING_FADE_OUT_MS), ease: 'power1.inOut', onComplete: ()=>{ blackoutEl?.remove(); blackoutEl = null; } }, 0);
+  }
 
   // Phase 2 setup at ~0.62s
   tl.call(() => {
@@ -2434,6 +2550,12 @@ dataArray = null;
 visualizerCanvas = null;
 visualizerCtx = null;
 animationId = null;
+let audioLoaded = false; // Track if audio file has been loaded
+let audioLoading = false; // Track if audio is currently loading
+let prePlayAnimationActive = true; // Start with pre-play animation
+let prePlayAnimationTime = 0; // Time for smooth wave animation
+let prePlayAnimationId = null; // Animation frame ID for pre-play animation
+let volumeOverride = null; // When set (0..1), overrides scroll-based target during fades
 // barHeights declared above
 
 // Visualizer configuration (can be adjusted at runtime via window.updateVisualizerConfig())
@@ -2443,6 +2565,7 @@ const visualizerConfig = {
   minBarHeightPx: 5,     // Minimum bar height in pixels
 };
 const AUDIO_FADE_MS = 1200; // Smooth fade duration for play/pause
+const VOLUME_SMOOTH_TC = AUDIO_FADE_MS / 1000 / 3; // ~3 time constants ~= fade duration
 
 function initMusicVisualizer() {
   visualizerCanvas = document.getElementById('music-visualizer');
@@ -2460,19 +2583,36 @@ function initMusicVisualizer() {
     barHeights[i] = Math.max(0.1, shape * 0.6);
   }
 
-  // Setup audio element
+  // Setup audio element (lazy-load: only preload metadata, not full file)
   bgAudio = new Audio(bgAudioUrl);
   bgAudio.loop = true;
-  bgAudio.preload = 'auto';
+  bgAudio.preload = 'metadata'; // Only load metadata for fast startup, full audio loads on first play
   bgAudio.crossOrigin = 'anonymous';
+
+  // Track when audio can start playing (buffer progress)
+  bgAudio.addEventListener('canplay', () => { audioLoaded = true; }, { once: true });
+  bgAudio.addEventListener('progress', trackAudioDownloadProgress);
 
   // Click handler for play/pause
   visualizerCanvas.addEventListener('click', toggleAudioVisualizer);
 
-  // Render initial static frame
-  renderStaticVisualizer();
+  // Start pre-play animation (will be stopped when user plays music)
+  prePlayAnimationActive = true;
+  animatePrePlayVisualizer();
   // Set initial opacity based on play state
   updateVisualizerOpacity();
+}
+
+// Track audio download progress for UX feedback on slow connections
+function trackAudioDownloadProgress() {
+  if (!bgAudio) return;
+  const buffered = bgAudio.buffered;
+  if (buffered.length > 0) {
+    const downloadProgress = buffered.end(buffered.length - 1) / bgAudio.duration;
+    if (window.__audioDebug) {
+      window.__audioDebug.downloadProgress = Math.round(downloadProgress * 100);
+    }
+  }
 }
 
 function setupAudioContext() {
@@ -2517,14 +2657,47 @@ function toggleAudioVisualizer() {
     smoothPause();
   } else {
     if (!audioContext) setupAudioContext();
-    smoothPlay()
-      .then(() => {
-        isAudioPlaying = true;
-        updateVisualizerOpacity();
-        visualizeAudio();
-      })
-      .catch(e => console.warn('Background audio failed to play:', e));
+    
+    // If audio not yet loaded, initiate lazy load on first click
+    if (!audioLoaded && !audioLoading) {
+      audioLoading = true;
+      console.log('Audio not yet loaded, buffering...');
+      // Start buffering and play when ready
+      bgAudio.addEventListener('canplay', playAudioWhenReady, { once: true });
+      bgAudio.load(); // Explicitly trigger download
+    } else if (audioLoaded) {
+      // Audio is ready, play immediately
+      playAudioImmediately();
+    } else {
+      // Audio is currently loading, wait for it
+      console.log('Audio buffering in progress, waiting...');
+      bgAudio.addEventListener('canplay', playAudioWhenReady, { once: true });
+    }
   }
+}
+
+function playAudioWhenReady() {
+  audioLoaded = true;
+  audioLoading = false;
+  console.log('Audio ready, starting playback');
+  playAudioImmediately();
+}
+
+function playAudioImmediately() {
+  // Stop pre-play animation
+  prePlayAnimationActive = false;
+  if (prePlayAnimationId) {
+    cancelAnimationFrame(prePlayAnimationId);
+    prePlayAnimationId = null;
+  }
+  
+  smoothPlay()
+    .then(() => {
+      isAudioPlaying = true;
+      updateVisualizerOpacity();
+      visualizeAudio();
+    })
+    .catch(e => console.warn('Background audio failed to play:', e));
 }
 
 async function smoothPlay() {
@@ -2533,9 +2706,11 @@ async function smoothPlay() {
   await bgAudio.play();
   const now = audioContext.currentTime;
   try {
-    gainNode.gain.cancelScheduledValues(now);
-    gainNode.gain.setValueAtTime(gainNode.gain.value, now);
-    gainNode.gain.linearRampToValueAtTime(1.0, now + AUDIO_FADE_MS / 1000);
+    // Clear pause override and begin smoothing toward scroll-based target
+    volumeOverride = null;
+    // Kick smoothing immediately so users feel the fade start
+    const desired = Math.max(0, Math.min(1, (volumeOverride ?? targetMusicVolume)));
+    gainNode.gain.setTargetAtTime(desired, now, VOLUME_SMOOTH_TC);
   } catch {}
 }
 
@@ -2543,11 +2718,114 @@ function smoothPause() {
   if (!audioContext || !gainNode) { try { bgAudio.pause(); } catch {} return; }
   const now = audioContext.currentTime;
   try {
-    gainNode.gain.cancelScheduledValues(now);
-    gainNode.gain.setValueAtTime(gainNode.gain.value, now);
-    gainNode.gain.linearRampToValueAtTime(0.0, now + AUDIO_FADE_MS / 1000);
+    // Force target to 0 and let smoothing handle fade-out
+    volumeOverride = 0.0;
+    gainNode.gain.setTargetAtTime(0.0, now, VOLUME_SMOOTH_TC);
   } catch {}
-  setTimeout(() => { try { bgAudio.pause(); } catch {} }, AUDIO_FADE_MS + 30);
+  // Pause after fade completes
+  setTimeout(() => { 
+    try { 
+      bgAudio.pause();
+      // Reset gainNode to 0 to ensure clean state
+      gainNode.gain.setValueAtTime(0.0, audioContext.currentTime);
+    } catch {} 
+  }, AUDIO_FADE_MS + 30);
+}
+
+// Initialize pseudo-random bar patterns for paused visualizer
+let prePlayBarSeeds = [];
+let prePlayBarHeights = []; // Smooth previous heights for continuity
+function initializePrePlayBarSeeds() {
+  prePlayBarSeeds = [];
+  prePlayBarHeights = [];
+  for (let i = 0; i < visualizerConfig.numBars; i++) {
+    // Generate pseudo-random seed per bar for deterministic but varied animation
+    prePlayBarSeeds[i] = Math.sin(i * 12.9898) * 43758.5453; // Common hash function
+    prePlayBarSeeds[i] = prePlayBarSeeds[i] - Math.floor(prePlayBarSeeds[i]);
+    prePlayBarHeights[i] = 0.45; // Initialize with base height
+  }
+}
+
+// Pre-play animation: complex organic pattern with multiple wave frequencies
+function animatePrePlayVisualizer() {
+  if (!prePlayAnimationActive || !visualizerCanvas || !visualizerCtx) return;
+  
+  prePlayAnimationId = requestAnimationFrame(animatePrePlayVisualizer);
+  prePlayAnimationTime += 0.025; // Slow, smooth progression
+  
+  // Initialize seeds once
+  if (prePlayBarSeeds.length === 0) {
+    initializePrePlayBarSeeds();
+  }
+  
+  const width = visualizerCanvas.width;
+  const height = visualizerCanvas.height;
+  
+  // Calculate bar width and gap based on config
+  const barWidth = width * visualizerConfig.barWidth / visualizerConfig.numBars;
+  const totalGapWidth = width - (barWidth * visualizerConfig.numBars);
+  const gap = totalGapWidth / visualizerConfig.numBars;
+  
+  visualizerCtx.clearRect(0, 0, width, height);
+  
+  for (let i = 0; i < visualizerConfig.numBars; i++) {
+    const centerIndex = Math.floor(visualizerConfig.numBars / 2);
+    const distanceFromCenter = Math.abs(i - centerIndex);
+    const shapeFactor = 1 - (distanceFromCenter / centerIndex) * 0.6; // taper edges
+    
+    // Per-bar seed for organic variation
+    const seed = prePlayBarSeeds[i];
+    
+    // Combine multiple wave frequencies at different speeds for organic feel
+    // Fundamental wave (slow, main rhythm)
+    const fundamentalFreq = 0.8;
+    const fundamental = (Math.sin(prePlayAnimationTime * fundamentalFreq + seed * 6.28) + 1) / 2;
+    
+    // Second harmonic (faster, adds complexity)
+    const harmonic2Freq = 1.9;
+    const harmonic2 = (Math.sin(prePlayAnimationTime * harmonic2Freq + seed * 3.14) + 1) / 2;
+    
+    // Third harmonic (even faster, adds detail)
+    const harmonic3Freq = 3.2;
+    const harmonic3 = (Math.sin(prePlayAnimationTime * harmonic3Freq - seed * 2.0) + 1) / 2;
+    
+    // Slow wandering drift (very long period, creates unpredictable motion)
+    const driftFreq = 0.15;
+    const drift = (Math.sin(prePlayAnimationTime * driftFreq + seed * 10.0) + 1) / 2;
+    
+    // Combine all waves with weighted mix:
+    // Fundamental drives the motion, harmonics add texture, drift adds subtle randomness
+    const waveValue = (
+      fundamental * 0.55 +      // Main driver
+      harmonic2 * 0.25 +         // Secondary variation
+      harmonic3 * 0.12 +         // Fine detail
+      drift * 0.08               // Slow, unpredictable drift
+    );
+    
+    // Add smooth per-bar variation (continuous, no abrupt changes)
+    // Use multiple smooth sine waves at different frequencies for organic feel
+    const variation1 = Math.sin(prePlayAnimationTime * 0.3 + seed * 7.77) * 0.04;
+    const variation2 = Math.sin(prePlayAnimationTime * 0.7 - seed * 5.23) * 0.03;
+    const variation3 = Math.sin(prePlayAnimationTime * 1.1 + seed * 3.14) * 0.02;
+    const smoothJitter = variation1 + variation2 + variation3;
+    
+    // Modulate height with all combined effects
+    const baseHeight = 0.45;
+    const heightWithVariation = baseHeight + (waveValue - 0.5) * 0.45 + smoothJitter;
+    const targetHeight = Math.max(0.15, heightWithVariation) * shapeFactor; // Clamp to 15% minimum
+    
+    // Apply exponential smoothing for ultra-smooth animation (prevents any tiny discontinuities)
+    prePlayBarHeights[i] += (targetHeight - prePlayBarHeights[i]) * 0.12; // Smooth lerp factor
+    const animatedHeight = prePlayBarHeights[i];
+    
+    const x = i * (barWidth + gap) + gap / 2;
+    let barHeightNorm = animatedHeight * height * currentVisualizerRange;
+    // Ensure minimum bar height of 5px
+    const barHeight = Math.max(visualizerConfig.minBarHeightPx, barHeightNorm);
+    const y = (height - barHeight) / 2;
+    visualizerCtx.fillStyle = '#E8EFFF';
+    visualizerCtx.fillRect(x, y, barWidth, barHeight);
+  }
 }
 
 function renderStaticVisualizer() {
@@ -2563,7 +2841,7 @@ function renderStaticVisualizer() {
   visualizerCtx.clearRect(0, 0, width, height);
   for (let i = 0; i < visualizerConfig.numBars; i++) {
     const x = i * (barWidth + gap) + gap / 2;
-    let barHeightNorm = barHeights[i] * height * 0.8;
+    let barHeightNorm = barHeights[i] * height * 0.8 * currentVisualizerRange;
     // Ensure minimum bar height of 5px
     const barHeight = Math.max(visualizerConfig.minBarHeightPx, barHeightNorm);
     const y = (height - barHeight) / 2;
@@ -2600,7 +2878,7 @@ function visualizeAudio() {
     barHeights[i] += (targetHeight - barHeights[i]) * 0.25;
 
     const x = i * (barWidth + gap) + gap / 2;
-    let barHeightNorm = barHeights[i] * height;
+    let barHeightNorm = barHeights[i] * height * currentVisualizerRange;
     // Ensure minimum bar height of 5px
     const barHeight = Math.max(visualizerConfig.minBarHeightPx, barHeightNorm);
     const y = (height - barHeight) / 2;
@@ -2615,11 +2893,13 @@ window.updateVisualizerConfig = function(config) {
   // Reinitialize bar heights array if numBars changed
   if (config.numBars) {
     barHeights = [];
+    prePlayBarHeights = [];
     for (let i = 0; i < visualizerConfig.numBars; i++) {
       const center = Math.floor(visualizerConfig.numBars / 2);
       const dist = Math.abs(i - center);
       const shape = 1 - (dist / center);
       barHeights[i] = Math.max(0.1, shape * 0.6);
+      prePlayBarHeights[i] = 0.45; // Initialize with base height
     }
   }
   if (!isAudioPlaying) renderStaticVisualizer();
@@ -2628,3 +2908,18 @@ window.updateVisualizerConfig = function(config) {
 
 // Initialize visualizer after startup
 setTimeout(initMusicVisualizer, 100);
+
+// Debug: expose audio loading state
+window.__audioDebug = {
+  get state() {
+    return {
+      audioLoaded,
+      audioLoading,
+      isPlaying: isAudioPlaying,
+      canPlayThrough: bgAudio ? bgAudio.readyState >= 3 : false,
+      downloadProgress: bgAudio ? `${Math.round((bgAudio.buffered.length > 0 ? bgAudio.buffered.end(bgAudio.buffered.length - 1) / bgAudio.duration : 0) * 100)}%` : 'N/A'
+    };
+  },
+  get duration() { return bgAudio ? bgAudio.duration : 'N/A'; },
+  get currentTime() { return bgAudio ? bgAudio.currentTime : 'N/A'; }
+};

@@ -1203,6 +1203,22 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     background: var(--white-100);
 }
 
+/* Startup blinds overlay (curtain/blinds transition) */
+.blinds-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999; /* below loading overlay (10000) so loader stays visible */
+    display: grid;
+    grid-template-columns: repeat(var(--blinds-count, 12), 1fr);
+    gap: 0;
+    pointer-events: none;
+}
+.blinds-overlay__stripe {
+    background: var(--bg-black);
+    will-change: transform, opacity;
+    transform-origin: center center;
+}
+
 /* Responsive bottom bar and navbar spacings */
 
 /* Enterprise Section (Section 3) */
