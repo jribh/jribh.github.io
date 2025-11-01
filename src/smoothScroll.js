@@ -22,6 +22,10 @@ class SmoothScroll {
     // One-way snap state
     this.section2Top = 0; // computed after DOM ready
     this.isAutoSnapping = false; // guard while animating snap
+    // Keyboard scrolling state
+    this.keysPressed = new Set();
+    this.keyScrollSpeed = 0;
+    this.keyScrollRafId = null;
     this.init();
   }
 
@@ -144,6 +148,11 @@ class SmoothScroll {
     // Listen for wheel events
   window.addEventListener('wheel', this.onWheel.bind(this), { passive: false });
     
+    // Listen for keyboard events
+    window.addEventListener('keydown', this.onKeyDown.bind(this), { passive: false });
+    window.addEventListener('keyup', this.onKeyUp.bind(this), { passive: false });
+    window.addEventListener('blur', this.onWindowBlur.bind(this), { passive: true });
+    
     // Listen for touchpad/touch events
     window.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: true });
     window.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false });
@@ -222,6 +231,134 @@ class SmoothScroll {
     // Clamp scroll target
     const maxScroll = this.content.scrollHeight - window.innerHeight;
     this.scrollTarget = Math.max(0, Math.min(this.scrollTarget, maxScroll));
+  }
+
+  onKeyDown(e) {
+    // Only handle keyboard scrolling if not in an input/textarea/contenteditable
+    const target = e.target;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.contentEditable === 'true') {
+      return; // Let default behavior handle input fields
+    }
+
+    const key = e.key;
+    if (this.keysPressed.has(key)) {
+      return; // Key already pressed, ignore repeat events
+    }
+
+    let shouldHandle = false;
+    let scrollDirection = 0;
+
+    switch (key) {
+      case 'ArrowDown':
+        scrollDirection = 1;
+        shouldHandle = true;
+        break;
+      case 'ArrowUp':
+        scrollDirection = -1;
+        shouldHandle = true;
+        break;
+      case 'PageDown':
+        this.scrollTarget += window.innerHeight;
+        this.scrollTarget = Math.max(0, Math.min(this.scrollTarget, this.content.scrollHeight - window.innerHeight));
+        e.preventDefault();
+        return;
+      case 'PageUp':
+        this.scrollTarget -= window.innerHeight;
+        this.scrollTarget = Math.max(0, Math.min(this.scrollTarget, this.content.scrollHeight - window.innerHeight));
+        e.preventDefault();
+        return;
+      case ' ': // Spacebar
+        if (!e.shiftKey) {
+          this.scrollTarget += window.innerHeight; // Space scrolls down
+        } else {
+          this.scrollTarget -= window.innerHeight; // Shift+Space scrolls up
+        }
+        this.scrollTarget = Math.max(0, Math.min(this.scrollTarget, this.content.scrollHeight - window.innerHeight));
+        e.preventDefault();
+        return;
+      case 'Home':
+        this.scrollTarget = 0;
+        e.preventDefault();
+        return;
+      case 'End':
+        this.scrollTarget = this.content.scrollHeight - window.innerHeight;
+        e.preventDefault();
+        return;
+      default:
+        return; // Don't prevent default for other keys
+    }
+
+    if (shouldHandle) {
+      e.preventDefault();
+      this.keysPressed.add(key);
+      this.keyScrollSpeed = scrollDirection * Math.max(30, window.innerHeight * 0.04);
+      this.startKeyScrolling();
+    }
+  }
+
+  onKeyUp(e) {
+    const key = e.key;
+    if (this.keysPressed.has(key)) {
+      this.keysPressed.delete(key);
+      
+      // If no arrow keys are pressed anymore, stop continuous scrolling
+      if (!this.hasActiveArrowKeys()) {
+        this.stopKeyScrolling();
+      }
+    }
+  }
+
+  onWindowBlur() {
+    // Stop all key scrolling when window loses focus
+    this.keysPressed.clear();
+    this.stopKeyScrolling();
+  }
+
+  hasActiveArrowKeys() {
+    return this.keysPressed.has('ArrowUp') || this.keysPressed.has('ArrowDown');
+  }
+
+  startKeyScrolling() {
+    if (this.keyScrollRafId) return; // Already scrolling
+    
+    const scrollStep = () => {
+      if (!this.hasActiveArrowKeys()) {
+        this.stopKeyScrolling();
+        return;
+      }
+
+      // One-way snap: if user holds down arrow while within Section 1, snap to Section 2
+      if (!this.isAutoSnapping && this.keyScrollSpeed > 0 && this.scrollCurrent < this.section2Top && this.scrollTarget < this.section2Top) {
+        this.isAutoSnapping = true;
+        this.scrollTo(this.section2Top, 700, () => {
+          this.isAutoSnapping = false;
+        });
+        this.stopKeyScrolling();
+        return;
+      }
+
+      if (this.isAutoSnapping) {
+        this.stopKeyScrolling();
+        return;
+      }
+
+      this.scrollTarget += this.keyScrollSpeed;
+      
+      // Clamp scroll target
+      const maxScroll = this.content.scrollHeight - window.innerHeight;
+      this.scrollTarget = Math.max(0, Math.min(this.scrollTarget, maxScroll));
+
+      this.keyScrollRafId = requestAnimationFrame(scrollStep);
+    };
+    
+    this.keyScrollRafId = requestAnimationFrame(scrollStep);
+  }
+
+  stopKeyScrolling() {
+    if (this.keyScrollRafId) {
+      cancelAnimationFrame(this.keyScrollRafId);
+      this.keyScrollRafId = null;
+    }
   }
 
   touchStartY = 0;
@@ -401,6 +538,7 @@ class SmoothScroll {
 
   destroy() {
     this.stop();
+    this.stopKeyScrolling();
     document.body.style.position = '';
     document.body.style.top = '';
     document.body.style.left = '';

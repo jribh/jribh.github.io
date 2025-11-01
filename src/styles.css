@@ -90,6 +90,17 @@ body {
     /* No outer padding - grid extends to screen edges */
 }
 
+/* Text selection styling */
+::selection {
+    background-color: var(--primary-dark);
+    color: white;
+}
+
+::-moz-selection {
+    background-color: var(--primary-dark);
+    color: white;
+}
+
 /* Grid guide overlay - for development/debugging */
 /* Toggle visibility: Press 'G' key to show/hide grid guides */
 .grid-guides {
@@ -137,9 +148,10 @@ body {
 .custom-cursor {
     position: fixed;
     pointer-events: none;
-    z-index: 10000;
+    z-index: 10001;
     mix-blend-mode: difference;
     transition: none; /* no transition for position */
+    opacity: 0; /* Hidden by default until mouse enters viewport */
     
     /* CSS variables for cursor dimensions */
     --cursor-width: 0.8em;
@@ -163,19 +175,6 @@ body {
     transition-timing-function: ease-out;
 }
 
-.custom-cursor__chevron {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 3em;
-    height: 3em;
-    opacity: 1; /* text.tertiary opacity */
-    transition: opacity 250ms ease;
-    will-change: transform;
-    transform-origin: center center;
-    color: white;
-}
-
 /* Locked (magnetic) state - iPadOS style */
 .custom-cursor--locked { 
     mix-blend-mode: normal;
@@ -191,8 +190,6 @@ body {
     transition-timing-function: ease-out;
 }
 
-.custom-cursor--locked .custom-cursor__chevron { opacity: 0; }
-
 /* Exiting state - morphing from CTA shape back to circle */
 /* Customize this state to control the transition appearance */
 .custom-cursor--exiting .custom-cursor__circle {
@@ -207,41 +204,13 @@ body {
     transition-timing-function: ease-out;
 }
 
-/* Hover state - cursor over clickable elements */
-.custom-cursor--hover .custom-cursor__circle {
-    width: 2.6em;
-    height: 2.6em;
-    background-color: var(--text-primary);
-    opacity: 1;
-    /* Keep perfect circle */
-    border-radius: 50%;
-    transition-property: width, height, background-color, opacity;
-    transition-duration: 100ms;
-    transition-timing-function: ease-out;
-}
-
-.custom-cursor--hover .custom-cursor__chevron {
-    opacity: 0;
-}
-
 /* Click/Active state - mouse button pressed */
 .custom-cursor--active .custom-cursor__circle {
     width: 0.7em;
     height: 0.7em;
 }
 
-/* Scroll-click state - clicking to scroll (chevron visible) */
-.custom-cursor--scroll-click .custom-cursor__circle {
-    width: 3.2em; /* 4x the original 0.8em */
-    height: 3.2em;
-    transition: width 120ms cubic-bezier(0.34, 1.56, 0.64, 1), height 120ms cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
 /* Click on hover state - clicking while over clickable element */
-.custom-cursor--hover.custom-cursor--active .custom-cursor__circle {
-    width: 2.4em;
-    height: 2.4em;
-}
 
 /* Text selection state - cursor over text elements (headings, paragraphs) */
 .custom-cursor--text .custom-cursor__circle {
@@ -253,10 +222,6 @@ body {
     transition-property: width, height, border-radius, background-color, opacity;
     transition-duration: 100ms;
     transition-timing-function: ease-out;
-}
-
-.custom-cursor--text .custom-cursor__chevron {
-    opacity: 0;
 }
 
 /* Magnetic target defaults (applied via JS with [data-magnetic]) */
@@ -492,6 +457,40 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
 .side-nav__dot.is-active::before {
     border-color: var(--text-secondary);
+}
+
+/* Performance HUD (Top-Left) */
+.performance-hud {
+    position: fixed;
+    top: 2.8em;
+    left: 4em;
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.performance-hud__content {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    font-family: var(--font-body);
+    font-size: 1em;
+}
+
+.performance-hud__label {
+    color: var(--text-secondary);
+}
+
+.performance-hud__value {
+    color: var(--text-primary);
+}
+
+/* Show performance HUD after startup */
+.performance-hud.is-visible {
+    opacity: 1;
+    visibility: visible;
 }
 
 /* Bottom Bar Container */
@@ -1347,6 +1346,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     white-space: normal;
     color: var(--text-primary) !important;
     transition: opacity 0.1s ease;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.35), 0 0 16px rgba(0, 0, 0, 0.75);
 }
 
 /* Ensure ornaments within word spans display correctly */
@@ -1721,6 +1721,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .section-tagline { font-size: 0.9em; }
     .content-section[data-section="2"] .section-word { font-size: 26em; }
     
+    .performance-hud { top: 2em; left: 3em; }
     .bottom-bar { bottom: 2em; padding-left: 3em; padding-right: 3em; }
     .bottom-bar__visualizer { height: 1.8em; }
     .bottom-bar__icon { width: 1.4em; height: 1.4em; }
@@ -1737,6 +1738,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
     .navbar { gap: 1.75em; padding-inline: 2em; }
     .navbar__logo-hero { height: 7em; }
+    .performance-hud { top: 1.75em; left: 2.5em; }
     .bottom-bar {
         bottom: 1.75em;
         padding-left: 2.5em;
@@ -1763,6 +1765,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
     .body-default { font-size: 1.8em; }
     
+    .performance-hud { top: 1.5em; left: 2em; }
     .bottom-bar { bottom: 1.5em; padding-left: 2em; padding-right: 2em; }
     .navbar { gap: 1.5em; padding-inline: 1.75em; padding-block: 0.7em; }
     .bottom-bar__visualizer { height: 1.6em; }
@@ -1826,6 +1829,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     
     #dark-overlay { background-color: rgba(0, 0, 0, 0.75); }
     
+    .performance-hud { top: 1em; left: 1em; }
     .bottom-bar {
         display: flex;
         grid-template-columns: none;

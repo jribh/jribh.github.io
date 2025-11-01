@@ -15,7 +15,6 @@ function initCustomCursor() {
     const cursor = document.querySelector('.custom-cursor');
     if (!cursor) return;
 
-    const chevron = cursor.querySelector('.custom-cursor__chevron');
     let isVisible = false;
     let isCursorLocked = false;
     let lockedTarget = null;
@@ -29,20 +28,15 @@ function initCustomCursor() {
     let mouseX = 0;
     let mouseY = 0;
     
-    // Store chevron position for lagged movement
-    let chevronX = 0;
-    let chevronY = 0;
-    
-    // Lag factor for chevron (higher = more lag)
-    const lagFactor = 0.25;
-    
-    // Track if cursor is in top 25% of screen
-    let isInTopZone = false;
-    let currentRotation = 0;
-    let targetRotation = 0;
-    
     // Track if text field is focused
     let isTextFieldFocused = false;
+    
+    // Track if mouse has ever entered the viewport (to avoid showing cursor at load)
+    let mouseHasEnteredViewport = false;
+    
+    // Start with cursor hidden
+    cursor.style.opacity = '0';
+    isVisible = false;
 
     // Track focus/blur on text fields
     const textFieldSelectors = 'input[type="text"], input[type="email"], input[type="password"], textarea, input:not([type="button"]):not([type="submit"]):not([type="reset"])';
@@ -66,57 +60,23 @@ function initCustomCursor() {
         }
     });
 
-    // Function to update cursor zone status
-    function updateCursorZone() {
-        // Check if cursor is over the first section
-        const firstSection = document.querySelector('.content-section[data-section="1"]');
-        let isInFirstSection = false;
-        
-        if (firstSection) {
-            const rect = firstSection.getBoundingClientRect();
-            isInFirstSection = (
-                mouseY >= rect.top &&
-                mouseY <= rect.bottom &&
-                mouseX >= rect.left &&
-                mouseX <= rect.right
-            );
-        }
-        
-        // Check if cursor is over the last section (data-section="6")
-        const lastSection = document.querySelector('.content-section[data-section="6"]');
-        let isInLastSection = false;
-        
-        if (lastSection) {
-            const rect = lastSection.getBoundingClientRect();
-            isInLastSection = (
-                mouseY >= rect.top &&
-                mouseY <= rect.bottom &&
-                mouseX >= rect.left &&
-                mouseX <= rect.right
-            );
-        }
-        
-        // Check if in top 25% of viewport (but not in first section) OR if in last section
-        const viewportHeight = window.innerHeight;
-        const topZoneThreshold = viewportHeight * 0.25;
-        isInTopZone = (mouseY < topZoneThreshold && !isInFirstSection) || isInLastSection;
-    }
-
     // Direct cursor movement without smoothing
     document.addEventListener('mousemove', (e) => {
         mouseX = e.clientX;
         mouseY = e.clientY;
+        
+        // Mark that mouse has entered the viewport on first move
+        if (!mouseHasEnteredViewport) {
+            mouseHasEnteredViewport = true;
+        }
 
         // If not locked, update cursor position immediately
         if (!isCursorLocked) {
             cursor.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
         }
         
-        // Update zone status
-        updateCursorZone();
-        
         // Show cursor when mouse moves in the page
-        if (!isVisible) {
+        if (!isVisible && mouseHasEnteredViewport) {
             cursor.style.opacity = '1';
             isVisible = true;
         }
@@ -125,62 +85,6 @@ function initCustomCursor() {
         document.body.style.cursor = 'none';
     });
     
-    // Update zone status on scroll as well (even when mouse is stationary)
-    document.addEventListener('scroll', () => {
-        updateCursorZone();
-    }, { passive: true });
-    
-    // For smooth scroll, also listen to the custom scroll updates
-    if (window.smoothScroll) {
-        // Poll for scroll updates when using custom smooth scroll
-        setInterval(() => {
-            updateCursorZone();
-        }, 16); // ~60fps
-    }
-    
-    // Animate chevron with lag
-    function animateChevron() {
-        // Smoothly interpolate chevron position towards mouse position
-        chevronX += (mouseX - chevronX) * lagFactor;
-        chevronY += (mouseY - chevronY) * lagFactor;
-        
-        // Calculate offset from cursor center
-        const offsetX = chevronX - mouseX;
-        const offsetY = chevronY - mouseY;
-        
-        // Determine target rotation based on zone
-        targetRotation = isInTopZone ? 180 : 0;
-        
-        // Smoothly interpolate rotation
-        currentRotation += (targetRotation - currentRotation) * 0.12;
-        
-        // Distance from dot center to chevron starting position (below the dot)
-        const distanceFromCenter = 1.8; // 0.8em (circle radius) + gap + chevron offset
-        
-        // Set transform origin to be at the cursor dot position
-        // The chevron is 3em tall, so we need to offset the origin upward
-        chevron.style.transformOrigin = `50% -${distanceFromCenter}em`;
-        
-        // Update CSS variable for rotation
-        chevron.style.setProperty('--chevron-rotation', `${currentRotation}deg`);
-        
-        // Hide chevron if text field is focused, otherwise let CSS handle hover state
-        if (isTextFieldFocused) {
-            chevron.style.opacity = '0';
-        } else {
-            // Remove inline opacity to let CSS handle it (hover state)
-            chevron.style.opacity = '';
-        }
-        
-        // Apply transform: translate to follow cursor with lag, then rotate around the origin (which is at the dot)
-        chevron.style.transform = `translate(calc(-50% + ${offsetX}px), calc(${distanceFromCenter}em + ${offsetY}px)) rotate(${currentRotation}deg)`;
-        
-        requestAnimationFrame(animateChevron);
-    }
-    
-    // Start animation loop
-    animateChevron();
-
     // Define clickable selectors - comprehensive list for all interactive elements
     const clickableSelectors = 'a, button, input, textarea, select, [role="button"], .navbar__link, .side-nav__dot, .bottom-bar__social, .bottom-bar__visualizer, .work-card, .contact-form, .contact-email-link, .contact-copy-btn, .btn-primary, .btn-secondary, .btn-instagram, .contact-form-input, .contact-form-submit, .navbar__logo';
 
@@ -189,21 +93,6 @@ function initCustomCursor() {
 
     // Text element selectors for text cursor behavior
     const textSelectors = 'h1, h2, h3, h4, h5, h6, p, input, textarea';
-
-    // Handle hover on clickable elements
-    const clickableElements = document.querySelectorAll(clickableSelectors);
-    
-    clickableElements.forEach((el) => {
-        el.addEventListener('mouseenter', () => {
-            if (isCursorLocked) return; // magnetic lock manages its own state
-            cursor.classList.add('custom-cursor--hover');
-        });
-        
-        el.addEventListener('mouseleave', () => {
-            if (isCursorLocked) return; // will be handled by magnetic leave
-            cursor.classList.remove('custom-cursor--hover');
-        });
-    });
 
     // Handle hover on text elements (headings, paragraphs, inputs, textareas) - show text cursor
     // Filter out paragraphs that contain interactive elements, but include all inputs and textareas
@@ -224,7 +113,6 @@ function initCustomCursor() {
         el.addEventListener('mouseenter', () => {
             if (isCursorLocked) return; // magnetic lock takes precedence
             cursor.classList.add('custom-cursor--text');
-            cursor.classList.remove('custom-cursor--hover');
         });
         
         el.addEventListener('mouseleave', () => {
@@ -259,7 +147,6 @@ function initCustomCursor() {
         lockedRect = target.getBoundingClientRect();
         isCursorLocked = true;
 
-        cursor.classList.remove('custom-cursor--hover');
         cursor.classList.add('custom-cursor--locked');
 
         // Start continuous position updates
@@ -474,13 +361,16 @@ function initCustomCursor() {
 
     // Re-show cursor when re-entering the document
     document.addEventListener('mouseenter', () => {
-        cursor.style.opacity = '1';
-        isVisible = true;
+        // Only show cursor if it has previously entered the viewport
+        if (mouseHasEnteredViewport) {
+            cursor.style.opacity = '1';
+            isVisible = true;
+        }
     });
 
     // Handle mouse down (click) state
     document.addEventListener('mousedown', (e) => {
-        // If text field is focused, don't trigger scroll-click behavior
+        // If text field is focused, don't trigger any special behavior
         if (isTextFieldFocused) {
             return;
         }
@@ -488,17 +378,8 @@ function initCustomCursor() {
         // Scale down cursor on click (like CodePen) - always apply, even when locked
         cursor.style.setProperty('--cursor-scale', '0.94');
         
-        // Check if this click will result in scrolling (chevron is visible, not hovering clickable element)
-        const isClickable = e.target.closest(clickableSelectors);
-        const chevronHidden = cursor.classList.contains('custom-cursor--hover') || cursor.classList.contains('custom-cursor--locked');
-
-        if (!isClickable && !chevronHidden) {
-            // This will scroll - use scroll-click state
-            cursor.classList.add('custom-cursor--scroll-click');
-        } else {
-            // Normal click on clickable element
-            cursor.classList.add('custom-cursor--active');
-        }
+        // Add active state for visual feedback
+        cursor.classList.add('custom-cursor--active');
     });
 
     document.addEventListener('mouseup', () => {
@@ -506,37 +387,7 @@ function initCustomCursor() {
         cursor.style.setProperty('--cursor-scale', '1');
         
         cursor.classList.remove('custom-cursor--active');
-        cursor.classList.remove('custom-cursor--scroll-click');
-    });    // Handle mix-blend-mode invert effect on clickable elements
-    const handleMixBlend = () => {
-        const cursorRect = cursor.getBoundingClientRect();
-        const cursorCenterX = cursorRect.left + cursorRect.width / 2;
-        const cursorCenterY = cursorRect.top + cursorRect.height / 2;
-        
-    clickableElements.forEach((el) => {
-        // Skip navbar, bottom-bar, btn-link, btn-instagram, and contact-footer__link elements to prevent interference with their styles
-        if (el.closest('.navbar') || el.closest('.bottom-bar') || el.classList.contains('btn-link') || el.classList.contains('btn-instagram') || el.classList.contains('contact-footer__link')) {
-            return;
-        }            const rect = el.getBoundingClientRect();
-            const isOver = (
-                cursorCenterX >= rect.left &&
-                cursorCenterX <= rect.right &&
-                cursorCenterY >= rect.top &&
-                cursorCenterY <= rect.bottom
-            );
-            
-            if (isOver) {
-                el.style.mixBlendMode = 'difference';
-                el.style.color = 'white';
-            } else {
-                el.style.mixBlendMode = '';
-                el.style.color = '';
-            }
-        });
-        requestAnimationFrame(handleMixBlend);
-    };
-
-    handleMixBlend();
+    });
 
     // Force hide default cursor on body with additional event
     document.body.style.cursor = 'none';
@@ -544,143 +395,6 @@ function initCustomCursor() {
     // Re-apply cursor: none when focus returns to window
     window.addEventListener('focus', () => {
         document.body.style.cursor = 'none';
-    });
-
-    // Click-to-scroll functionality
-    initClickToScroll();
-}
-
-/**
- * Click-to-scroll functionality
- * Scrolls to next/previous section based on cursor position and chevron direction
- */
-function initClickToScroll() {
-    // Define clickable selectors that should NOT trigger scroll
-    const clickableSelectors = 'a, button, input, textarea, select, [role="button"], .navbar__link, .side-nav__dot, .bottom-bar__social, .work-card, .contact-form, .contact-email-link, .contact-copy-btn, .bottom-bar, .side-nav, .btn-primary, .btn-secondary, .btn-instagram, .navbar__logo, h1, h2, h3, h4, h5, h6, p';
-    
-    // Text field selectors
-    const textFieldSelectors = 'input[type="text"], input[type="email"], input[type="password"], textarea, input:not([type="button"]):not([type="submit"]):not([type="reset"])';
-    
-    // Track the last focused text field
-    let lastFocusedTextField = null;
-    
-    // Listen for focus to track which field was focused
-    document.addEventListener('focus', (e) => {
-        if (e.target.matches && e.target.matches(textFieldSelectors)) {
-            lastFocusedTextField = e.target;
-        }
-    }, true);
-    
-    // Clear on blur
-    document.addEventListener('blur', (e) => {
-        if (e.target === lastFocusedTextField) {
-            // Small delay before clearing to allow click to check it
-            setTimeout(() => {
-                lastFocusedTextField = null;
-            }, 100);
-        }
-    }, true);
-    
-    // Get all sections
-    const getAllSections = () => document.querySelectorAll('.content-section');
-    
-    // Get current section based on scroll position
-    const getCurrentSection = () => {
-        const sections = getAllSections();
-        const scrollPos = smoothScroll.scrollCurrent || window.scrollY;
-        const viewportHeight = window.innerHeight;
-        const scrollMid = scrollPos + viewportHeight / 2;
-        
-        let currentSection = sections[0];
-        sections.forEach(section => {
-            const sectionTop = section.offsetTop;
-            const sectionBottom = sectionTop + section.offsetHeight;
-            
-            if (scrollMid >= sectionTop && scrollMid < sectionBottom) {
-                currentSection = section;
-            }
-        });
-        
-        return currentSection;
-    };
-    
-    // Get next or previous section
-    const getAdjacentSection = (direction) => {
-        const sections = Array.from(getAllSections());
-        const currentSection = getCurrentSection();
-        const currentIndex = sections.indexOf(currentSection);
-        
-        if (direction === 'down') {
-            return currentIndex < sections.length - 1 ? sections[currentIndex + 1] : null;
-        } else {
-            return currentIndex > 0 ? sections[currentIndex - 1] : null;
-        }
-    };
-    
-    // Handle click event
-    document.addEventListener('click', (e) => {
-        // Check if a text field was just focused (click is defocusing it)
-        if (lastFocusedTextField) {
-            return; // Don't scroll, this click is just to defocus the field
-        }
-        
-        // Check if clicking on a text field to focus it
-        const clickingTextField = e.target.matches && e.target.matches(textFieldSelectors);
-        if (clickingTextField) {
-            return;
-        }
-        
-        // Check if click is on a clickable element
-        const isClickable = e.target.closest(clickableSelectors);
-        if (isClickable) return;
-        
-        // Determine scroll direction based on cursor zone
-        // Chevron points up (180deg) when in top 25% zone OR in last section
-        const viewportHeight = window.innerHeight;
-        const topZoneThreshold = viewportHeight * 0.25;
-        const mouseY = e.clientY;
-        
-        // Check if in first section
-        const firstSection = document.querySelector('.content-section[data-section="1"]');
-        let isInFirstSection = false;
-        if (firstSection) {
-            const rect = firstSection.getBoundingClientRect();
-            isInFirstSection = (
-                mouseY >= rect.top &&
-                mouseY <= rect.bottom
-            );
-        }
-        
-        // Check if in last section
-        const lastSection = document.querySelector('.content-section[data-section="6"]');
-        let isInLastSection = false;
-        if (lastSection) {
-            const rect = lastSection.getBoundingClientRect();
-            isInLastSection = (
-                mouseY >= rect.top &&
-                mouseY <= rect.bottom
-            );
-        }
-        
-        const shouldScrollUp = (mouseY < topZoneThreshold && !isInFirstSection) || isInLastSection;
-        const direction = shouldScrollUp ? 'up' : 'down';
-        
-        // Get target section
-        const targetSection = getAdjacentSection(direction);
-        
-        if (targetSection) {
-            const targetTop = targetSection.offsetTop;
-            
-            // Use smooth scroll if available, otherwise use native scroll
-            if (smoothScroll && typeof smoothScroll.scrollTo === 'function') {
-                smoothScroll.scrollTo(targetTop, 1200); // Slightly slower for click navigation
-            } else {
-                window.scrollTo({
-                    top: targetTop,
-                    behavior: 'smooth'
-                });
-            }
-        }
     });
 }
 

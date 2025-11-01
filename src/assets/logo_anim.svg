@@ -1,0 +1,11 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Logo with animated paths">
+<path id="j" d="M3.17969 8.16016H13.1797V19.1602L4.17969 25.1602" stroke="white" stroke-width="4.5"/>
+<path id="r" d="M35.1797 17.1602V12.1602C35.1797 9.95102 33.3888 8.16016 31.1797 8.16016H20.6797V14.1602M20.6797 26.043V14.1602M20.6797 14.1602L37.0523 25.2756" stroke="white" stroke-width="4.5"/>
+<path id="h" d="M27.5339 22.4258L27.5312 32.81M27.5312 41.909V32.81M27.5312 32.81H38.1407" stroke="white" stroke-width="4.5"/>
+<path id="i_body" d="M42.1797 42.1602V17.1602" stroke="white" stroke-width="4.5"/>
+<path id="i_dot" d="M42.1797 15.1602V6.16016" stroke="#FA5242" stroke-width="4.5"/>
+<path id="b_upper" d="M3.17969 26.9258H15.1797L24.4421 33.2294" stroke="white" stroke-width="4.5"/>
+<path id="b_lower" d="M3.17969 32.9219H12.6797L22.6444 39.6597L3.18118 39.6595" stroke="white" stroke-width="4.5"/>
+</g>
+</svg>

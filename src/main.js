@@ -6,6 +6,7 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 import { EffectComposer, RenderPass, EffectPass, SelectiveBloomEffect, SMAAEffect, SMAAPreset, HueSaturationEffect, BrightnessContrastEffect , Effect } from 'postprocessing';
 import { reededParams, createReededPass, setReededResolution, tickReededTime, updateReeded as _updateReeded, createGrainPass, updateGrain, setReededDepth, setReededScrollProgress, setReededScrollRefractionMultiplier, setReededSplitScreenMode, createBottomVignettePass, setBottomVignetteResolution, updateBottomVignette } from './effects/OverlayEffects.js';
 import { gsap } from 'gsap';
+import { logoAnimationComplete, markLoadingComplete } from './logoTestAnim.js';
 
 import hdriUrl from './assets/hdri_bg.hdr';
 import modelUrl from './assets/head_packed.glb';
@@ -112,13 +113,7 @@ logoImg.draggable = false;
 logoImg.decoding = 'async';
 logoImg.className = 'loading-overlay__logo';
 
-const loadingBar = document.createElement('div');
-loadingBar.className = 'loading-overlay__bar';
-const loadingBarFill = document.createElement('div');
-loadingBarFill.className = 'loading-overlay__progress';
-loadingBar.appendChild(loadingBarFill);
 loadingContent.appendChild(logoImg);
-loadingContent.appendChild(loadingBar);
 blackoutEl.appendChild(loadingContent);
 document.body.appendChild(blackoutEl);
 gsap.set(blackoutEl, { opacity: 0 });
@@ -142,6 +137,14 @@ function createBlindsOverlay(stripeCount) {
 }
 
 let overlayActivated = false;
+let logoAnimReady = false;
+
+// Wait for logo animation to complete
+logoAnimationComplete.then(() => {
+  logoAnimReady = true;
+  tryStartStartupSequence();
+});
+
 const activateLoadingOverlay = () => {
   if (overlayActivated) return;
   overlayActivated = true;
@@ -169,49 +172,28 @@ let modelReady = false;
 let startupTriggered = false;
 
 loadingManager.onProgress = (_url, itemsLoaded, itemsTotal) => {
-  const progress = itemsTotal ? itemsLoaded / itemsTotal : 1;
-  tweenLoadingBarWidth(`${Math.min(progress * 100, 100)}%`, 0.45, 'power2.out');
+  // Progress bar removed - no longer updating progress
 };
 
 loadingManager.onLoad = () => {
   assetsReady = true;
-  tweenLoadingBarWidth('100%', 0.5, 'power3.out');
-  // Fade out logo and progress bar after reaching 100%
-  gsap.to(logoImg, { opacity: 0, duration: 0.6, delay: 0.5, ease: 'power2.out' });
-  gsap.to(loadingBar, { opacity: 0, duration: 0.6, delay: 0.2, ease: 'power2.out' });
   tryStartStartupSequence();
 };
 
 loadingManager.onError = (url) => {
   console.warn(`Asset failed to load: ${url}`);
-  tweenLoadingBarWidth('100%', 0.5, 'power3.out');
-  // Fade out logo and progress bar even on error
-  gsap.to(logoImg, { opacity: 0, duration: 0.8, delay: 1.0, ease: 'power2.out' });
-  gsap.to(loadingBar, { opacity: 0, duration: 0.8, delay: 1.0, ease: 'power2.out' });
   assetsReady = true;
   tryStartStartupSequence();
 };
 
 function tryStartStartupSequence() {
   if (startupTriggered) return;
-  if (!assetsReady || !modelReady) return;
+  if (!assetsReady || !modelReady || !logoAnimReady) return;
   startupTriggered = true;
   startStartupSequence();
 }
 
-function tweenLoadingBarWidth(widthValue, duration = 0.45, ease = 'power2.out') {
-  if (!loadingBarFill) return;
-  if (PREFERS_REDUCED_MOTION || duration <= 0) {
-    gsap.set(loadingBarFill, { width: widthValue });
-    return;
-  }
-  gsap.to(loadingBarFill, {
-    width: widthValue,
-    duration,
-    ease,
-    overwrite: 'auto'
-  });
-}
+
 
 theCanvas.style.overflow = "hidden";
 theCanvas.style.left = '0';
@@ -1288,10 +1270,10 @@ let _dprBucketIndex = 0; // start at full quality of current baseCapCurrent
 // Effect quality tiers prioritizing subtle internal resolution drops before DPR buckets
 // level 0 = best, higher = more aggressive downscale
 const EFFECT_QUALITY_LEVELS = [
-  { name:'ultra', bloomScale:1.0,  reededScale:1.0 },
-  { name:'high',  bloomScale:0.82, reededScale:0.9 },
-  { name:'med',   bloomScale:0.68, reededScale:0.8 },
-  { name:'low',   bloomScale:0.55, reededScale:0.7 } // reserve for very heavy scenes
+  { name:'Ultra', bloomScale:1.0,  reededScale:1.0 },
+  { name:'High',  bloomScale:0.82, reededScale:0.9 },
+  { name:'Med',   bloomScale:0.68, reededScale:0.8 },
+  { name:'Low',   bloomScale:0.55, reededScale:0.7 } // reserve for very heavy scenes
 ];
 let _effectQualityLevel = 0;
 
@@ -1510,135 +1492,41 @@ function perfAdaptiveUpdate(delta){
   _updatePerfHUD(150);
 }
 
-// Lightweight Perf HUD
-let _perfHUD = null;
+// Performance HUD update tracking
 let _perfHUDLastUpdate = 0;
-const _perfLog = [];
 
 function _initPerfHUD(){
-  if (_perfHUD) return;
-  // Inject stylesheet for responsive/collapsible HUD with color tags
-  const styleId = 'perf-hud-style';
-  if (!document.getElementById(styleId)){
-    const st = document.createElement('style');
-    st.id = styleId;
-    st.textContent = `
-      #perf-hud{position:fixed;top:8px;left:8px;z-index:10000;background:rgba(12,12,12,.72);color:#e8efff;border-radius:10px;font:12px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;backdrop-filter:saturate(1.15) blur(2px);box-shadow:0 4px 14px rgba(0,0,0,.25);pointer-events:auto;max-width:80vw}
-      #perf-hud.collapsed{background:none;border:none;border-radius:0;padding:0}
-      #perf-hud .hd{display:flex;align-items:center;gap:6px;font-weight:700;padding:8px 10px;cursor:pointer;user-select:none}
-      #perf-hud.collapsed .hd{padding:2px 6px;font-size:13px;font-weight:400}
-      #perf-hud .bd{white-space:pre-wrap;padding:0 10px 8px 10px}
-      #perf-hud .lg{white-space:pre-wrap;margin:6px 0 8px 0;border-top:1px solid rgba(255,255,255,.08);padding:6px 10px 0 10px;max-height:140px;overflow:auto}
-      #perf-hud.collapsed .bd, #perf-hud.collapsed .lg{display:none}
-      #perf-hud.collapsed .hd .caret{display:none}
-      #perf-hud .tag{display:inline-block;font-weight:700;padding:0 6px;border-radius:6px;color:#111}
-      #perf-hud .tag.up{background:#16c784}
-      #perf-hud .tag.down{background:#ff6b6b}
-      #perf-hud .tag.budget{background:#fbbf24}
-      #perf-hud .ts{opacity:.7}
-      @media (max-width:640px){
-        #perf-hud{top:6px;left:6px;border-radius:8px}
-        #perf-hud.collapsed{border-radius:0}
-        #perf-hud .hd{padding:6px 8px;font-size:11px}
-        #perf-hud.collapsed .hd{padding:2px 4px;font-size:12px}
-        #perf-hud .bd{padding:0 8px 6px 8px;font-size:11px}
-        #perf-hud .lg{padding:6px 8px 0 8px;max-height:100px;font-size:10px}
-      }
-    `;
-    document.head.appendChild(st);
+  // Show performance HUD element
+  const perfHud = document.querySelector('.performance-hud');
+  if (perfHud) {
+    // Defer showing until after startup so GSAP can animate it in
+    if (!startupActive) {
+      perfHud.classList.add('is-visible');
+    }
   }
-
-  const wrap = document.createElement('div');
-  wrap.id = 'perf-hud';
-  wrap.className = 'collapsed';
-
-  const head = document.createElement('div'); head.className='hd';
-  const caret = document.createElement('span'); caret.textContent='▸'; caret.style.opacity='.8'; caret.className='caret';
-  const title = document.createElement('span'); title.textContent = 'Perf';
-  const mini = document.createElement('span'); mini.style.opacity='.85'; mini.style.fontWeight='600'; mini.style.marginLeft='4px'; mini.className='mini';
-  head.appendChild(caret); head.appendChild(title); head.appendChild(mini);
-
-  const body = document.createElement('div'); body.className='bd';
-  const log = document.createElement('div'); log.className='lg';
-  wrap.appendChild(head); wrap.appendChild(body); wrap.appendChild(log);
-  document.body.appendChild(wrap);
-  _perfHUD = { el: wrap, head, body, log, caret, mini, title };
-
-  // Toggle expand/collapse on click/tap
-  const toggle = ()=>{
-    const collapsed = wrap.classList.toggle('collapsed');
-    wrap.setAttribute('aria-expanded', String(!collapsed));
-    _updatePerfHUD(0);
-  };
-  head.addEventListener('click', toggle, {passive:true});
-  head.addEventListener('touchstart', (e)=>{ e.preventDefault(); toggle(); }, {passive:false});
-}
-
-function _describeQuality(){
-  const tier = EFFECT_QUALITY_LEVELS[_effectQualityLevel]?.name || 'ultra';
-  const bucket = DPR_BUCKETS[_dprBucketIndex] ?? 1.0;
-  const pr = currentTargetPixelRatio().toFixed(2);
-  return `FPS: ${_lastEmaFPS.toFixed(1)}\nTier: ${tier}  DPR: ${pr} (bucket ${bucket})`;
 }
 
 function _updatePerfHUD(throttleMs = 150){
   const now = performance.now();
-  if (!_perfHUD || (now - _perfHUDLastUpdate) < throttleMs) return;
+  if ((now - _perfHUDLastUpdate) < throttleMs) return;
   _perfHUDLastUpdate = now;
-  const collapsed = _perfHUD.el.classList.contains('collapsed');
-  // Header caret + compact line
-  _perfHUD.caret.textContent = collapsed ? '▸' : '▾';
-  const ema = (_lastEmaFPS && isFinite(_lastEmaFPS)) ? `${_lastEmaFPS.toFixed(0)}` : '';
-  const bucket = (typeof _dprBucketIndex==='number') ? `DPR ${DPR_BUCKETS[_dprBucketIndex]}` : '';
-  const tier = (typeof _effectQualityLevel==='number') ? EFFECT_QUALITY_LEVELS[_effectQualityLevel].name : '';
-  _perfHUD.mini.textContent = collapsed ? '' : [bucket, tier].filter(Boolean).join(' · ');
-
-  // Update title based on collapsed state
-  _perfHUD.title.textContent = collapsed ? ema : 'Perf';
-
-  // Body and Log
-  _perfHUD.body.textContent = _describeQuality();
-  if (_perfLog.length){
-    const last = _perfLog.slice(-8);
-    const html = last.map(_renderPerfLogLine).join('');
-    _perfHUD.log.innerHTML = html;
+  
+  // Update FPS value
+  const fpsFPS = document.getElementById('perf-fps');
+  if (fpsFPS && _lastEmaFPS && isFinite(_lastEmaFPS)) {
+    fpsFPS.textContent = _lastEmaFPS.toFixed(0);
+  }
+  
+  // Update Tier value
+  const perfTier = document.getElementById('perf-tier');
+  if (perfTier && typeof _effectQualityLevel === 'number') {
+    perfTier.textContent = EFFECT_QUALITY_LEVELS[_effectQualityLevel].name;
   }
 }
 
-function _logPerfEvent(msg){
-  const t = new Date();
-  const hh = String(t.getHours()).padStart(2,'0');
-  const mm = String(t.getMinutes()).padStart(2,'0');
-  const ss = String(t.getSeconds()).padStart(2,'0');
-  _perfLog.push(`${hh}:${mm}:${ss} ${msg}`);
-  _updatePerfHUD(0);
-}
-
-// Helper to format richer changes consistently
 function _logChange(kind, from, to, reason){
-  const t = new Date();
-  const hh = String(t.getHours()).padStart(2,'0');
-  const mm = String(t.getMinutes()).padStart(2,'0');
-  const ss = String(t.getSeconds()).padStart(2,'0');
-  _perfLog.push({ ts: `${hh}:${mm}:${ss}`, kind, from, to, reason });
-  _updatePerfHUD(0);
-}
-
-function _renderPerfLogLine(entry){
-  // Legacy string entries support
-  if (typeof entry === 'string'){
-    const safe = entry.replace(/[&<>]/g, s=>({ '&':'&amp;','<':'&lt;','>':'&gt;' }[s]));
-    return `<div>• ${safe}</div>`;
-  }
-  const {ts, kind, from, to, reason} = entry;
-  const isUp = kind.includes('↑');
-  const isDown = kind.includes('↓');
-  const cls = kind.startsWith('Budget') ? 'budget' : (isUp ? 'up' : (isDown ? 'down' : ''));
-  const base = kind.replace(' ↑','').replace(' ↓','');
-  const tag = `<span class="tag ${cls}">${base}${isUp?' ↑':isDown?' ↓':''}</span>`;
-  const parts = [ `<span class="ts">${ts}</span> — ${tag} ${from} → ${to}` ];
-  if (reason) parts.push(` — ${reason}`);
-  return `<div>${parts.join('')}</div>`;
+  // Console logging only for performance changes
+  window.__perfDebug && console.log(`[Perf] ${kind}: ${from} → ${to} ${reason ? `(${reason})` : ''}`);
 }
 
 // Expose debug controls
@@ -1649,7 +1537,7 @@ window.__perfDebug = {
   setBaseCap(v){ __deviceProfile.baseCapCurrent = Math.min(Math.max(0.5, v), __deviceProfile.baseCapMax); _applyRendererPixelRatio(); },
   emaFPS: 60,
   bucket: 1.0,
-  effectTier: 'ultra'
+  effectTier: 'Ultra'
 };
 
 function updateOrthoFrustum(cam, aspect) {
@@ -2019,6 +1907,20 @@ function handleScroll() {
   
   // Update music volume based on scroll section
   updateMusicVolumeForSection(currentSection);
+  
+  // Update performance HUD opacity based on section (skip during startup to avoid clashing with GSAP intro)
+  const hudElement = document.querySelector('.performance-hud');
+  if (hudElement && !startupActive) {
+    let opacity = 1.0;
+    if (scrollProgress > 0 && scrollProgress <= 1/3) {
+      // During transition from section 1 to 2
+      const t = scrollProgress / (1/3);
+      opacity = 1.0 - t * 0.5;
+    } else if (currentSection > 0) {
+      opacity = 0.5;
+    }
+    hudElement.style.opacity = opacity;
+  }
 }
 
 // Section 6 camera and model animation
@@ -2282,10 +2184,10 @@ async function startStartupSequence(){
   let blindsWrap = null;
   let blindsStripes = null;
   if (!PREFERS_REDUCED_MOTION) {
-    blindsWrap = createBlindsOverlay();
-    blindsStripes = blindsWrap.querySelectorAll('.blinds-overlay__stripe');
+    // blindsWrap = createBlindsOverlay();
+    // blindsStripes = blindsWrap.querySelectorAll('.blinds-overlay__stripe');
     // Stripes start fully covering the screen (full width)
-    gsap.set(blindsStripes, { scaleX: 1 });
+    // gsap.set(blindsStripes, { scaleX: 1 });
   }
 
   // Set initial lower values for reeded glass parameters at startup
@@ -2309,6 +2211,7 @@ async function startStartupSequence(){
   const navbarLogoHero = document.querySelector('.navbar__logo-hero'); // Hero logo for section 1
   const bottomBarLeft = document.querySelector('.bottom-bar__left');
   const bottomBarRight = document.querySelector('.bottom-bar__right');
+  const perfHudEl = document.querySelector('.performance-hud');
   
   // Note: CSS already hides these with opacity: 0 and visibility: hidden
   // We just need to set GSAP initial states for the transforms
@@ -2318,42 +2221,22 @@ async function startStartupSequence(){
   gsap.set(navbarLogoHero, { opacity: 0 }); // Only hide hero logo opacity (no scale transform)
   gsap.set(bottomBarLeft, { opacity: 0, x: -12 });
   gsap.set(bottomBarRight, { opacity: 0, x: 12 });
+  // Prepare performance HUD for a subtle top-down fade-in
+  if (perfHudEl) {
+    gsap.set(perfHudEl, { opacity: 0, x: -8, visibility: 'hidden' });
+    perfHudEl.style.transition = 'none'; // Disable CSS transition during GSAP animation
+  }
 
-  // Phase 1: reveal model under a curtain/blinds overlay instead of a simple fade
-  // Keep loader visible while the blinds animate by removing only the loader's background
-  // (so we can see through), but retaining the logo/progress on top of the blinds.
-  if (blindsStripes && blindsStripes.length) {
-    tl.to(blackoutEl, { backgroundColor: 'rgba(0,0,0,0)', duration: 0.25, ease: 'power2.out' }, 0);
-  }
-  // Bring canvas up while blinds still cover the view
-  tl.to(theCanvas, { opacity: 1, duration: 0.6, ease: 'power1.inOut' }, 0);
-  tl.to(bgEl, { opacity: 0.1, duration: 0.45, ease: 'power1.inOut' }, 0);
-  // 3) Blinds move up to reveal the stage, staggered left to right
-  if (blindsStripes && blindsStripes.length) {
-    const stripeCount = blindsStripes.length;
-    const blindsStaggerDuration = 0.8 + (stripeCount * 0.09); // Total time for all stripes to finish animating
-    tl.add('blindsOpen', 0.0);
-    tl.to(blindsStripes, {
-      y: (index) => {
-        // Move each stripe upward by its full height (100vh)
-        return -window.innerHeight;
-      },
-      duration: 0.8,
-      ease: 'power1.in', // Ease in only—accelerate smoothly, stop abruptly
-      stagger: { 
-        each: 0.09, 
-        from: 0, // Left to right (index 0 first)
-        ease: 'linear' // Ease the stagger progression itself for fluid wave motion
-      }
-    }, 'blindsOpen');
-    // After blinds open completely, fade out and remove the loader, then remove blinds overlay
-    tl.to([loadingContent, blackoutEl], { opacity: 0, duration: ms(LOADING_FADE_OUT_MS), ease: 'power1.inOut' }, `blindsOpen+=${blindsStaggerDuration - 0.2}`);
-    tl.call(() => { try { blackoutEl?.remove(); blackoutEl = null; } catch {} }, null, `blindsOpen+=${blindsStaggerDuration}`);
-    tl.call(() => { try { blindsWrap?.remove(); } catch {} }, null, `blindsOpen+=${blindsStaggerDuration + 0.05}`);
-  } else {
-    // Reduced motion fallback: original quick fade
-    tl.to(blackoutEl, { opacity: 0, duration: ms(LOADING_FADE_OUT_MS), ease: 'power1.inOut', onComplete: ()=>{ blackoutEl?.remove(); blackoutEl = null; } }, 0);
-  }
+  // Phase 1: Simple smooth fade reveal
+  // Fade out loading overlay completely (including logo) while canvas and background fade in
+  // Total duration of 0.8s for smooth, continuous transition
+  tl.to(blackoutEl, { opacity: 0, duration: 0.8, ease: 'power2.inOut' }, 0);
+  // Canvas fades in from transparent to opaque during same period
+  tl.to(theCanvas, { opacity: 1, duration: 0.8, ease: 'power2.inOut' }, 0);
+  // Background element fades to 10% opacity during same period
+  tl.to(bgEl, { opacity: 0.1, duration: 0.8, ease: 'power2.inOut' }, 0);
+  // Remove DOM element after fade completes
+  tl.call(() => { try { blackoutEl?.remove(); blackoutEl = null; } catch {} }, null, 0.8);
 
   // Phase 2 setup at ~0.62s
   tl.call(() => {
@@ -2411,6 +2294,23 @@ async function startStartupSequence(){
     duration: 1.2, // in seconds
     ease: 'power2.out' 
   }, 'navReveal');
+  // Performance HUD fades in in parallel with bottom bar
+  if (perfHudEl) {
+    tl.to(perfHudEl, {
+      opacity: 1,
+      y: 0,
+      duration: 1.8,
+      ease: 'power2.out',
+      delay: 0.6,
+      onStart: () => { try { perfHudEl.style.visibility = 'visible'; } catch (e) {} },
+      onComplete: () => { 
+        try { 
+          perfHudEl.classList.add('is-visible');
+          perfHudEl.style.transition = ''; // Re-enable CSS transition after startup
+        } catch (e) {} 
+      }
+    }, 'navReveal');
+  }
   
   // Navbar links fade up with stagger (left to right)
   tl.to(navbarLinks, { 
@@ -2492,11 +2392,25 @@ async function startStartupSequence(){
   // Sync camera zoom-out with chin settling to rest
   tl.to(chin.rotation, { x: Math.PI/2, duration: 1.2, ease: 'power1.inOut' }, 'phase4+=0.1');
   tl.to(camera, { zoom: 1.0, duration: 1.5, ease: 'power3.inOut', onUpdate: ()=> camera.updateProjectionMatrix() }, 'phase4+=0.1');
+  
+  // Enable head look immediately when chin finishes settling to rest pose
+  tl.call(() => {
+    if (!IS_TOUCH_DEVICE) {
+      allowHeadLook = true;
+      if (chin) startHeadLook(chin);
+    }
+  }, null, 'phase4+=1.2'); // When chin animation completes
   }
 
   // Mark startup complete when timeline ends
   await new Promise(res => tl.eventCallback('onComplete', () => res()));
   startupActive = false;
+  
+  // Stop logo animation loop now that startup is complete
+  markLoadingComplete();
+  if (window.stopLogoLooping) {
+    window.stopLogoLooping();
+  }
 
   // Apply scroll-based wind speed if we're in the final section
   if (mixer && currentScrollProgress > 0.5) {
@@ -2505,12 +2419,8 @@ async function startStartupSequence(){
     mixer.timeScale = WIND_BASE_TS * windSpeedMultiplier;
   }
 
-  // Enable head look 0.1s after startup ends, then start breathing
-  await delay(10);
-  if (!IS_TOUCH_DEVICE) {
-    allowHeadLook = true;
-    if (chin) startHeadLook(chin);
-  } else {
+  // Start breathing animation and touch device head look after startup
+  if (IS_TOUCH_DEVICE) {
     allowHeadLook = false;
     // Keep head centered and run only breathing updates on touch devices
     startBreathingOnly();
@@ -2735,6 +2645,9 @@ function smoothPause() {
 // Initialize pseudo-random bar patterns for paused visualizer
 let prePlayBarSeeds = [];
 let prePlayBarHeights = []; // Smooth previous heights for continuity
+let prePlayAnimationStartTime = 0; // Track when the burst animation started
+const PRE_PLAY_BURST_DURATION = 3000; // 3 seconds of animation
+const PRE_PLAY_BURST_CYCLE = 10000; // 10 second total cycle (2 sec on, 8 sec off)
 function initializePrePlayBarSeeds() {
   prePlayBarSeeds = [];
   prePlayBarHeights = [];
@@ -2751,80 +2664,98 @@ function animatePrePlayVisualizer() {
   if (!prePlayAnimationActive || !visualizerCanvas || !visualizerCtx) return;
   
   prePlayAnimationId = requestAnimationFrame(animatePrePlayVisualizer);
-  prePlayAnimationTime += 0.025; // Slow, smooth progression
   
-  // Initialize seeds once
-  if (prePlayBarSeeds.length === 0) {
-    initializePrePlayBarSeeds();
+  // Calculate position in the 6-second cycle
+  const now = performance.now();
+  if (prePlayAnimationStartTime === 0) {
+    prePlayAnimationStartTime = now;
   }
+  const timeInCycle = (now - prePlayAnimationStartTime) % PRE_PLAY_BURST_CYCLE;
+  const isInBurstPhase = timeInCycle < PRE_PLAY_BURST_DURATION;
   
-  const width = visualizerCanvas.width;
-  const height = visualizerCanvas.height;
-  
-  // Calculate bar width and gap based on config
-  const barWidth = width * visualizerConfig.barWidth / visualizerConfig.numBars;
-  const totalGapWidth = width - (barWidth * visualizerConfig.numBars);
-  const gap = totalGapWidth / visualizerConfig.numBars;
-  
-  visualizerCtx.clearRect(0, 0, width, height);
-  
-  for (let i = 0; i < visualizerConfig.numBars; i++) {
-    const centerIndex = Math.floor(visualizerConfig.numBars / 2);
-    const distanceFromCenter = Math.abs(i - centerIndex);
-    const shapeFactor = 1 - (distanceFromCenter / centerIndex) * 0.6; // taper edges
+  // Only animate during burst phase; render static otherwise
+  if (isInBurstPhase) {
+    // Progressive time during burst (0 to 1 over 2 seconds)
+    const burstProgress = timeInCycle / PRE_PLAY_BURST_DURATION;
+    prePlayAnimationTime += 0.025; // Continue time progression during burst
     
-    // Per-bar seed for organic variation
-    const seed = prePlayBarSeeds[i];
+    // Initialize seeds once
+    if (prePlayBarSeeds.length === 0) {
+      initializePrePlayBarSeeds();
+    }
     
-    // Combine multiple wave frequencies at different speeds for organic feel
-    // Fundamental wave (slow, main rhythm)
-    const fundamentalFreq = 0.8;
-    const fundamental = (Math.sin(prePlayAnimationTime * fundamentalFreq + seed * 6.28) + 1) / 2;
+    const width = visualizerCanvas.width;
+    const height = visualizerCanvas.height;
     
-    // Second harmonic (faster, adds complexity)
-    const harmonic2Freq = 1.9;
-    const harmonic2 = (Math.sin(prePlayAnimationTime * harmonic2Freq + seed * 3.14) + 1) / 2;
+    // Calculate bar width and gap based on config
+    const barWidth = width * visualizerConfig.barWidth / visualizerConfig.numBars;
+    const totalGapWidth = width - (barWidth * visualizerConfig.numBars);
+    const gap = totalGapWidth / visualizerConfig.numBars;
     
-    // Third harmonic (even faster, adds detail)
-    const harmonic3Freq = 3.2;
-    const harmonic3 = (Math.sin(prePlayAnimationTime * harmonic3Freq - seed * 2.0) + 1) / 2;
+    visualizerCtx.clearRect(0, 0, width, height);
     
-    // Slow wandering drift (very long period, creates unpredictable motion)
-    const driftFreq = 0.15;
-    const drift = (Math.sin(prePlayAnimationTime * driftFreq + seed * 10.0) + 1) / 2;
-    
-    // Combine all waves with weighted mix:
-    // Fundamental drives the motion, harmonics add texture, drift adds subtle randomness
-    const waveValue = (
-      fundamental * 0.55 +      // Main driver
-      harmonic2 * 0.25 +         // Secondary variation
-      harmonic3 * 0.12 +         // Fine detail
-      drift * 0.08               // Slow, unpredictable drift
-    );
-    
-    // Add smooth per-bar variation (continuous, no abrupt changes)
-    // Use multiple smooth sine waves at different frequencies for organic feel
-    const variation1 = Math.sin(prePlayAnimationTime * 0.3 + seed * 7.77) * 0.04;
-    const variation2 = Math.sin(prePlayAnimationTime * 0.7 - seed * 5.23) * 0.03;
-    const variation3 = Math.sin(prePlayAnimationTime * 1.1 + seed * 3.14) * 0.02;
-    const smoothJitter = variation1 + variation2 + variation3;
-    
-    // Modulate height with all combined effects
-    const baseHeight = 0.45;
-    const heightWithVariation = baseHeight + (waveValue - 0.5) * 0.45 + smoothJitter;
-    const targetHeight = Math.max(0.15, heightWithVariation) * shapeFactor; // Clamp to 15% minimum
-    
-    // Apply exponential smoothing for ultra-smooth animation (prevents any tiny discontinuities)
-    prePlayBarHeights[i] += (targetHeight - prePlayBarHeights[i]) * 0.12; // Smooth lerp factor
-    const animatedHeight = prePlayBarHeights[i];
-    
-    const x = i * (barWidth + gap) + gap / 2;
-    let barHeightNorm = animatedHeight * height * currentVisualizerRange;
-    // Ensure minimum bar height of 5px
-    const barHeight = Math.max(visualizerConfig.minBarHeightPx, barHeightNorm);
-    const y = (height - barHeight) / 2;
-    visualizerCtx.fillStyle = '#E8EFFF';
-    visualizerCtx.fillRect(x, y, barWidth, barHeight);
+    for (let i = 0; i < visualizerConfig.numBars; i++) {
+      const centerIndex = Math.floor(visualizerConfig.numBars / 2);
+      const distanceFromCenter = Math.abs(i - centerIndex);
+      const shapeFactor = 1 - (distanceFromCenter / centerIndex) * 0.6; // taper edges
+      
+      // Per-bar seed for organic variation
+      const seed = prePlayBarSeeds[i];
+      
+      // Combine multiple wave frequencies at different speeds for organic feel
+      // Fundamental wave (slow, main rhythm)
+      const fundamentalFreq = 0.8;
+      const fundamental = (Math.sin(prePlayAnimationTime * fundamentalFreq + seed * 6.28) + 1) / 2;
+      
+      // Second harmonic (faster, adds complexity)
+      const harmonic2Freq = 1.9;
+      const harmonic2 = (Math.sin(prePlayAnimationTime * harmonic2Freq + seed * 3.14) + 1) / 2;
+      
+      // Third harmonic (even faster, adds detail)
+      const harmonic3Freq = 3.2;
+      const harmonic3 = (Math.sin(prePlayAnimationTime * harmonic3Freq - seed * 2.0) + 1) / 2;
+      
+      // Slow wandering drift (very long period, creates unpredictable motion)
+      const driftFreq = 0.15;
+      const drift = (Math.sin(prePlayAnimationTime * driftFreq + seed * 10.0) + 1) / 2;
+      
+      // Combine all waves with weighted mix:
+      // Fundamental drives the motion, harmonics add texture, drift adds subtle randomness
+      const waveValue = (
+        fundamental * 0.55 +      // Main driver
+        harmonic2 * 0.25 +         // Secondary variation
+        harmonic3 * 0.12 +         // Fine detail
+        drift * 0.08               // Slow, unpredictable drift
+      );
+      
+      // Add smooth per-bar variation (continuous, no abrupt changes)
+      // Use multiple smooth sine waves at different frequencies for organic feel
+      const variation1 = Math.sin(prePlayAnimationTime * 0.3 + seed * 7.77) * 0.04;
+      const variation2 = Math.sin(prePlayAnimationTime * 0.7 - seed * 5.23) * 0.03;
+      const variation3 = Math.sin(prePlayAnimationTime * 1.1 + seed * 3.14) * 0.02;
+      const smoothJitter = variation1 + variation2 + variation3;
+      
+      // Modulate height with all combined effects
+      const baseHeight = 0.45;
+      const heightWithVariation = baseHeight + (waveValue - 0.5) * 0.45 + smoothJitter;
+      const targetHeight = Math.max(0.15, heightWithVariation) * shapeFactor; // Clamp to 15% minimum
+      
+      // Apply exponential smoothing for ultra-smooth animation (prevents any tiny discontinuities)
+      // Use consistent lerp factor for smooth transitions between phases
+      prePlayBarHeights[i] += (targetHeight - prePlayBarHeights[i]) * 0.50; // Smooth lerp factor
+      const animatedHeight = prePlayBarHeights[i];
+      
+      const x = i * (barWidth + gap) + gap / 2;
+      let barHeightNorm = animatedHeight * height * currentVisualizerRange;
+      // Ensure minimum bar height of 5px
+      const barHeight = Math.max(visualizerConfig.minBarHeightPx, barHeightNorm);
+      const y = (height - barHeight) / 2;
+      visualizerCtx.fillStyle = '#E8EFFF';
+      visualizerCtx.fillRect(x, y, barWidth, barHeight);
+    }
+  } else {
+    // Render static visualization during off phase
+    renderStaticVisualizer();
   }
 }
 
@@ -2839,9 +2770,39 @@ function renderStaticVisualizer() {
   const gap = totalGapWidth / visualizerConfig.numBars;
   
   visualizerCtx.clearRect(0, 0, width, height);
+  
+  // Initialize seeds once if needed
+  if (prePlayBarSeeds.length === 0) {
+    initializePrePlayBarSeeds();
+  }
+  
   for (let i = 0; i < visualizerConfig.numBars; i++) {
+    const centerIndex = Math.floor(visualizerConfig.numBars / 2);
+    const distanceFromCenter = Math.abs(i - centerIndex);
+    const shapeFactor = 1 - (distanceFromCenter / centerIndex) * 0.6; // taper edges
+    
+    // Per-bar seed for organic variation
+    const seed = prePlayBarSeeds[i];
+    
+    // Very subtle slow animation even in static phase for randomization
+    // Use very low frequency waves to create gentle variation
+    const slowWave1 = (Math.sin(prePlayAnimationTime * 0.15 + seed * 6.28) + 1) / 2;
+    const slowWave2 = (Math.sin(prePlayAnimationTime * 0.08 - seed * 3.14) + 1) / 2;
+    
+    // Subtle jitter to break symmetry
+    const jitter = (Math.sin(prePlayAnimationTime * 0.2 + seed * 9.99) + 1) / 2;
+    
+    // Combine for static base height with slight variation
+    const baseHeight = 0.45;
+    const variation = (slowWave1 * 0.15 + slowWave2 * 0.1 + jitter * 0.05) * shapeFactor;
+    const targetHeight = Math.max(0.15, baseHeight + (variation - 0.15) * 0.3) * shapeFactor;
+    
+    // Apply smooth lerp to prePlayBarHeights to ensure smooth transition
+    prePlayBarHeights[i] += (targetHeight - prePlayBarHeights[i]) * 0.28; // Slower lerp for smooth transition
+    const animatedHeight = prePlayBarHeights[i];
+    
     const x = i * (barWidth + gap) + gap / 2;
-    let barHeightNorm = barHeights[i] * height * 0.8 * currentVisualizerRange;
+    let barHeightNorm = animatedHeight * height * currentVisualizerRange;
     // Ensure minimum bar height of 5px
     const barHeight = Math.max(visualizerConfig.minBarHeightPx, barHeightNorm);
     const y = (height - barHeight) / 2;
