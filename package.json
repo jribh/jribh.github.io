@@ -5,7 +5,7 @@
   "scripts": {
     "start": "parcel index.htm --open",
     "devmac": "parcel index.htm --host 192.168.29.8 --port 3000",
-    "build": "parcel build index.htm --public-url ./"
+    "build": "parcel build index.htm --public-url ./ --no-scope-hoist"
   },
   "devDependencies": {
     "@parcel/transformer-raw": "^2.15.4",

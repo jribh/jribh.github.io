@@ -1,6 +1,7 @@
 import { gsap } from 'gsap';
-import logoAnimUrl from './assets/logo_anim.svg';
-import logoMaskUrl from './assets/logo_mask.svg';
+// Use explicit url: imports so Parcel always treats these as file URLs in dev and build
+import logoAnimUrl from 'url:./assets/logo_anim.svg';
+import logoMaskUrl from 'url:./assets/logo_mask.svg';
 
 // ============================================================================
 // CONFIGURABLE ANIMATION PARAMETERS
@@ -99,56 +100,59 @@ async function initLogoAnimation() {
 
     // Create a unique ID for the mask
     const maskId = 'logo-mask-' + Date.now();
-    
-    // Extract the mask paths and create a mask element
+
+    // Derive mask box from the logo's viewBox to keep coordinates in sync
+    const vbVals = (logoSvg.getAttribute('viewBox') || '').trim().split(/\s+/).map(Number);
+    const vbX = Number.isFinite(vbVals[0]) ? vbVals[0] : 0;
+    const vbY = Number.isFinite(vbVals[1]) ? vbVals[1] : 0;
+    const vbW = Number.isFinite(vbVals[2]) ? vbVals[2] : 48;
+    const vbH = Number.isFinite(vbVals[3]) ? vbVals[3] : 48;
+
+    // Build the mask inside the same SVG to avoid cross-doc references
     const maskElement = document.createElementNS('http://www.w3.org/2000/svg', 'mask');
     maskElement.setAttribute('id', maskId);
     maskElement.setAttribute('maskUnits', 'userSpaceOnUse');
-    maskElement.setAttribute('x', '0');
-    maskElement.setAttribute('y', '0');
-    maskElement.setAttribute('width', '48');
-    maskElement.setAttribute('height', '48');
-    
-    // Add a white background to the mask (everything visible by default)
+    maskElement.setAttribute('x', String(vbX));
+    maskElement.setAttribute('y', String(vbY));
+    maskElement.setAttribute('width', String(vbW));
+    maskElement.setAttribute('height', String(vbH));
+    // Hint some engines (WebKit) to use luminance masking
+    maskElement.setAttribute('style', 'mask-type:luminance');
+
+    // White background: show everything by default
     const whiteRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    whiteRect.setAttribute('width', '48');
-    whiteRect.setAttribute('height', '48');
+    whiteRect.setAttribute('x', String(vbX));
+    whiteRect.setAttribute('y', String(vbY));
+    whiteRect.setAttribute('width', String(vbW));
+    whiteRect.setAttribute('height', String(vbH));
     whiteRect.setAttribute('fill', 'white');
     maskElement.appendChild(whiteRect);
-    
-    console.log('Mask element created:', maskElement);
-    
-    // Add the black shapes from the mask SVG (these will hide content)
-    const maskPaths = maskSvg.querySelectorAll('path, rect');
-    console.log('Mask shapes found:', maskPaths.length);
-    maskPaths.forEach((path, idx) => {
-      const clonedPath = path.cloneNode(true);
-      maskElement.appendChild(clonedPath);
-      console.log(`Added mask shape ${idx}:`, clonedPath);
+
+    // Add black shapes from the external mask SVG
+    const maskShapes = maskSvg.querySelectorAll('path, rect, circle, ellipse, polygon, polyline');
+    maskShapes.forEach((node) => {
+      const cloned = node.cloneNode(true);
+      // Ensure these draw as "holes" in the mask regardless of original styling
+      if (!cloned.getAttribute('fill')) cloned.setAttribute('fill', 'black');
+      cloned.setAttribute('stroke', 'none');
+      maskElement.appendChild(cloned);
     });
-    
-    // Add the mask definition to the logo SVG
+
+    // Add the mask into <defs>
     let defs = logoSvg.querySelector('defs');
     if (!defs) {
       defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
       logoSvg.insertBefore(defs, logoSvg.firstChild);
     }
     defs.appendChild(maskElement);
-    
-    // Apply the mask to ALL paths in the logo AND to any groups
-    const allPaths = logoSvg.querySelectorAll('path');
-    console.log('Logo paths found:', allPaths.length);
-    allPaths.forEach((path, idx) => {
-      path.setAttribute('mask', `url(#${maskId})`);
-      console.log(`Applied mask to path ${idx}: ${path.id || 'unnamed'}`);
-    });
-    
-    // Also apply to the group if it exists
-    const logoGroup = logoSvg.querySelector('[id*="Logo"]');
-    if (logoGroup) {
-      logoGroup.setAttribute('mask', `url(#${maskId})`);
-      console.log('Applied mask to group:', logoGroup.id);
-    }
+
+    // Wrap all visible content in a <g> and apply the mask to the group
+    const wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    wrapper.setAttribute('class', 'masked-logo-content');
+    wrapper.setAttribute('mask', `url(#${maskId})`);
+    const childrenToWrap = Array.from(logoSvg.childNodes).filter((n) => n.nodeType === 1 && n.nodeName.toLowerCase() !== 'defs');
+    childrenToWrap.forEach((n) => wrapper.appendChild(n));
+    logoSvg.appendChild(wrapper);
 
     // Replace the loading overlay logo with our animated SVG
     loadingLogoImg.replaceWith(logoSvg);
