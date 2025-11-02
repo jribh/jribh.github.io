@@ -1,7 +1,6 @@
 import { gsap } from 'gsap';
-// Import SVGs explicitly as URLs to avoid Parcel scope-hoisting bugs with asset imports
-import logoAnimUrl from 'url:./assets/logo_anim.svg';
-import logoMaskUrl from 'url:./assets/logo_mask.svg';
+import logoAnimUrl from './assets/logo_anim.svg';
+import logoMaskUrl from './assets/logo_mask.svg';
 
 // ============================================================================
 // CONFIGURABLE ANIMATION PARAMETERS

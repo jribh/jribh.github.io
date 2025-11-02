@@ -5,14 +5,14 @@
   "scripts": {
     "start": "parcel index.htm --open",
     "devmac": "parcel index.htm --host 192.168.29.8 --port 3000",
-    "build": "parcel build index.htm --public-url ./ --no-scope-hoist"
+    "build": "parcel build index.htm --public-url ./"
   },
   "devDependencies": {
-  "@parcel/transformer-raw": "^2.15.4",
+    "@parcel/transformer-raw": "^2.15.4",
     "buffer": "^6.0.3",
     "gltfpack": "^0.24.0",
     "local-ip-url": "^1.0.10",
-    "parcel": "^2.0.0",
+    "parcel": "^2.15.4",
     "path-browserify": "^1.0.1",
     "process": "^0.11.10"
   },
