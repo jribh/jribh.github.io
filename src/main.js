@@ -2399,7 +2399,7 @@ async function startStartupSequence(){
       allowHeadLook = true;
       if (chin) startHeadLook(chin);
     }
-  }, null, 'phase4+=1.2'); // When chin animation completes
+  }, null, 'phase4+=1.2'); // When chin animation has completed
   }
 
   // Mark startup complete when timeline ends
