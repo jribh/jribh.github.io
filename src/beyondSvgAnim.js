@@ -181,8 +181,8 @@ async function initBeyondAnimation() {
         path.style.strokeDashoffset = length;
         // Ensure paths are visible and styled
         path.style.fill = 'none';
-        path.style.stroke = path.getAttribute('stroke') || 'white';
-        path.style.strokeWidth = path.getAttribute('stroke-width') || '1';
+        path.style.stroke = '#FA5242';
+        path.style.strokeWidth = '30';
       }
     });
 
@@ -194,8 +194,8 @@ async function initBeyondAnimation() {
         path.style.strokeDashoffset = length;
         // Ensure paths are visible and styled
         path.style.fill = 'none';
-        path.style.stroke = path.getAttribute('stroke') || 'white';
-        path.style.strokeWidth = path.getAttribute('stroke-width') || '1';
+        path.style.stroke = '#FA5242';
+        path.style.strokeWidth = '30';
       }
     });
 

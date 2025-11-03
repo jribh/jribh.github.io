@@ -713,7 +713,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     font-family: var(--font-heading-sans);
     font-style: normal;
     font-weight: 700; /* Bold */
-    font-size: 7.5em; /* 120px */
+    font-size: 7em; /* 120px */
     line-height: var(--lh-104);
     letter-spacing: -0.06em; /* -6% */
     text-transform: uppercase; /* tight capital headings */
@@ -845,6 +845,10 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 /* Moving the content slightly up for visual symmetry */
 .content-section[data-section="4"] .section-content {
     transform: translateY(-2em);
+}
+
+.content-section[data-section="4"] {
+    font-size: 1.2em;
 }
 
 /* Remove height constraint for sections 5 and 6 */
@@ -1012,7 +1016,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     justify-content: space-between;
     position: relative;
     width: 100%;
-    min-height: 200px; /* Ensure enough space for the animated SVG */
+    min-height: 100px; /* Ensure enough space for the animated SVG */
 }
 
 .section-row--bottom {
@@ -1034,6 +1038,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 .content-section[data-section="2"] .section-heading-eyecandy {
     color: var(--primary-light);
     margin: 0;
+    font-weight: 400;
 }
 
 /* Beyond and Pretty SVGs in section 2 */
@@ -1821,6 +1826,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .content-section[data-section="2"] .section-content {
         grid-column: 1 / -1;
     }
+    .heading-h2 { font-size: 6em; }
     .content-section[data-section="2"] .section-word { font-size: 28em; }
     .work-overlay--and {
         bottom: 0.85em;
@@ -1839,7 +1845,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 /* Medium laptops (<=1440px) */
 @media (width <= 1440px) {
     .heading-h1 { font-size: 10em; }
-    .heading-h2 { font-size: 6.5em; }
+    .heading-h2 { font-size: 5.8em; }
     .heading-h3, .heading-h3-regular { font-size: 5.3em; }
 
     body { font-size: 14px; }
@@ -1847,9 +1853,6 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .content-section[data-section="2"] .section-heading { font-size: 5em; }
     .section-tagline { font-size: 0.9em; }
     .content-section[data-section="2"] .section-word { font-size: 26em; }
-    .content-section[data-section="2"] .section-content {
-        gap: 1.2em;
-    }
     
     .performance-hud { top: 2em; left: 3em; }
     .bottom-bar { bottom: 2em; padding-left: 3em; padding-right: 3em; }
@@ -1867,7 +1870,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
 /* 1280px and below */
 @media (width <= 1280px) {
-    .heading-h2 { font-size: 5.8em; }
+    .heading-h2 { font-size: 5.4em; }
     .heading-h3, .heading-h3-regular { font-size: 4.7em; }
 
     .navbar { gap: 1.75em; padding-inline: 2em; }
@@ -1885,6 +1888,9 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
     .content-section[data-section="2"] .section-heading { font-size: 4.5em; }
     .content-section[data-section="2"] .section-word { font-size: 24em; }
+    .content-section[data-section="4"] {
+        font-size: 1.1em;
+    }
 
     .content-section[data-section="6"] .section-content { 
         grid-column: 3 / 7;
@@ -1893,12 +1899,16 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .pretty-svg {
         height: 18em;
     }
+
+    .content-section[data-section="2"] .section-content {
+        gap: 2.2em;
+    }
 }
 
 /* 1024px and below */
 @media (width <= 1024px) {
     .heading-h1 { font-size: 7.2em; }
-    .heading-h2 { font-size: 5.4em; }
+    .heading-h2 { font-size: 4.8em; }
     .heading-h3, .heading-h3-regular { font-size: 5em; }
 
     .body-default { font-size: 1.8em; }
@@ -1941,8 +1951,6 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
         padding-right: 0;
     }
 
-    .content-section[data-section="2"] .section-heading-eyecandy { font-size: 3.5em; }
-
     .beyond-svg,
     .pretty-svg {
         height: 14em;
@@ -1964,17 +1972,20 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
         overflow: visible; /* Prevent character clipping on mobile while maintaining animation */
     }
 
+    .content-section[data-section="2"] .section-content {
+        gap: 2em;
+    }
 }
 
 /* 768px and below */
 @media (width <= 768px) {
     .heading-h1 { font-size: 6.75em; }
-    .heading-h2 { font-size: 5em; }
+    .heading-h2 { font-size: 4.5em; }
     .body-default { font-size: 1.6em; }
     
     #dark-overlay { background-color: rgba(0, 0, 0, 0.75); }
     
-    .performance-hud { top: 1em; left: 1em; }
+    .performance-hud { display: none; }
     .bottom-bar {
         display: flex;
         grid-template-columns: none;
@@ -2014,13 +2025,13 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .content-section[data-section="5"] .heading-h2 { font-size: 4em; }
     .content-section[data-section="5"] .section-content { padding-left: 0; padding-right: 0; }
     .section-content--work { grid-column: 1 / -1; gap: 4em; }
-    .work-overlay--crafting { top: 0.1em; left: -0.8em; }
-    .work-overlay--for-people { bottom: 0.2em; right: -0.6em; }
+    .work-overlay--crafting { top: 0.4em; left: -0.3em; }
+    .work-overlay--for-people { bottom: 0.4em; right: -0.3em; }
     
-    /* Mobile: stack the words vertically and keep equal heights */
+    /* Mobile: keep words side-by-side with 1em gap */
     .content-section[data-section="2"] .section-row--middle { 
-        flex-direction: column; 
-        gap: 2em; 
+        flex-direction: row; 
+        gap: 1em; 
         margin-left: 0;
     }
     /* SVG heights: 8em (12em - 2em - 2em) at ≤768px */
@@ -2029,11 +2040,12 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
         height: 12em;
     }
     #beyond-pretty-container {
-        flex-direction: column;
+        flex-direction: row;
+        justify-content: center;
         align-items: center;
-        gap: 1.5rem;
+        gap: 2em;
     }
-    .content-section[data-section="2"] .section-heading-eyecandy { font-size: 3em; }
+
     .section-row.section-row--middle { justify-content: center; }
     
     .content-section[data-section="6"] .section-content { 
@@ -2084,6 +2096,10 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
         display: block;
         flex-shrink: 0;
     }
+
+    .content-section[data-section="2"] .section-content {
+        gap: 1.6em;
+    }
 }
 
 /* 600px and below */
@@ -2099,6 +2115,12 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .pretty-svg {
         height: 8em;
     }
+
+    .content-section[data-section="2"] .section-heading-eyecandy {
+        font-size: 3em;
+    }
+
+    .heading-h2 { font-size: 4.5em; }
 
     /* Additional overflow fix for very small screens */
     .content-section[data-section="2"] .section-word,

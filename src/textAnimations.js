@@ -53,7 +53,7 @@ class TextAnimations {
       if (tagline) {
         gsap.set(tagline, { autoAlpha: 0 });
         this.createScrollTriggerAnimation(tagline, {
-          start: 'top 75%',
+          start: 'top 82%',
           duration: 1,
           ease: 'expo.out',
         });
