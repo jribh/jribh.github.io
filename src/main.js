@@ -88,11 +88,9 @@ camera.zoom = STARTUP_CAM_ZOOM;
 camera.updateProjectionMatrix();
 
 const theCanvas = document.querySelector("#artboard");
-const bgEl = document.getElementById('head-background');
 const g2xEl = document.getElementById('g2x'); // optional red radial gradient overlay
 // Ensure initial blackout
 if (theCanvas) theCanvas.style.opacity = '0';
-if (bgEl) bgEl.style.opacity = '0';
 // Create a fullscreen loading overlay that fades in on startup
 
 // Loading overlay fade durations (in milliseconds)
@@ -104,16 +102,8 @@ let blackoutEl = document.createElement('div');
 blackoutEl.className = 'loading-overlay';
 const loadingContent = document.createElement('div');
 loadingContent.className = 'loading-overlay__content';
-const logoImg = new Image();
-// Resolve logo URL via bundler to work in dev and build
-const logoUrl = new URL('./assets/logo.svg', import.meta.url);
-logoImg.src = logoUrl.href;
-logoImg.alt = 'Logo';
-logoImg.draggable = false;
-logoImg.decoding = 'async';
-logoImg.className = 'loading-overlay__logo';
 
-loadingContent.appendChild(logoImg);
+loadingContent.appendChild(document.createElement('div')); // Placeholder that will be replaced by animated logo
 blackoutEl.appendChild(loadingContent);
 document.body.appendChild(blackoutEl);
 gsap.set(blackoutEl, { opacity: 0 });
@@ -1908,18 +1898,26 @@ function handleScroll() {
   // Update music volume based on scroll section
   updateMusicVolumeForSection(currentSection);
   
-  // Update performance HUD opacity based on section (skip during startup to avoid clashing with GSAP intro)
+  // Update performance HUD opacity based on section and animation state (skip during startup)
   const hudElement = document.querySelector('.performance-hud');
   if (hudElement && !startupActive) {
-    let opacity = 1.0;
+    // Base opacity from section context
+    let targetOpacity = 1.0;
     if (scrollProgress > 0 && scrollProgress <= 1/3) {
       // During transition from section 1 to 2
       const t = scrollProgress / (1/3);
-      opacity = 1.0 - t * 0.5;
+      targetOpacity = 1.0 - t * 0.5;
     } else if (currentSection > 0) {
-      opacity = 0.5;
+      targetOpacity = 0.5;
     }
-    hudElement.style.opacity = opacity;
+
+    // If animation is paused, fade HUD out completely
+    if (typeof isAnimationPaused !== 'undefined' && isAnimationPaused) {
+      targetOpacity = 0.0;
+    }
+
+    // CSS already has a smooth opacity transition
+    hudElement.style.opacity = targetOpacity;
   }
 }
 
@@ -2233,8 +2231,6 @@ async function startStartupSequence(){
   tl.to(blackoutEl, { opacity: 0, duration: 0.8, ease: 'power2.inOut' }, 0);
   // Canvas fades in from transparent to opaque during same period
   tl.to(theCanvas, { opacity: 1, duration: 0.8, ease: 'power2.inOut' }, 0);
-  // Background element fades to 10% opacity during same period
-  tl.to(bgEl, { opacity: 0.1, duration: 0.8, ease: 'power2.inOut' }, 0);
   // Remove DOM element after fade completes
   tl.call(() => { try { blackoutEl?.remove(); blackoutEl = null; } catch {} }, null, 0.8);
 
@@ -2242,7 +2238,13 @@ async function startStartupSequence(){
   tl.call(() => {
     renderer.toneMappingExposure = 0.5; // 50% reduced exposure (darker scene)
     if (hueSatEffect) hueSatEffect.saturation = -0.75; // 75% saturation (more desaturated)
-    eyeMeshes.forEach(m=>{ if (m.material){ m.material.emissiveIntensity = 0.5; m.material.color.set(0x000000); }});
+    eyeMeshes.forEach(m=>{
+      if (m.material) {
+        m.material.color.set(0x000000); // Black material color
+        m.material.emissive.set(0x121212); // Dark grey emissive color
+        m.material.emissiveIntensity = 0.1; // Dim the emissive
+      }
+    });
   }, null, 0.62);
 
   // Phase 3: eyes on after 1s
@@ -2264,8 +2266,6 @@ async function startStartupSequence(){
       }
     } catch (e) { /* ignore */ }
   }, null, 'eyesOn');
-  // Fade in the background element to its normal opacity in sync with lights-on
-  if (bgEl) tl.to(bgEl, { opacity: 0.75, duration: 0.6, ease: 'power1.out' }, 'eyesOn');
   
   eyeMeshes.forEach(m=>{
     // Adjust target eye intensity based on scroll position
@@ -2276,6 +2276,8 @@ async function startStartupSequence(){
     const orig = (m.userData.eyeOriginalColor && m.userData.eyeOriginalColor.isColor) ? m.userData.eyeOriginalColor : new THREE.Color('#2C2C2C');
     tl.to(m.material, { emissiveIntensity: targetEI, duration: 0.12, ease: 'power1.out' }, 'eyesOn');
     tl.to(m.material.color, { r: orig.r, g: orig.g, b: orig.b, duration: 0.12, ease: 'none' }, 'eyesOn');
+    // Restore emissive color to original bright blue
+    tl.to(m.material.emissive, { r: 0, g: 0x53/255, b: 0xED/255, duration: 0.12, ease: 'none' }, 'eyesOn');
   });
 
   // Match lights intensity ramp to eyes-on: 10% -> 100% over the same window
@@ -2324,7 +2326,6 @@ async function startStartupSequence(){
   // Hero logo fades in smoothly (only for section 1)
   tl.to(navbarLogoHero, { 
     opacity: 1,
-    visibility: 'visible', // Make visible when animating in
     duration: 3.2,
     ease: 'power2.out',
     onComplete: () => {

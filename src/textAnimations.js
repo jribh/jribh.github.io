@@ -37,12 +37,29 @@ class TextAnimations {
     const section2 = document.querySelector('[data-section="2"]');
     if (section2) {
       // Get animatable elements
-      const eyeCandyHeading = section2.querySelector('.section-heading');
-      const beyondWord = section2.querySelector('.section-word--left');
-      const prettyWord = section2.querySelector('.section-word--right');
+      const eyeCandyHeading = section2.querySelector('.section-heading-eyecandy');
       const tagline = section2.querySelector('.section-tagline');
 
       // Split and animate EYE CANDY - triggers earlier
+      if (eyeCandyHeading) {
+        this.createAnimation(eyeCandyHeading, {
+          start: 'top 70%', // Decrease to trigger further up in the viewport
+          duration: 0.6,
+          stagger: 0.02,
+        });
+      }
+
+      // Set up tagline animation to trigger independently (30% earlier = 60% - 30% = 30%)
+      if (tagline) {
+        gsap.set(tagline, { autoAlpha: 0 });
+        this.createScrollTriggerAnimation(tagline, {
+          start: 'top 75%',
+          duration: 1,
+          ease: 'expo.out',
+        });
+      }
+    }
+
     // ========== SECTION 4 ANIMATIONS ==========
     const section4 = document.querySelector('[data-section="4"]');
     if (section4) {
@@ -80,47 +97,6 @@ class TextAnimations {
             delay: index * 0.1, // Slight stagger for multiple overlays
           });
         });
-      }
-    }
-      if (eyeCandyHeading) {
-        this.createAnimation(eyeCandyHeading, {
-          start: 'top 70%', // Decrease to trigger further up in the viewport
-          duration: 0.6,
-          stagger: 0.02,
-        });
-      }
-
-      // Split and animate BEYOND - triggers further up
-      if (beyondWord) {
-        this.createAnimation(beyondWord, {
-          start: 'top 50%', // Decrease to trigger further up in the viewport
-          duration: 0.8,
-          stagger: 0.04, // Slightly more stagger
-        });
-      }
-
-      // Split and animate PRETTY - triggers even further up
-      if (prettyWord) {
-        this.createAnimation(prettyWord, {
-          start: 'top 45%', // Decrease to trigger further up in the viewport
-          duration: 0.8,
-          stagger: 0.04,
-          onComplete: () => {
-            // Trigger tagline animation 500ms after PRETTY finishes
-            setTimeout(() => {
-              this.animateTagline(tagline);
-            }, 900);
-          },
-          onReverse: () => {
-            // Hide tagline when row 2 reverses
-            this.hideTagline(tagline);
-          }
-        });
-      }
-
-      // Set up tagline but don't animate it yet
-      if (tagline) {
-        gsap.set(tagline, { autoAlpha: 0 });
       }
     }
 

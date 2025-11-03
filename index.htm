@@ -38,6 +38,8 @@
 <div id="head-container">
     <canvas id="artboard"></canvas>
     <div id="dark-overlay"></div>
+    <!-- Blinds overlay (separate layer from dark overlay) -->
+    <div id="blinds-overlay"></div>
 </div>
 
 <div id="content">
@@ -47,11 +49,9 @@
     <section class="content-section" data-section="2">
         <div class="section-content">
             <div class="section-row section-row--top">
-                <h2 class="section-heading">EYE CANDY</h2>
+                <h2 class="heading-h2 section-heading-eyecandy">EYE CANDY</h2>
             </div>
-            <div class="section-row section-row--middle">
-                <h1 class="section-word section-word--left" aria-hidden="false">BEYOND</h1>
-                <h1 class="section-word section-word--right" aria-hidden="false">PRETTY</h1>                
+            <div class="section-row section-row--middle" id="beyond-pretty-container">
             </div>
             <div class="section-row section-row--bottom">
                 <p class="text-label section-tagline">Designing beautiful products<br>that work, and work well.</p>
@@ -71,7 +71,7 @@
                 
                 <!-- Row 2: Buttons -->
                 <div class="enterprise-buttons">
-                    <button class="btn-link text-label">CONTACT ME<img src="src/assets/arrow-right.svg" alt="" /></button>
+                    <button class="btn-link text-label">CONTACT ME<img src="src/assets/arrow-down.svg" alt="" /></button>
                     <button class="btn-link text-label">GET MY RESUME<img src="src/assets/download.svg" alt="" /></button>
                 </div>
             </div>
@@ -135,7 +135,12 @@
     
     <section id="contact" class="content-section" data-section="6">
         <div class="section-content section-content--centered">
-            <h2 class="heading-h2 heading-h2--primary">LET'S TALK</h2>
+            <div class="contact-heading-wrapper">
+                <button class="contact-return-btn" aria-label="Return to about section" title="Back to About">
+                    <img src="src/assets/arrow-up.svg" alt="" class="contact-return-icon" />
+                </button>
+                <h2 class="heading-h2 heading-h2--primary">LET'S TALK</h2>
+            </div>
             <div class="contact-email-wrapper">
                 <a href="mailto:jribhshan@gmail.com" class="contact-email-link body-small">
                     <span class="contact-email-text">jribhshan@gmail.com</span>
@@ -245,6 +250,9 @@
 <script type="module" src="./src/contactCopy.js"></script>
 <script type="module" src="./src/gsapButtonFlair.js"></script>
 <script type="module" src="./src/logoTestAnim.js"></script>
+<script type="module" src="./src/beyondSvgAnim.js"></script>
+<script type="module" src="./src/contactReturnBtn.js"></script>
+<script type="module" src="./src/contactArrowAnimation.js"></script>
 <script type="module" src="./src/main.js"></script>
 <script type="module" src="./src/index.js"></script>
 

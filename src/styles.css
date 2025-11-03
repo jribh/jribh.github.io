@@ -28,7 +28,7 @@
     --white-20:  rgb(255 255 255 / 0.2);
 
     /* Backgrounds */
-    --bg-card:   rgb(255 255 255 / 0.09);   /* Card 9% */
+    --bg-card:   rgb(18, 18, 18);   /* Card 9% */
     --bg-navbar: rgb(0 0 0 / 0.16);         /* Navbar 16% */
     --bg-black:  #000000;                   /* Black */
 
@@ -764,12 +764,12 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
 .work-overlay--and {
     bottom: 0.85em;
-    left: 0.4em;
+    left: 0.3em;
 }
 
 .work-overlay--for-people {
     bottom: 0.6em;
-    right: -1.4em;
+    right: -1.5em;
 }
 
 .heading-h3 {
@@ -1011,6 +1011,8 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     align-items: center;
     justify-content: space-between;
     position: relative;
+    width: 100%;
+    min-height: 200px; /* Ensure enough space for the animated SVG */
 }
 
 .section-row--bottom {
@@ -1020,13 +1022,46 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 }
 
 .content-section[data-section="2"] .section-content {
-    gap: 1em;
+    gap: 3em;
     grid-column: 1 / -1;;
 }
 
 .content-section[data-section="2"] .section-row--middle {
     margin-left: -0.4em;
     margin-bottom: -1em;
+}
+
+.content-section[data-section="2"] .section-heading-eyecandy {
+    color: var(--primary-light);
+    margin: 0;
+}
+
+/* Beyond and Pretty SVGs in section 2 */
+/* Shared container and sizing so both words have equal height across breakpoints */
+#beyond-pretty-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+}
+
+/* Beyond and Pretty SVGs - responsive heights starting at 12em, reducing by 2em at each breakpoint */
+.beyond-svg,
+.pretty-svg {
+    height: 32em;
+    width: auto;
+    pointer-events: none;
+    display: block;
+    flex: 0 0 auto; /* prevent flex growing/shrinking to keep equal heights */
+}
+
+/* Ensure SVG paths are styled correctly */
+.beyond-svg path,
+.pretty-svg path {
+    fill: none !important;
+    stroke: white;
+    background: none !important;
+    background-image: none !important;
 }
 
 .content-section[data-section="2"] .section-heading {
@@ -1155,7 +1190,6 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     background-color: rgba(0, 0, 0, 0.5);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 1200ms ease, background-color 800ms ease;
     z-index: 2;
 }
 
@@ -1163,8 +1197,46 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     opacity: 1;
 }
 
-#dark-overlay.is-fully-black {
-    background-color: rgba(0, 0, 0, 1);
+/* Blinds overlay sits above the dark overlay to stay fully opaque */
+#blinds-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 3; /* above dark overlay */
+}
+
+/* Venetian blinds container (independent of dark overlay) */
+.venetian-blinds {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(var(--slats-count, 18), 1fr);
+    gap: 0; /* seamless slats */
+    pointer-events: none;
+    opacity: 0;            /* hidden by default */
+    visibility: hidden;    /* hidden by default */
+}
+
+.venetian-blinds__slat {
+    background: #000;
+    transform-origin: left center;
+    transform: scaleX(0);
+    will-change: transform;
+    /* Add small overlap to eliminate sub-pixel gaps on high-DPI displays */
+    margin-left: -0.5px;
+    margin-right: -0.5px;
+    /* Ensure first slat doesn't overflow left */
+}
+
+.venetian-blinds__slat:first-child {
+    margin-left: 0;
+}
+
+.venetian-blinds__slat:last-child {
+    margin-right: 0;
 }
 
 .loading-overlay {
@@ -1436,7 +1508,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     align-items: flex-start;
     text-align: left;
     justify-content: flex-start;
-    padding: 6em 0 0 0; /* 6em top padding, no other padding */
+    padding: 10em 0 0 0; /* 6em top padding, no other padding */
     grid-column: 3 / 6; /* Default: columns 3 to 5 (for screens > 1280px) */
 }
 
@@ -1449,6 +1521,49 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     display: flex;
     align-items: center;
     gap: 1.2em;
+}
+
+/* Contact Heading Wrapper (for positioning return button) */
+.contact-heading-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+/* Contact Return Button */
+.contact-return-btn {
+    position: absolute;
+    left: -4.5em;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgb(255 255 255 / 0.16);
+    border: none;
+    padding: 0.5em;
+    border-radius: 100%;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 1;
+    transition: opacity 0.4s ease, background 0.2s ease;
+    pointer-events: auto;
+}
+
+.contact-return-btn:hover {
+    background: rgb(255 255 255 / 0.24);
+}
+
+.contact-return-btn.is-hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.contact-return-icon {
+    width: 1.5em;
+    height: 1.5em;
+    color: var(--text-primary);
+    filter: brightness(0) invert(1);
+    transition: opacity 0.2s ease;
 }
 
 .contact-email-link {
@@ -1707,6 +1822,18 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
         grid-column: 1 / -1;
     }
     .content-section[data-section="2"] .section-word { font-size: 28em; }
+    .work-overlay--and {
+        bottom: 0.85em;
+        left: 0.4em;
+    }
+    .work-overlay--for-people {
+        bottom: 0.6em;
+        right: -1.4em;
+    }
+    .beyond-svg,
+    .pretty-svg {
+        height: 24em;
+    }
 }
 
 /* Medium laptops (<=1440px) */
@@ -1720,6 +1847,9 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .content-section[data-section="2"] .section-heading { font-size: 5em; }
     .section-tagline { font-size: 0.9em; }
     .content-section[data-section="2"] .section-word { font-size: 26em; }
+    .content-section[data-section="2"] .section-content {
+        gap: 1.2em;
+    }
     
     .performance-hud { top: 2em; left: 3em; }
     .bottom-bar { bottom: 2em; padding-left: 3em; padding-right: 3em; }
@@ -1729,6 +1859,10 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     
     .big-cats-section { gap: 3em; }
     .work-cards { padding-bottom: 3em; }
+    .beyond-svg,
+    .pretty-svg {
+        height: 20em;
+    }
 }
 
 /* 1280px and below */
@@ -1754,6 +1888,10 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
     .content-section[data-section="6"] .section-content { 
         grid-column: 3 / 7;
+    }
+    .beyond-svg,
+    .pretty-svg {
+        height: 18em;
     }
 }
 
@@ -1803,8 +1941,15 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
         padding-right: 0;
     }
 
-    .content-section[data-section="2"] .section-heading { font-size: 3.5em; }
-    .content-section[data-section="2"] .section-word { font-size: 20em; }
+    .content-section[data-section="2"] .section-heading-eyecandy { font-size: 3.5em; }
+
+    .beyond-svg,
+    .pretty-svg {
+        height: 14em;
+    }
+
+    /* Keep equal heights on tablet as well */
+    #beyond-pretty-container { gap: 1.25rem; }
 
     .contact-form { max-width: none; }
     .curtains-block { padding-bottom: 20vh; }
@@ -1872,6 +2017,25 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .work-overlay--crafting { top: 0.1em; left: -0.8em; }
     .work-overlay--for-people { bottom: 0.2em; right: -0.6em; }
     
+    /* Mobile: stack the words vertically and keep equal heights */
+    .content-section[data-section="2"] .section-row--middle { 
+        flex-direction: column; 
+        gap: 2em; 
+        margin-left: 0;
+    }
+    /* SVG heights: 8em (12em - 2em - 2em) at ≤768px */
+    .beyond-svg,
+    .pretty-svg {
+        height: 12em;
+    }
+    #beyond-pretty-container {
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    .content-section[data-section="2"] .section-heading-eyecandy { font-size: 3em; }
+    .section-row.section-row--middle { justify-content: center; }
+    
     .content-section[data-section="6"] .section-content { 
         grid-column: 1 / -1; /* Span first to last column */
         padding-left: 1em; 
@@ -1929,7 +2093,11 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
         font-size: 10em;
     }
     .content-section[data-section="2"] .section-content {
-        gap: 0.6em;
+        gap: 1.5em;
+    }
+    .beyond-svg,
+    .pretty-svg {
+        height: 8em;
     }
 
     /* Additional overflow fix for very small screens */

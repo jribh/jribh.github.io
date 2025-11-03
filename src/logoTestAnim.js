@@ -70,13 +70,13 @@ async function loadSVG(url) {
 
 async function initLogoAnimation() {
   try {
-    // Wait for loading overlay to exist
+    // Wait for loading overlay content to exist
     const waitForLoadingOverlay = () => {
       return new Promise(resolve => {
         const check = () => {
-          const loadingLogo = document.querySelector('.loading-overlay__logo');
-          if (loadingLogo) {
-            resolve(loadingLogo);
+          const loadingContent = document.querySelector('.loading-overlay__content');
+          if (loadingContent) {
+            resolve(loadingContent);
           } else {
             requestAnimationFrame(check);
           }
@@ -85,7 +85,7 @@ async function initLogoAnimation() {
       });
     };
 
-    const loadingLogoImg = await waitForLoadingOverlay();
+    const loadingContent = await waitForLoadingOverlay();
     
     // Load both SVGs
     const [logoSvg, maskSvg] = await Promise.all([
@@ -154,9 +154,8 @@ async function initLogoAnimation() {
     childrenToWrap.forEach((n) => wrapper.appendChild(n));
     logoSvg.appendChild(wrapper);
 
-    // Replace the loading overlay logo with our animated SVG
-    loadingLogoImg.replaceWith(logoSvg);
-    console.log('Replaced loading logo with animated SVG');
+    // Replace the placeholder div with our animated SVG
+    loadingContent.replaceChild(logoSvg, loadingContent.firstChild);
 
     // Get all the letter paths
     const paths = {
@@ -250,10 +249,9 @@ async function initLogoAnimation() {
     let loopInterval = null;
     
     currentTimeline.eventCallback('onComplete', () => {
-      // Wait 1 second after first animation completes before resolving
+      // Wait 400ms after first animation completes before resolving
       setTimeout(() => {
         logoAnimationCompleteResolve();
-        console.log('Logo animation complete - startup can proceed');
         
         // Continue looping animation during loading if startup hasn't finished
         if (isLoadingPhase) {
@@ -270,7 +268,7 @@ async function initLogoAnimation() {
             }
           }, LOGO_ANIMATION_CONFIG.loopInterval * 1000);
         }
-      }, 1000);
+      }, 400);
     });
 
     // Cleanup function to stop looping when loading finishes
@@ -282,8 +280,6 @@ async function initLogoAnimation() {
       }
     };
 
-    console.log('Logo animation initialized with config:', LOGO_ANIMATION_CONFIG);
-
   } catch (error) {
     console.error('Error loading logo animation:', error);
     // If there's an error, resolve the promise anyway so the startup sequence can continue
@@ -291,7 +287,7 @@ async function initLogoAnimation() {
       logoAnimationCompleteResolve();
       // Mark loading complete to stop any loops
       markLoadingComplete();
-    }, 1000);
+    }, 400);
   }
 }
 
