@@ -1037,7 +1037,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
 .content-section[data-section="2"] .section-heading-eyecandy {
     color: var(--primary-light);
-    margin: 0;
+    margin: 0 0 0 -0.1em;
     font-weight: 400;
 }
 
@@ -1060,14 +1060,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     flex: 0 0 auto; /* prevent flex growing/shrinking to keep equal heights */
 }
 
-/* Ensure SVG paths are styled correctly */
-.beyond-svg path,
-.pretty-svg path {
-    fill: none !important;
-    stroke: white;
-    background: none !important;
-    background-image: none !important;
-}
+/* No path styling needed - base SVGs have gradient fills, masks handle animation */
 
 .content-section[data-section="2"] .section-heading {
     font-family: 'Roboto Flex', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
@@ -1123,7 +1116,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
 .section-tagline {
     color: var(--text-secondary);
-    margin: 0;
+    margin: 1em 0 0 0;
     text-align: left;
     line-height: 1.4;
     font-weight: 500; /* Medium weight */
@@ -2044,6 +2037,9 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
         justify-content: center;
         align-items: center;
         gap: 2em;
+    }
+    .content-section[data-section="2"] .section-heading-eyecandy {
+        margin: 0;
     }
 
     .section-row.section-row--middle { justify-content: center; }

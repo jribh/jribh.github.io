@@ -1,13 +1,13 @@
-<svg width="553" height="500" viewBox="0 0 553 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="554" height="496" viewBox="0 0 554 496" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g id="pretty_svg">
-<path id="y" d="M536.218 3.88281L497.5 148.383V498.883" stroke="#FA5242" stroke-width="30"/>
-<path id="e_left" d="M294.5 484.383H234.5L234.635 18.8828H461.5L498.498 151.383" stroke="#FA5242" stroke-width="30"/>
-<path id="e_middle" d="M234.633 116.883L291.13 116.883" stroke="#FA5242" stroke-width="30"/>
-<path id="p_left" d="M15 3.88281V498.883" stroke="#FA5242" stroke-width="30"/>
-<path id="t_1" d="M333.5 3.88281V498.883" stroke="#FA5242" stroke-width="30"/>
-<path id="t_2" d="M409.5 3.88281V498.883" stroke="#FA5242" stroke-width="30"/>
-<path id="r_left" d="M121.5 3.88281V498.883" stroke="#FA5242" stroke-width="30"/>
-<path id="p_right" d="M0 18.8828H51.5C66.4117 18.8828 78.5 30.9711 78.5 45.8828V102.883C78.5 117.795 66.4117 129.883 51.5 129.883H0" stroke="#FA5242" stroke-width="30"/>
-<path id="r_right" d="M106.5 18.8828H158C172.912 18.8828 185 30.9711 185 45.8828V85.7527C185 100.519 173.137 112.546 158.372 112.75L112.5 113.383H158C172.912 113.383 185 125.471 185 140.383V498.883" stroke="#FA5242" stroke-width="30"/>
+<path id="y" d="M535.5 3.85547L498 144.856V495.356" stroke="#FA5242" stroke-width="30"/>
+<path id="e_left" d="M295 480.855H235L235.135 15.3555H462L498.998 147.855" stroke="#FA5242" stroke-width="30"/>
+<path id="e_middle" d="M235.133 113.355L291.63 113.355" stroke="#FA5242" stroke-width="30"/>
+<path id="p_left" d="M15.5 0.355469V495.355" stroke="#FA5242" stroke-width="30"/>
+<path id="t_1" d="M334 0.355469V495.355" stroke="#FA5242" stroke-width="30"/>
+<path id="t_2" d="M410 0.355469V495.355" stroke="#FA5242" stroke-width="30"/>
+<path id="r_left" d="M122 0.355469V495.355" stroke="#FA5242" stroke-width="30"/>
+<path id="p_right" d="M0.5 15.3555H52C66.9117 15.3555 79 27.4438 79 42.3555V99.3555C79 114.267 66.9117 126.355 52 126.355H0.5" stroke="#FA5242" stroke-width="30"/>
+<path id="r_right" d="M107 15.3555H158.5C173.412 15.3555 185.5 27.4438 185.5 42.3555V82.2253C185.5 96.9918 173.637 109.019 158.872 109.223L113 109.855H158.5C173.412 109.855 185.5 121.944 185.5 136.855V495.355" stroke="#FA5242" stroke-width="30"/>
 </g>
 </svg>

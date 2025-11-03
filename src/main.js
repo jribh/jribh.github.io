@@ -1838,6 +1838,23 @@ function handleScroll() {
   // Update reeded glass smoothly based on scroll position
   currentScrollProgress = scrollProgress;
   
+  // Camera zoom mapping: Smooth zoom-out as user scrolls from section 1 to 2, then zoom-in from section 2 to 3
+  if (scrollY <= section1End) {
+    // Section 1 -> 2 transition: zoom out from 1.0 to 0.95
+    const section1Progress = scrollY / section1End; // 0 to 1
+    camera.zoom = 1.0 - (section1Progress * 0.05); // smoothly zoom out by 5%
+    camera.updateProjectionMatrix();
+  } else if (scrollY <= section2End) {
+    // Section 2 -> 3 transition: zoom back in from 0.95 to 1.0
+    const section2Progress = (scrollY - section1End) / (section2End - section1End); // 0 to 1
+    camera.zoom = 0.95 + (section2Progress * 0.05); // smoothly zoom back in by 5%
+    camera.updateProjectionMatrix();
+  } else {
+    // Beyond section 3: maintain zoom at 1.0
+    camera.zoom = 1.0;
+    camera.updateProjectionMatrix();
+  }
+  
   // Get glass mode configuration for current progress
   const glassModeConfig = getGlassModeForProgress(scrollProgress);
   
