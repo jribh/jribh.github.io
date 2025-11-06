@@ -434,19 +434,30 @@ async function initBeyondAnimation() {
     // Track if animation has been triggered
     let animationTriggered = false;
     
-    // Mobile/touch device: IntersectionObserver + scroll fallback for iOS
-    if (!window.smoothScroll || !window.smoothScroll.scrollTo) {
+  // Mobile/touch device: IntersectionObserver + scroll fallback for iOS
+  const IS_TOUCH = (window.smoothScroll && window.smoothScroll.isTouchDevice) ||
+           (typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0)) ||
+           (typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches);
+  if (IS_TOUCH) {
       if (section2) {
         const observer = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            // Trigger when any decent visibility (>= 35%) to be more forgiving on iOS rubber-banding
-            if (entry.isIntersecting && entry.intersectionRatio >= 0.35 && !animationTriggered) {
-              animationTriggered = true;
-              runAnimationLoop();
+          for (const entry of entries) {
+            if (!animationTriggered) {
+              // Use boundingClientRect approach as a fallback when intersectionRatio is unreliable (some iOS cases)
+              const ratioOkay = entry.intersectionRatio >= 0.28; // lower threshold
+              const bounds = entry.boundingClientRect;
+              const vh = window.innerHeight || document.documentElement.clientHeight;
+              const pixelVisible = Math.min(vh, Math.max(0, vh - Math.max(bounds.top, 0))); // crude visible height estimate
+              const pixelThresholdOkay = pixelVisible >= vh * 0.28; // at least 28% of viewport height
+              if ((entry.isIntersecting && ratioOkay) || pixelThresholdOkay) {
+                animationTriggered = true;
+                runAnimationLoop();
+                break;
+              }
             }
-          });
+          }
         }, {
-          threshold: [0.2, 0.35, 0.5]
+          threshold: [0.1, 0.2, 0.28, 0.35, 0.5]
         });
         observer.observe(section2);
 
@@ -472,7 +483,7 @@ async function initBeyondAnimation() {
           }
         }, 6000);
       }
-    } else {
+  } else {
       // Desktop: Hook into the smoothScroll snap callback
       const originalScrollTo = window.smoothScroll.scrollTo;
       window.smoothScroll.scrollTo = function(target, duration, onComplete) {

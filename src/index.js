@@ -215,6 +215,7 @@ function updateNavbarOnScroll(scrollY = null) {
 			showOverlay = currentSectionIndex === 3 || currentSectionIndex === 4 || currentSectionIndex === 5;
 		}
 		
+		// Apply class instantly but we'll manage opacity smoothly including mobile section 2->3
 		if (showOverlay) {
 			darkOverlay.classList.add('is-visible');
 		} else {
@@ -270,8 +271,25 @@ function updateNavbarOnScroll(scrollY = null) {
 				}
 			}
 		} else if (isMobile && currentSectionIndex === 2) {
-			// Mobile: section 3 (index 2) has overlay
-			overlayOpacity = 0.5;
+			// Mobile: section 3 (index 2) should fade in as we enter it from section 2
+			const section3 = sections[2];
+			if (section3) {
+				const section3Top = section3.offsetTop;
+				// Start fading 60% viewport before section 3 top
+				const transitionWindow = window.innerHeight * 0.6;
+				const transitionStart = section3Top - transitionWindow;
+				const transitionEnd = section3Top + window.innerHeight * 0.15; // allow slight continued ramp inside section
+				if (scrollY >= transitionEnd) {
+					overlayOpacity = 0.5;
+				} else if (scrollY >= transitionStart) {
+					const progress = (scrollY - transitionStart) / (transitionEnd - transitionStart);
+					overlayOpacity = Math.min(0.5, progress * 0.5);
+				} else {
+					overlayOpacity = 0;
+				}
+			} else {
+				overlayOpacity = 0.5; // fallback
+			}
 		}
 		
 		darkOverlay.style.opacity = overlayOpacity;

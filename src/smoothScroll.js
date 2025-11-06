@@ -53,17 +53,41 @@ class SmoothScroll {
     // Skip smooth scroll setup on touch devices
     if (this.isTouchDevice) {
       console.log('Touch device detected - smooth scrolling disabled');
-      // Set scrollCurrent to 0 for compatibility with other scripts
-      this.scrollCurrent = 0;
-      
+      this.scrollCurrent = window.scrollY || 0;
+
+      // Compute Section 2 top for snap assist
+      this.computeSection2Top = () => {
+        const sec2 = document.querySelector('.content-section[data-section="2"]');
+        this.section2Top = sec2 ? sec2.offsetTop : window.innerHeight;
+      };
+      this.computeSection2Top();
+
       // Update scrollCurrent on native scroll for touch devices
-      window.addEventListener('scroll', () => {
-        this.scrollCurrent = window.scrollY;
+      this.lastNativeScrollY = window.scrollY || 0;
+      this.isAutoSnappingTouch = false;
+      const onNativeScroll = () => {
+        const y = window.scrollY || 0;
+        const delta = y - this.lastNativeScrollY;
+        this.lastNativeScrollY = y;
+        this.scrollCurrent = y;
+
+        // JS snap fallback: if user scrolls down from Section 1, snap to Section 2
+        if (!this.isAutoSnappingTouch && delta > 6 && y < this.section2Top * 0.9) {
+          this.isAutoSnappingTouch = true;
+          this.animateScrollTo(this.section2Top, 750);
+          setTimeout(() => { this.isAutoSnappingTouch = false; }, 900);
+        }
+      };
+      window.addEventListener('scroll', onNativeScroll, { passive: true });
+
+      // Update on resize
+      window.addEventListener('resize', () => {
+        this.computeSection2Top();
       }, { passive: true });
 
-      // Still handle anchor links with custom animated scroll to avoid instant jumps
+      // Handle anchor links smoothly
       this.setupAnchorLinks();
-      
+      SmoothScroll.installGlobalAnchorInterceptor(this);
       return;
     }
     

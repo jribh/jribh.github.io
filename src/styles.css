@@ -96,6 +96,7 @@ body {
 @media (pointer: coarse) {
     html, body {
         scroll-snap-type: y mandatory;
+        -webkit-overflow-scrolling: touch; /* iOS momentum */
     }
     #content, .content-wrapper {
         scroll-snap-type: y mandatory;
@@ -105,6 +106,19 @@ body {
     }
     .content-section[data-section="2"] {
         scroll-snap-stop: always; /* ensure 2 locks firmly when reached */
+    }
+}
+
+/* Mobile: collapse section 1 height while preserving layout flow */
+@media (pointer: coarse) {
+    .content-section[data-section="1"] { /* assuming section index 1 is the first after 0? If section 1 means the hero (data-section="1"), adjust */
+        height: 1px !important;
+        margin-top: -2px !important;
+    }
+    /* If the hero is actually data-section="0", apply there instead */
+    .content-section[data-section="0"] {
+        height: 1px !important;
+        margin-top: -2px !important;
     }
 }
 
@@ -2127,7 +2141,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     }
     .beyond-svg,
     .pretty-svg {
-        height: 8em;
+        height: 7em;
     }
 
     .content-section[data-section="2"] .section-heading-eyecandy {

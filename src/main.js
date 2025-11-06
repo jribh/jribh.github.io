@@ -449,6 +449,13 @@ function positionGradientBackgroundFromFrustum() {
 function updateGradientColorsForScroll(scrollProgress) {
   if (!_bgGrad || !_bgGrad.material || !_bgGrad.material.uniforms) return;
   
+  // Keep background opacity at 1.0 on touch/mobile devices (especially for section 6)
+  // On desktop, fade background to 0 when fully scrolled (section 6)
+  const bgOpacity = IS_TOUCH_DEVICE ? 1.0 : (scrollProgress >= 1.0 ? 0.0 : 1.0);
+  if (_bgGrad.material.uniforms.uOpacity) {
+    _bgGrad.material.uniforms.uOpacity.value = bgOpacity;
+  }
+  
   // Original top color: #1C214B (dark blue)
   // Target top color when scrolled: #050505 (almost black)
   const originalTopColor = new THREE.Color(0x1C214B);
@@ -1879,11 +1886,19 @@ function handleScroll() {
   // Update reeded glass smoothly based on scroll position
   currentScrollProgress = scrollProgress;
   
-  // Early scroll takeover for camera zoom during startup
-  // If user scrolls before startup sequence finishes, we smoothly blend to scroll-based zoom mapping.
-  if (!startupCameraZoomKilled && scrollY > 4) { // very small threshold to catch quick scrolls
-    gsap.killTweensOf(camera, 'zoom');
-    startupCameraZoomKilled = true;
+  // Disable scroll-based camera zoom entirely on touch/mobile devices
+  // (Mobile layout collapses first section; keep a stable zoom of 1.0 for consistency)
+  if (IS_TOUCH_DEVICE) {
+    if (camera.zoom !== 1.0) {
+      camera.zoom = 1.0;
+      camera.updateProjectionMatrix();
+    }
+  } else {
+    // Early scroll takeover for camera zoom during startup (desktop only)
+    if (!startupCameraZoomKilled && scrollY > 4) { // very small threshold to catch quick scrolls
+      gsap.killTweensOf(camera, 'zoom');
+      startupCameraZoomKilled = true;
+    }
   }
 
   const computeScrollTargetZoom = () => {
@@ -1903,23 +1918,25 @@ function handleScroll() {
   // Apply zoom mapping:
   // 1. During full startup (no early scroll) we let the startup timeline drive zoom.
   // 2. After startup finishes OR early scroll takeover triggered, we smoothly lerp toward the scroll target.
-  if (!startupActive || startupCameraZoomKilled) {
-    // If at the very top, snap to 1.0 to avoid lingering interpolation
-    if (scrollY <= 1) {
-      if (camera.zoom !== 1.0) {
-        camera.zoom = 1.0;
+  if (!IS_TOUCH_DEVICE) {
+    if (!startupActive || startupCameraZoomKilled) {
+      // If at the very top, snap to 1.0 to avoid lingering interpolation
+      if (scrollY <= 1) {
+        if (camera.zoom !== 1.0) {
+          camera.zoom = 1.0;
+          camera.updateProjectionMatrix();
+        }
+      } else {
+        const desiredZoom = computeScrollTargetZoom();
+        // Smoothly interpolate to avoid snap; faster when difference large.
+        const diff = desiredZoom - camera.zoom;
+        const lerpFactor = Math.abs(diff) > 0.04 ? 0.22 : 0.12; // larger step for bigger gaps
+        camera.zoom = camera.zoom + diff * lerpFactor;
+        // Clamp defensively
+        if (camera.zoom < 0.5) camera.zoom = 0.5;
+        if (camera.zoom > 2.0) camera.zoom = 2.0;
         camera.updateProjectionMatrix();
       }
-    } else {
-      const desiredZoom = computeScrollTargetZoom();
-      // Smoothly interpolate to avoid snap; faster when difference large.
-      const diff = desiredZoom - camera.zoom;
-      const lerpFactor = Math.abs(diff) > 0.04 ? 0.22 : 0.12; // larger step for bigger gaps
-      camera.zoom = camera.zoom + diff * lerpFactor;
-      // Clamp defensively
-      if (camera.zoom < 0.5) camera.zoom = 0.5;
-      if (camera.zoom > 2.0) camera.zoom = 2.0;
-      camera.updateProjectionMatrix();
     }
   }
   
