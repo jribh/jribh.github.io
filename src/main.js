@@ -31,6 +31,7 @@ let barHeights = [];
 
 // Startup sequence state
 let startupActive = true;
+let startupCameraZoomKilled = false; // Track if we've killed the startup camera zoom tween
 let allowHeadLook = false;
 let allowBreathing = false; // both chin & shoulder breathing enabled together after startup
 const eyeMeshes = [];
@@ -1878,22 +1879,46 @@ function handleScroll() {
   // Update reeded glass smoothly based on scroll position
   currentScrollProgress = scrollProgress;
   
-  // Camera zoom mapping: Smooth zoom-out as user scrolls from section 1 to 2, then zoom-in from section 2 to 3
-  // Skip zoom updates during startup to allow startup sequence to complete
-  if (!startupActive) {
+  // Early scroll takeover for camera zoom during startup
+  // If user scrolls before startup sequence finishes, we smoothly blend to scroll-based zoom mapping.
+  if (!startupCameraZoomKilled && scrollY > 4) { // very small threshold to catch quick scrolls
+    gsap.killTweensOf(camera, 'zoom');
+    startupCameraZoomKilled = true;
+  }
+
+  const computeScrollTargetZoom = () => {
+    let target = 1.0;
     if (scrollY <= section1End) {
-      // Section 1 -> 2 transition: zoom out from 1.0 to 0.95
-      const section1Progress = scrollY / section1End; // 0 to 1
-      camera.zoom = 1.0 - (section1Progress * 0.05); // smoothly zoom out by 5%
-      camera.updateProjectionMatrix();
+      const section1Progress = scrollY / section1End; // 0-1
+      target = 1.0 - (section1Progress * 0.05); // 1.0 -> 0.95
     } else if (scrollY <= section2End) {
-      // Section 2 -> 3 transition: zoom back in from 0.95 to 1.0
-      const section2Progress = (scrollY - section1End) / (section2End - section1End); // 0 to 1
-      camera.zoom = 0.95 + (section2Progress * 0.05); // smoothly zoom back in by 5%
-      camera.updateProjectionMatrix();
+      const section2Progress = (scrollY - section1End) / (section2End - section1End); // 0-1
+      target = 0.95 + (section2Progress * 0.05); // 0.95 -> 1.0
     } else {
-      // Beyond section 3: maintain zoom at 1.0
-      camera.zoom = 1.0;
+      target = 1.0;
+    }
+    return target;
+  };
+
+  // Apply zoom mapping:
+  // 1. During full startup (no early scroll) we let the startup timeline drive zoom.
+  // 2. After startup finishes OR early scroll takeover triggered, we smoothly lerp toward the scroll target.
+  if (!startupActive || startupCameraZoomKilled) {
+    // If at the very top, snap to 1.0 to avoid lingering interpolation
+    if (scrollY <= 1) {
+      if (camera.zoom !== 1.0) {
+        camera.zoom = 1.0;
+        camera.updateProjectionMatrix();
+      }
+    } else {
+      const desiredZoom = computeScrollTargetZoom();
+      // Smoothly interpolate to avoid snap; faster when difference large.
+      const diff = desiredZoom - camera.zoom;
+      const lerpFactor = Math.abs(diff) > 0.04 ? 0.22 : 0.12; // larger step for bigger gaps
+      camera.zoom = camera.zoom + diff * lerpFactor;
+      // Clamp defensively
+      if (camera.zoom < 0.5) camera.zoom = 0.5;
+      if (camera.zoom > 2.0) camera.zoom = 2.0;
       camera.updateProjectionMatrix();
     }
   }
@@ -2301,8 +2326,14 @@ async function startStartupSequence(){
       blackoutEl = null;
       
       // Re-enable scrolling after loading is complete
-      // Note: Don't touch body.style.overflow or position - smooth scroll will handle those
-      // Only clear the temporary loading block styles
+      // Desktop: smooth scroll manages body fixed/overflow
+      // Touch devices: restore native scrolling explicitly
+      if (IS_TOUCH_DEVICE) {
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.top = '';
+      }
       if (typeof window.visualViewport !== 'undefined') {
         document.documentElement.style.overflow = '';
       }
@@ -2322,6 +2353,21 @@ async function startStartupSequence(){
       }
     } catch {} 
   }, null, 0.8);
+
+  // Fallback: ensure native scroll is restored on touch devices even if other code changes body styles
+  setTimeout(() => {
+    try {
+      if (IS_TOUCH_DEVICE) {
+        const cs = getComputedStyle(document.body);
+        if (cs.position === 'fixed' || document.body.style.position === 'fixed') {
+          document.body.style.overflow = '';
+          document.body.style.position = '';
+          document.body.style.width = '';
+          document.body.style.top = '';
+        }
+      }
+    } catch {}
+  }, 1600);
 
   // Phase 2 setup at ~0.62s
   tl.call(() => {
