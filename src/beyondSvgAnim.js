@@ -426,21 +426,45 @@ async function initBeyondAnimation() {
       animationState.isRunning = false;
     }
 
-    // Start animation when Section 2 snaps in place
-    // Hook into the smoothScroll snap callback
-    const originalScrollTo = window.smoothScroll?.scrollTo;
-    if (window.smoothScroll && originalScrollTo) {
+    // Start animation when Section 2 comes into view
+    // For desktop: hook into smoothScroll snap callback
+    // For mobile: use Intersection Observer
+    const section2 = document.querySelector('.content-section[data-section="2"]');
+    
+    // Track if animation has been triggered
+    let animationTriggered = false;
+    
+    // Mobile/touch device: use Intersection Observer
+    if (!window.smoothScroll || !window.smoothScroll.scrollTo) {
+      if (section2) {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            // Trigger animation when section 2 is at least 50% visible
+            if (entry.isIntersecting && entry.intersectionRatio >= 0.5 && !animationTriggered) {
+              animationTriggered = true;
+              runAnimationLoop();
+            }
+          });
+        }, {
+          threshold: [0.5] // Trigger when 50% of section 2 is visible
+        });
+        
+        observer.observe(section2);
+      }
+    } else {
+      // Desktop: Hook into the smoothScroll snap callback
+      const originalScrollTo = window.smoothScroll.scrollTo;
       window.smoothScroll.scrollTo = function(target, duration, onComplete) {
         // Check if this is the Section 2 snap
-        const section2 = document.querySelector('.content-section[data-section="2"]');
         const section2Top = section2 ? section2.offsetTop : window.innerHeight;
         
         const isSection2Snap = Math.abs(target - section2Top) < 1;
         
         // Call original scrollTo
         const wrappedCallback = () => {
-          if (isSection2Snap) {
+          if (isSection2Snap && !animationTriggered) {
             // Start animation when snap completes
+            animationTriggered = true;
             runAnimationLoop();
           }
           if (typeof onComplete === 'function') {

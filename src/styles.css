@@ -90,6 +90,18 @@ body {
     /* No outer padding - grid extends to screen edges */
 }
 
+/* CSS scroll snap for touch devices (mobile) */
+@media (pointer: coarse) {
+    html {
+        scroll-snap-type: y proximity;
+    }
+    
+    .content-section[data-section="2"] {
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+    }
+}
+
 /* Text selection styling */
 ::selection {
     background-color: var(--primary-dark);
@@ -763,7 +775,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 }
 
 .work-overlay--and {
-    bottom: 0.85em;
+    bottom: 0.9em;
     left: 0.3em;
 }
 
@@ -1304,7 +1316,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 10em calc((100% / 12) * 2 + 0.5em) 4em;
+    padding: 16em calc((100% / 12) * 2 + 0.5em) 4em;
     box-sizing: border-box;
     width: 100%;
     height: auto;
@@ -1921,7 +1933,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
         flex-direction: column;
         justify-content: flex-start;
         gap: 5em;
-        padding-top: 2em;
+        padding-top: 6em;
         padding-bottom: 2em;
     }
     .enterprise-left {
@@ -2066,7 +2078,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .section-tagline { font-size: 0.75em; }
     
     .section-content--enterprise {
-        padding: 2em 0;
+        padding: 4em 0;
         gap: 4em;
     }
     .enterprise-left { gap: 2em; position: static !important; transform: none !important; }

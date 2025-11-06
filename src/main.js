@@ -128,6 +128,28 @@ function createBlindsOverlay(stripeCount) {
 
 let overlayActivated = false;
 let logoAnimReady = false;
+let scrollBlocked = false;
+
+// Handler to prevent scrolling during loading
+const preventScroll = (e) => {
+  if (scrollBlocked) {
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  }
+};
+
+// Handler to prevent keyboard scrolling
+const preventKeyboardScroll = (e) => {
+  if (scrollBlocked) {
+    const keys = ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '];
+    if (keys.includes(e.key)) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+  }
+};
 
 // Wait for logo animation to complete
 logoAnimationComplete.then(() => {
@@ -138,7 +160,25 @@ logoAnimationComplete.then(() => {
 const activateLoadingOverlay = () => {
   if (overlayActivated) return;
   overlayActivated = true;
+  scrollBlocked = true;
   blackoutEl.style.pointerEvents = 'auto';
+  
+  // Block scrolling during loading
+  document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.width = '100%';
+  document.body.style.top = '0';
+  if (typeof window.visualViewport !== 'undefined') {
+    document.documentElement.style.overflow = 'hidden';
+  }
+  
+  // Prevent scroll events
+  window.addEventListener('scroll', preventScroll, { passive: false, capture: true });
+  window.addEventListener('wheel', preventScroll, { passive: false, capture: true });
+  window.addEventListener('touchmove', preventScroll, { passive: false, capture: true });
+  window.addEventListener('keydown', preventKeyboardScroll, { passive: false, capture: true });
+  document.addEventListener('scroll', preventScroll, { passive: false, capture: true });
+  
   if (PREFERS_REDUCED_MOTION) {
     gsap.set(blackoutEl, { opacity: 1 });
     gsap.set(loadingContent, { opacity: 1, y: 0 });
@@ -1839,20 +1879,23 @@ function handleScroll() {
   currentScrollProgress = scrollProgress;
   
   // Camera zoom mapping: Smooth zoom-out as user scrolls from section 1 to 2, then zoom-in from section 2 to 3
-  if (scrollY <= section1End) {
-    // Section 1 -> 2 transition: zoom out from 1.0 to 0.95
-    const section1Progress = scrollY / section1End; // 0 to 1
-    camera.zoom = 1.0 - (section1Progress * 0.05); // smoothly zoom out by 5%
-    camera.updateProjectionMatrix();
-  } else if (scrollY <= section2End) {
-    // Section 2 -> 3 transition: zoom back in from 0.95 to 1.0
-    const section2Progress = (scrollY - section1End) / (section2End - section1End); // 0 to 1
-    camera.zoom = 0.95 + (section2Progress * 0.05); // smoothly zoom back in by 5%
-    camera.updateProjectionMatrix();
-  } else {
-    // Beyond section 3: maintain zoom at 1.0
-    camera.zoom = 1.0;
-    camera.updateProjectionMatrix();
+  // Skip zoom updates during startup to allow startup sequence to complete
+  if (!startupActive) {
+    if (scrollY <= section1End) {
+      // Section 1 -> 2 transition: zoom out from 1.0 to 0.95
+      const section1Progress = scrollY / section1End; // 0 to 1
+      camera.zoom = 1.0 - (section1Progress * 0.05); // smoothly zoom out by 5%
+      camera.updateProjectionMatrix();
+    } else if (scrollY <= section2End) {
+      // Section 2 -> 3 transition: zoom back in from 0.95 to 1.0
+      const section2Progress = (scrollY - section1End) / (section2End - section1End); // 0 to 1
+      camera.zoom = 0.95 + (section2Progress * 0.05); // smoothly zoom back in by 5%
+      camera.updateProjectionMatrix();
+    } else {
+      // Beyond section 3: maintain zoom at 1.0
+      camera.zoom = 1.0;
+      camera.updateProjectionMatrix();
+    }
   }
   
   // Get glass mode configuration for current progress
@@ -2248,8 +2291,37 @@ async function startStartupSequence(){
   tl.to(blackoutEl, { opacity: 0, duration: 0.8, ease: 'power2.inOut' }, 0);
   // Canvas fades in from transparent to opaque during same period
   tl.to(theCanvas, { opacity: 1, duration: 0.8, ease: 'power2.inOut' }, 0);
-  // Remove DOM element after fade completes
-  tl.call(() => { try { blackoutEl?.remove(); blackoutEl = null; } catch {} }, null, 0.8);
+  // Remove DOM element after fade completes and re-enable scrolling
+  tl.call(() => { 
+    try { 
+      // Re-enable scrolling
+      scrollBlocked = false;
+      
+      blackoutEl?.remove(); 
+      blackoutEl = null;
+      
+      // Re-enable scrolling after loading is complete
+      // Note: Don't touch body.style.overflow or position - smooth scroll will handle those
+      // Only clear the temporary loading block styles
+      if (typeof window.visualViewport !== 'undefined') {
+        document.documentElement.style.overflow = '';
+      }
+      
+      // Remove scroll prevention event listeners
+      window.removeEventListener('scroll', preventScroll, { capture: true });
+      window.removeEventListener('wheel', preventScroll, { capture: true });
+      window.removeEventListener('touchmove', preventScroll, { capture: true });
+      window.removeEventListener('keydown', preventKeyboardScroll, { capture: true });
+      document.removeEventListener('scroll', preventScroll, { capture: true });
+      
+      // Reset scroll position to top
+      window.scrollTo(0, 0);
+      if (window.smoothScroll) {
+        window.smoothScroll.scrollTarget = 0;
+        window.smoothScroll.scrollCurrent = 0;
+      }
+    } catch {} 
+  }, null, 0.8);
 
   // Phase 2 setup at ~0.62s
   tl.call(() => {
