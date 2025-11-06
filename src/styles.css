@@ -90,15 +90,21 @@ body {
     /* No outer padding - grid extends to screen edges */
 }
 
-/* CSS scroll snap for touch devices (mobile) */
+/* CSS scroll snap for touch devices (mobile)
+     Use mandatory to enforce snapping on iOS Safari. Apply to body/content wrapper.
+*/
 @media (pointer: coarse) {
-    html {
-        scroll-snap-type: y proximity;
+    html, body {
+        scroll-snap-type: y mandatory;
     }
-    
-    .content-section[data-section="2"] {
+    #content, .content-wrapper {
+        scroll-snap-type: y mandatory;
+    }
+    .content-section {
         scroll-snap-align: start;
-        scroll-snap-stop: always;
+    }
+    .content-section[data-section="2"] {
+        scroll-snap-stop: always; /* ensure 2 locks firmly when reached */
     }
 }
 

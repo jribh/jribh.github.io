@@ -434,22 +434,43 @@ async function initBeyondAnimation() {
     // Track if animation has been triggered
     let animationTriggered = false;
     
-    // Mobile/touch device: use Intersection Observer
+    // Mobile/touch device: IntersectionObserver + scroll fallback for iOS
     if (!window.smoothScroll || !window.smoothScroll.scrollTo) {
       if (section2) {
         const observer = new IntersectionObserver((entries) => {
           entries.forEach(entry => {
-            // Trigger animation when section 2 is at least 50% visible
-            if (entry.isIntersecting && entry.intersectionRatio >= 0.5 && !animationTriggered) {
+            // Trigger when any decent visibility (>= 35%) to be more forgiving on iOS rubber-banding
+            if (entry.isIntersecting && entry.intersectionRatio >= 0.35 && !animationTriggered) {
               animationTriggered = true;
               runAnimationLoop();
             }
           });
         }, {
-          threshold: [0.5] // Trigger when 50% of section 2 is visible
+          threshold: [0.2, 0.35, 0.5]
         });
-        
         observer.observe(section2);
+
+        // Fallback: if user has scrolled past 70% of first viewport but observer hasn't fired, start animation
+        const touchFallbackCheck = () => {
+          if (!animationTriggered) {
+            const y = window.scrollY || document.documentElement.scrollTop || 0;
+            if (y > window.innerHeight * 0.7) {
+              animationTriggered = true;
+              runAnimationLoop();
+            }
+          }
+        };
+        window.addEventListener('scroll', touchFallbackCheck, { passive: true });
+        // Safety timeout: trigger if not started after 6s and user has interacted
+        setTimeout(() => {
+          if (!animationTriggered) {
+            const y = window.scrollY || document.documentElement.scrollTop || 0;
+            if (y > window.innerHeight * 0.4) {
+              animationTriggered = true;
+              runAnimationLoop();
+            }
+          }
+        }, 6000);
       }
     } else {
       // Desktop: Hook into the smoothScroll snap callback
