@@ -109,19 +109,6 @@ body {
     }
 }
 
-/* Mobile: collapse section 1 height while preserving layout flow */
-@media (pointer: coarse) {
-    .content-section[data-section="1"] { /* assuming section index 1 is the first after 0? If section 1 means the hero (data-section="1"), adjust */
-        height: 1px !important;
-        margin-top: -2px !important;
-    }
-    /* If the hero is actually data-section="0", apply there instead */
-    .content-section[data-section="0"] {
-        height: 1px !important;
-        margin-top: -2px !important;
-    }
-}
-
 /* Text selection styling */
 ::selection {
     background-color: var(--primary-dark);
@@ -1217,10 +1204,12 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    opacity: 0;
+    /* Use solid black; JS controls element opacity for desired darkness */
+    background-color: #000;
+    opacity: 0; /* JS sets to 0.5 for partial overlay */
     pointer-events: none;
     z-index: 2;
+    transition: opacity 1200ms ease; /* smooth fade for schedule changes */
 }
 
 #dark-overlay.is-visible {
@@ -1865,6 +1854,10 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .pretty-svg {
         height: 24em;
     }
+
+    .section-content--enterprise {
+        padding-top: 10em;
+    }
 }
 
 /* Medium laptops (<=1440px) */
@@ -1878,6 +1871,10 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .content-section[data-section="2"] .section-heading { font-size: 5em; }
     .section-tagline { font-size: 0.9em; }
     .content-section[data-section="2"] .section-word { font-size: 26em; }
+
+    .section-content--enterprise {
+        padding-top: 8em;
+    }
     
     .performance-hud { top: 2em; left: 3em; }
     .bottom-bar { bottom: 2em; padding-left: 3em; padding-right: 3em; }
@@ -2007,8 +2004,8 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .heading-h1 { font-size: 6.75em; }
     .heading-h2 { font-size: 4.5em; }
     .body-default { font-size: 1.6em; }
-    
-    #dark-overlay { background-color: rgba(0, 0, 0, 0.75); }
+
+    /* Removed mobile-specific overlay alpha override; dark overlay now always solid black with JS-managed opacity */
     
     .performance-hud { display: none; }
     .bottom-bar {

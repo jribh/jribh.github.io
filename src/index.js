@@ -198,168 +198,89 @@ function updateNavbarOnScroll(scrollY = null) {
 			if (smallLogo) { smallLogo.style.visibility = 'visible'; smallLogo.style.pointerEvents = 'auto'; }
 	}
 	
-	// Update dark overlay based on sections 4 and 5 (indices 3 and 4)
-	// On mobile (<=1024px), also show overlay for section 3 (index 2) and section 6 (index 5)
-	// On desktop, show overlay in sections 4, 5, and during transition to 6 (indices 3, 4, 5)
+	// Update dark overlay and blinds based on simplified spec
+	// Overlay schedule (opacity):
+	// - Section 1 & 2: 0 on all devices
+	// - Section 3: mobile (<=768px) 0.5, otherwise 0 (fade in smoothly)
+	// - Section 4: 0.5 on all devices (fade in smoothly from previous)
+	// - Section 5: handled by blinds animation; base overlay opacity 0 to avoid stacking with blinds
+	// - Section 6: desktop/tablet -> remove black via blinds; mobile (<=768px) -> remain black (overlay 1) throughout
 	const darkOverlay = document.getElementById('dark-overlay');
 	if (darkOverlay) {
-		const isMobile = window.innerWidth <= 1024;
-		
-		// Show overlay logic:
-		// Desktop: sections 4, 5, and 6 (indices 3, 4, and 5) - blinds will handle the uncovering
-		// Mobile: sections 3, 4, 5, and 6 (indices 2, 3, 4, and 5)
-		let showOverlay;
-		if (isMobile) {
-			showOverlay = currentSectionIndex === 2 || currentSectionIndex === 3 || currentSectionIndex === 4 || currentSectionIndex === 5;
-		} else {
-			showOverlay = currentSectionIndex === 3 || currentSectionIndex === 4 || currentSectionIndex === 5;
+		const isMobile = window.innerWidth <= 768; // per requirement
+
+		// Determine target overlay opacity by section + device
+		let overlayOpacity = 0; // default for sections 1-2
+
+		if (currentSectionIndex === 2) {
+			// Section 3
+			overlayOpacity = isMobile ? 0.5 : 0;
+		} else if (currentSectionIndex === 3) {
+			// Section 4
+			// Smooth fade from previous value to 0.5 using CSS transition; set value directly here
+			overlayOpacity = 0.5;
+		} else if (currentSectionIndex === 4) {
+			// Section 5 -> use blinds; avoid stacking base overlay with blinds
+			overlayOpacity = 0;
+		} else if (currentSectionIndex === 5) {
+			// Section 6
+			// Desktop: remove black via blinds opening; Mobile: keep black but via blinds (avoid double-overlay)
+			overlayOpacity = 0;
 		}
-		
-		// Apply class instantly but we'll manage opacity smoothly including mobile section 2->3
-		if (showOverlay) {
+
+		// Apply overlay visibility and opacity
+		if (overlayOpacity > 0) {
 			darkOverlay.classList.add('is-visible');
 		} else {
 			darkOverlay.classList.remove('is-visible');
-			resetVenetianBlinds();
 		}
-		
-		// Smooth opacity transitions for dark overlay
-		// Section 3→4: opacity 0 to 0.5
-		// Section 4-5: maintain 0.5
-		// Section 5→6: opacity 0.5 to 0
-		let overlayOpacity = 0;
-		
-		if (currentSectionIndex === 3) {
-			// In section 4 - calculate transition from section 3
-			const section3 = sections[2];
-			const section4 = sections[3];
-			if (section3 && section4) {
-				const section4Top = section4.offsetTop;
-				const transitionWindow = window.innerHeight * 0.5; // Fade over 50% viewport height
-				const transitionStart = section4Top - transitionWindow;
-				const transitionEnd = section4Top;
-				
-				if (scrollY >= transitionEnd) {
-					overlayOpacity = 0.5;
-				} else if (scrollY >= transitionStart) {
-					const progress = (scrollY - transitionStart) / transitionWindow;
-					overlayOpacity = progress * 0.5;
-				} else {
-					overlayOpacity = 0;
-				}
-			}
-		} else if (currentSectionIndex === 4) {
-			// In section 5 - maintain 0.5 opacity
-			overlayOpacity = 0.5;
-		} else if (currentSectionIndex === 5) {
-			// In section 6 - calculate transition from section 5
-			const section5 = sections[4];
-			const section6 = sections[5];
-			if (section5 && section6) {
-				const section6Top = section6.offsetTop;
-				const transitionWindow = window.innerHeight * 0.5; // Fade over 50% viewport height
-				const transitionStart = section6Top - transitionWindow;
-				const transitionEnd = section6Top;
-				
-				if (scrollY >= transitionEnd) {
-					overlayOpacity = 0;
-				} else if (scrollY >= transitionStart) {
-					const progress = (scrollY - transitionStart) / transitionWindow;
-					overlayOpacity = 0.5 * (1 - progress);
-				} else {
-					overlayOpacity = 0.5;
-				}
-			}
-		} else if (isMobile && currentSectionIndex === 2) {
-			// Mobile: section 3 (index 2) should fade in as we enter it from section 2
-			const section3 = sections[2];
-			if (section3) {
-				const section3Top = section3.offsetTop;
-				// Start fading 60% viewport before section 3 top
-				const transitionWindow = window.innerHeight * 0.6;
-				const transitionStart = section3Top - transitionWindow;
-				const transitionEnd = section3Top + window.innerHeight * 0.15; // allow slight continued ramp inside section
-				if (scrollY >= transitionEnd) {
-					overlayOpacity = 0.5;
-				} else if (scrollY >= transitionStart) {
-					const progress = (scrollY - transitionStart) / (transitionEnd - transitionStart);
-					overlayOpacity = Math.min(0.5, progress * 0.5);
-				} else {
-					overlayOpacity = 0;
-				}
-			} else {
-				overlayOpacity = 0.5; // fallback
-			}
-		}
-		
 		darkOverlay.style.opacity = overlayOpacity;
-		
-		// Calculate blinds progress - blinds should cover section 5 only
-		// Section 4→5 transition: blinds close (animate in left to right)
-		// Section 5: blinds fully closed (covering)
-		// Section 5→6 transition: blinds open (animate out right to left)
-		
+
+		// Blinds logic (section 5 only for desktop/tablet, persistent black in 6 for mobile)
 		if (currentSectionIndex === 3) {
 			// In section 4 - animate blinds closing as we approach section 5
 			const section4 = sections[3];
 			const section5 = sections[4];
-			
 			if (section4 && section5) {
 				const section5Top = section5.offsetTop;
 				const transitionWindow = window.innerHeight * 0.35;
 				const transitionStart = section5Top - window.innerHeight + transitionWindow - (window.innerHeight * 0.016);
-				const transitionEnd = section5Top + window.innerHeight * 0.35; // Extend animation window to give it more time
-				
+				const transitionEnd = section5Top + window.innerHeight * 0.35;
 				let blindsProgress = 0;
-				
 				if (scrollY >= transitionEnd) {
-					// Reached section 5
 					blindsProgress = 1;
 				} else if (scrollY >= transitionStart) {
-					// In transition window - animate blinds closing as section 5 comes into view
 					blindsProgress = (scrollY - transitionStart) / transitionWindow;
 				} else {
-					// Before transition starts
 					blindsProgress = 0;
 				}
-				
 				updateVenetianBlinds(blindsProgress, { slats: 18, stagger: 0.04, reverse: false });
 			}
 		} else if (currentSectionIndex === 4 || currentSectionIndex === 5) {
-			// In section 5 or 6 - handle transition to section 6
-			const section5 = sections[4];
 			const section6 = sections[5];
-			
-			if (section5 && section6) {
-				const section5Top = section5.offsetTop;
-				const section5Bottom = section5Top + section5.offsetHeight;
-				const section6Top = section6.offsetTop;
-				
-				// Trigger blinds when transitioning from section 5 to 6
-				// Blinds uncover (sweep right to left) as section 6 comes into view
-				const transitionWindow = window.innerHeight * 0.35; // Same timing as 4->5 transition
-				const transitionStart = section6Top - window.innerHeight * 0.5; // Start when section 6 is ~50% into viewport
-				const transitionEnd = section6Top + window.innerHeight * 0.35; // End 35% viewport after section 6 starts
-				
-				let blindsProgress = 0;
-				
-				if (scrollY >= transitionEnd) {
-					// Fully in section 6 - blinds fully open (0 progress = fully uncovered)
-					blindsProgress = 0;
-				} else if (scrollY >= transitionStart) {
-					// In transition window - animate blinds uncovering as section 6 comes into view
-					// Reverse progress: 1 when starting transition, 0 when fully in section 6
-					blindsProgress = 1 - ((scrollY - transitionStart) / transitionWindow);
+			if (section6) {
+				if (isMobile) {
+					// Mobile: keep blinds closed through section 6 (visually black stays)
+					updateVenetianBlinds(1, { slats: 18, stagger: 0.04, reverse: true });
 				} else {
-					// Before section 6 enters viewport - blinds fully closed (covering)
-					blindsProgress = 1;
+					// Desktop/tablet: open blinds transitioning into section 6
+					const section6Top = section6.offsetTop;
+					const transitionWindow = window.innerHeight * 0.35;
+					const transitionStart = section6Top - window.innerHeight * 0.5;
+					const transitionEnd = section6Top + window.innerHeight * 0.35;
+					let blindsProgress = 0;
+					if (scrollY >= transitionEnd) {
+						blindsProgress = 0;
+					} else if (scrollY >= transitionStart) {
+						blindsProgress = 1 - ((scrollY - transitionStart) / transitionWindow);
+					} else {
+						blindsProgress = 1;
+					}
+					updateVenetianBlinds(blindsProgress, { slats: 18, stagger: 0.04, reverse: true });
 				}
-				
-				// Use reverse: true for right-to-left uncovering
-				updateVenetianBlinds(blindsProgress, { slats: 18, stagger: 0.04, reverse: true });
 			}
 		} else {
-			// Outside active sections, ensure blinds are hidden
+			// Outside blinds-active sections, hide blinds
 			resetVenetianBlinds();
 		}
 	}
