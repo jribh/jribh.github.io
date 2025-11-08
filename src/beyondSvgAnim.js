@@ -1,8 +1,11 @@
 import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
 import beyondSvgUrl from 'url:./assets/beyond_svg.svg';
 import prettySvgUrl from 'url:./assets/pretty_svg.svg';
 import beyondBaseUrl from 'url:./assets/beyond_base.svg';
 import prettyBaseUrl from 'url:./assets/pretty_base.svg';
+
+gsap.registerPlugin(ScrollTrigger);
 
 // ============================================================================
 // CONFIGURABLE ANIMATION PARAMETERS
@@ -258,6 +261,47 @@ async function initBeyondAnimation() {
     // Append base SVGs to container (these are visible)
     container.appendChild(beyondBaseSvg);
     container.appendChild(prettyBaseSvg);
+
+    // Set up beautiful GSAP scroll-triggered fade-in animation for the SVG container
+    // This animates the container itself, separate from the path/mask animations
+    gsap.set(container, { autoAlpha: 0, y: 32, filter: 'blur(8px)' });
+    
+    // Get scroller based on smooth scroll state
+    const getScroller = () => {
+      return (window.smoothScroll && window.smoothScroll.isRunning) ? '#content' : window;
+    };
+    
+    // Mobile-responsive trigger: trigger further up (60%) on mobile (<=768px), 75% on desktop
+    const isMobile = window.innerWidth <= 768;
+    const triggerStart = isMobile ? 'top 60%' : 'top 75%';
+    
+    ScrollTrigger.create({
+      trigger: container,
+      start: triggerStart,
+      scroller: getScroller(),
+      onEnter: () => {
+        // Beautiful fade-in animation matching the site's aesthetic
+        gsap.to(container, {
+          autoAlpha: 1,
+          y: 0,
+          filter: 'blur(0px)',
+          duration: 1.2,
+          ease: 'expo.out',
+          overwrite: 'auto'
+        });
+      },
+      onLeaveBack: () => {
+        // Fade out when scrolling back up
+        gsap.to(container, {
+          autoAlpha: 0,
+          y: 32,
+          filter: 'blur(8px)',
+          duration: 0.6,
+          ease: 'power2.in',
+          overwrite: 'auto'
+        });
+      }
+    });
 
     // Get all the paths to animate for BEYOND (from the mask)
     const beyondPaths = {

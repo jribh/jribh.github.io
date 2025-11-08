@@ -21,7 +21,11 @@ class SmoothScroll {
     this.isTouchDevice = this.detectTouchDevice();
     // One-way snap state
     this.section2Top = 0; // computed after DOM ready
-    this.isAutoSnapping = false; // guard while animating snap
+  this.isAutoSnapping = false; // guard while animating snap
+  this.snapAccumulatedDelta = 0; // accumulate wheel delta to add inertia before snap
+  this.snapPendingTimeout = null; // allow short delay before triggering snap
+  this.lastWheelTime = 0; // time of last wheel event for decay
+  this.snapThresholdPx = 0; // dynamic threshold computed from viewport
     // Keyboard scrolling state
     this.keysPressed = new Set();
     this.keyScrollSpeed = 0;
@@ -62,20 +66,52 @@ class SmoothScroll {
       };
       this.computeSection2Top();
 
-      // Update scrollCurrent on native scroll for touch devices
+      // Update scrollCurrent on native scroll for touch devices with inertia/elastic guards
       this.lastNativeScrollY = window.scrollY || 0;
       this.isAutoSnappingTouch = false;
+      this.mobileSnapAccumulated = 0;
+      this.mobileSnapPending = null;
       const onNativeScroll = () => {
         const y = window.scrollY || 0;
         const delta = y - this.lastNativeScrollY;
         this.lastNativeScrollY = y;
         this.scrollCurrent = y;
 
-        // JS snap fallback: if user scrolls down from Section 1, snap to Section 2
-        if (!this.isAutoSnappingTouch && delta > 6 && y < this.section2Top * 0.9) {
-          this.isAutoSnappingTouch = true;
-          this.animateScrollTo(this.section2Top, 750);
-          setTimeout(() => { this.isAutoSnappingTouch = false; }, 900);
+        const withinSection1 = y < this.section2Top * 0.95;
+        if (withinSection1) {
+          if (delta > 0) {
+            // Ignore iOS elastic bounce from the top
+            if (y < 12) return;
+            this.mobileSnapAccumulated += delta;
+            const threshold = this.snapThresholdPx || window.innerHeight * 0.14;
+            if (!this.isAutoSnappingTouch && this.mobileSnapAccumulated >= threshold) {
+              if (!this.mobileSnapPending) {
+                this.mobileSnapPending = setTimeout(() => {
+                  if (this.scrollCurrent < this.section2Top * 0.95) {
+                    this.isAutoSnappingTouch = true;
+                    this.animateScrollTo(this.section2Top, 750);
+                    setTimeout(() => { this.isAutoSnappingTouch = false; }, 900);
+                  }
+                  this.mobileSnapPending = null;
+                  this.mobileSnapAccumulated = 0;
+                }, 100);
+              }
+            }
+          } else if (delta < -6) {
+            // User quickly scrolls up: cancel pending snap and reset accumulation
+            this.mobileSnapAccumulated = 0;
+            if (this.mobileSnapPending) {
+              clearTimeout(this.mobileSnapPending);
+              this.mobileSnapPending = null;
+            }
+          }
+        } else {
+          // Reset once we leave Section 1
+          this.mobileSnapAccumulated = 0;
+          if (this.mobileSnapPending) {
+            clearTimeout(this.mobileSnapPending);
+            this.mobileSnapPending = null;
+          }
         }
       };
       window.addEventListener('scroll', onNativeScroll, { passive: true });
@@ -100,6 +136,11 @@ class SmoothScroll {
       const sec2 = document.querySelector('.content-section[data-section="2"]');
       // Fallback to viewport height if not found (section 1 is 100vh)
       this.section2Top = sec2 ? sec2.offsetTop : window.innerHeight;
+      // Recompute snap threshold: require user to scroll a fraction of viewport before snap engages
+      // Using 14% of viewport height gives gentle inertia (tunable)
+      this.snapThresholdPx = window.innerHeight * 0.14;
+      // Clamp minimum threshold for very small viewports
+      if (this.snapThresholdPx < 80) this.snapThresholdPx = 80;
     };
     this.computeSection2Top();
     
@@ -231,18 +272,46 @@ class SmoothScroll {
     const wheelMultiplier = 1.0;
     delta *= wheelMultiplier;
 
-    // One-way snap: if user scrolls down while within Section 1, snap to Section 2
-    // Conditions:
-    // - Not already auto-snapping
-    // - Downward scroll (delta > 0)
-    // - Current and target are both within Section 1 range (< section2Top)
-    if (!this.isAutoSnapping && delta > 0 && this.scrollCurrent < this.section2Top && this.scrollTarget < this.section2Top) {
-      this.isAutoSnapping = true;
-      // Animate to Section 2 top and release guard when done
-      this.scrollTo(this.section2Top, 700, () => {
-        this.isAutoSnapping = false;
-      });
-      return; // Skip default wheel handling
+    // Inertia-based snap logic for desktop (non-touch): accumulate intent before snapping to Section 2
+    if (!this.isTouchDevice) {
+      const now = performance.now();
+      // Decay accumulation if time between wheel events is large (>250ms)
+      if (now - this.lastWheelTime > 250) {
+        this.snapAccumulatedDelta = 0;
+      }
+      this.lastWheelTime = now;
+
+      const withinSection1 = this.scrollCurrent < this.section2Top && this.scrollTarget < this.section2Top;
+      if (!this.isAutoSnapping && withinSection1 && delta > 0) {
+        this.snapAccumulatedDelta += delta;
+        // If user reverses direction (negative delta) clear accumulation
+        if (delta < 0) this.snapAccumulatedDelta = 0;
+
+        // If accumulated delta exceeds threshold, schedule snap with small delay allowing quick reversal cancel
+        if (this.snapAccumulatedDelta >= this.snapThresholdPx) {
+          // Prevent duplicate scheduling
+          if (!this.snapPendingTimeout) {
+            this.snapPendingTimeout = setTimeout(() => {
+              // Re-check conditions before executing (user might have scrolled back up)
+              if (!this.isAutoSnapping && this.scrollCurrent < this.section2Top * 0.95) {
+                this.isAutoSnapping = true;
+                this.scrollTo(this.section2Top, 700, () => {
+                  this.isAutoSnapping = false;
+                  this.snapAccumulatedDelta = 0;
+                });
+              }
+              this.snapPendingTimeout = null;
+            }, 80); // 80ms delay gives slight inertia window
+          }
+        }
+      } else if (!withinSection1) {
+        // Reset accumulation if user leaves Section 1
+        this.snapAccumulatedDelta = 0;
+        if (this.snapPendingTimeout) {
+          clearTimeout(this.snapPendingTimeout);
+          this.snapPendingTimeout = null;
+        }
+      }
     }
 
     if (this.isAutoSnapping) {
@@ -351,14 +420,18 @@ class SmoothScroll {
         return;
       }
 
-      // One-way snap: if user holds down arrow while within Section 1, snap to Section 2
+      // Inertia-based snap for key scrolling: accumulate implied distance before snapping
       if (!this.isAutoSnapping && this.keyScrollSpeed > 0 && this.scrollCurrent < this.section2Top && this.scrollTarget < this.section2Top) {
-        this.isAutoSnapping = true;
-        this.scrollTo(this.section2Top, 700, () => {
-          this.isAutoSnapping = false;
-        });
-        this.stopKeyScrolling();
-        return;
+        this.snapAccumulatedDelta += Math.abs(this.keyScrollSpeed);
+        if (this.snapAccumulatedDelta >= this.snapThresholdPx) {
+          this.isAutoSnapping = true;
+          this.scrollTo(this.section2Top, 700, () => {
+            this.isAutoSnapping = false;
+            this.snapAccumulatedDelta = 0;
+          });
+          this.stopKeyScrolling();
+          return;
+        }
       }
 
       if (this.isAutoSnapping) {

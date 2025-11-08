@@ -40,10 +40,13 @@ class TextAnimations {
       const eyeCandyHeading = section2.querySelector('.section-heading-eyecandy');
       const tagline = section2.querySelector('.section-tagline');
 
-      // Split and animate EYE CANDY - triggers earlier
+      // Split and animate EYE CANDY - triggers earlier, mobile-responsive
       if (eyeCandyHeading) {
+        // On mobile (<=768px), trigger further up (55%); on desktop trigger at 70%
+        const isMobile = window.innerWidth <= 768;
+        const startPosition = isMobile ? 'top 55%' : 'top 70%';
         this.createAnimation(eyeCandyHeading, {
-          start: 'top 70%', // Decrease to trigger further up in the viewport
+          start: startPosition,
           duration: 0.6,
           stagger: 0.02,
         });
