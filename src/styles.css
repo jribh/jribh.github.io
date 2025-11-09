@@ -484,7 +484,7 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     top: 2.8em;
     left: 4em;
     z-index: 10;
-    pointer-events: none;
+    pointer-events: auto; /* clickable HUD */
     opacity: 0;
     visibility: hidden;
     transition: opacity 400ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -496,6 +496,11 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     gap: 0.4em;
     font-family: var(--font-body);
     font-size: 1em;
+    padding: 0.35em 0.6em;
+    border-radius: 0.6em;
+    /* subtle hit-target style like other UI buttons */
+    transition: background-color 200ms ease, opacity 200ms ease;
+    width: fit-content;
 }
 
 .performance-hud__label {
@@ -510,6 +515,20 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 .performance-hud.is-visible {
     opacity: 1;
     visibility: visible;
+}
+
+/* Details under the HUD (hidden by default, shown via GSAP) */
+.performance-hud__details {
+    color: var(--text-secondary);
+    font-family: var(--font-body);
+    font-size: 0.9em;
+    line-height: 1.4;
+    margin-top: 0.6em;
+    margin-left: 0.6em;
+    will-change: height, opacity, transform;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4em;
 }
 
 /* Bottom Bar Container */

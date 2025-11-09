@@ -1534,6 +1534,57 @@ function _initPerfHUD(){
     if (!startupActive) {
       perfHud.classList.add('is-visible');
     }
+
+    // Inject details container if missing
+    if (!perfHud.querySelector('.performance-hud__details')) {
+      const details = document.createElement('div');
+      details.className = 'performance-hud__details';
+      details.style.opacity = '0';
+      details.style.display = 'none';
+      details.innerHTML = '';
+      perfHud.appendChild(details);
+    }
+
+    // Make HUD clickable with magnetic behavior if cursor system present
+    const content = perfHud.querySelector('.performance-hud__content');
+    if (content && !content.hasAttribute('data-magnetic')) {
+      content.setAttribute('data-magnetic','');
+      content.style.cursor = 'pointer';
+    }
+
+    // Toggle logic only bound once
+    if (!perfHud._toggleBound) {
+      perfHud._detailsVisible = false;
+      perfHud.addEventListener('click', () => {
+        const detailsEl = perfHud.querySelector('.performance-hud__details');
+        if (!detailsEl) return;
+        perfHud._detailsVisible = !perfHud._detailsVisible;
+        if (perfHud._detailsVisible) {
+          // Populate nerdy stats (snapshot from window.__perfDebug)
+          const dbg = window.__perfDebug || {};
+          const lines = [
+            `Frame Rate: ${dbg.emaFPS ? parseFloat(dbg.emaFPS).toFixed(2) : '—'} FPS`,
+            `Display Pixel Ratio: ${dbg.bucket ?? '—'}`,
+            `Quality Level: ${dbg.effectTier ?? '—'}`,
+            `Performance Cap: ${(dbg.baseCapCurrent ? parseFloat(dbg.baseCapCurrent).toFixed(2) : '—')}`,
+            `Resume Delay: ${dbg.resumeGuardMs ? parseFloat(dbg.resumeGuardMs).toFixed(2) : 0}ms`,
+            `Wake Frames Ignored: ${dbg.ignoreFrames ? parseFloat(dbg.ignoreFrames).toFixed(2) : 0}`,
+            `Target Pixel Ratio: ${typeof currentTargetPixelRatio === 'function' ? currentTargetPixelRatio().toFixed(2) : '—'}`
+          ];
+          detailsEl.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
+          detailsEl.style.display = 'block';
+          gsap.fromTo(detailsEl, { autoAlpha: 0, y: -6 }, { autoAlpha: 1, y: 0, duration: 0.45, ease: 'power2.out' });
+          gsap.to(content, { backgroundColor: 'rgba(255,255,255,0.06)', duration: 0.3, ease: 'power2.out' });
+        } else {
+          gsap.to(detailsEl, { autoAlpha: 0, y: -6, duration: 0.35, ease: 'power2.in', onComplete: () => {
+            detailsEl.style.display = 'none';
+            detailsEl.innerHTML = '';
+          }});
+          gsap.to(content, { backgroundColor: 'transparent', duration: 0.3, ease: 'power2.in' });
+        }
+      });
+      perfHud._toggleBound = true;
+    }
   }
 }
 
@@ -1552,6 +1603,25 @@ function _updatePerfHUD(throttleMs = 150){
   const perfTier = document.getElementById('perf-tier');
   if (perfTier && typeof _effectQualityLevel === 'number') {
     perfTier.textContent = EFFECT_QUALITY_LEVELS[_effectQualityLevel].name;
+  }
+
+  // If details panel is open, refresh its contents live
+  const perfHud = document.querySelector('.performance-hud');
+  if (perfHud && perfHud._detailsVisible) {
+    const detailsEl = perfHud.querySelector('.performance-hud__details');
+    if (detailsEl) {
+      const dbg = window.__perfDebug || {};
+      const lines = [
+        `Frame Rate: ${dbg.emaFPS ? parseFloat(dbg.emaFPS).toFixed(2) : '—'} FPS`,
+        `Display Pixel Ratio: ${dbg.bucket ?? '—'}`,
+        `Quality Level: ${dbg.effectTier ?? '—'}`,
+        `Performance Cap: ${(dbg.baseCapCurrent ? parseFloat(dbg.baseCapCurrent).toFixed(2) : '—')}`,
+        `Resume Delay: ${dbg.resumeGuardMs ? parseFloat(dbg.resumeGuardMs).toFixed(2) : 0}ms`,
+        `Wake Frames Ignored: ${dbg.ignoreFrames ? parseFloat(dbg.ignoreFrames).toFixed(2) : 0}`,
+        `Target Pixel Ratio: ${typeof currentTargetPixelRatio === 'function' ? currentTargetPixelRatio().toFixed(2) : '—'}`
+      ];
+      detailsEl.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
+    }
   }
 }
 
