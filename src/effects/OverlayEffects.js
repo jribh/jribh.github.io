@@ -29,9 +29,9 @@ export const reededParams = {
   refractPxStop1: 0.0,
   refractPxStop2: 6.0,
   gradientWhiteStop1: 0.28,
-  gradientWhiteStop2: 0.85,
-  gradientBlackStop1: 0.04,
-  gradientBlackStop2: 0.55,
+  gradientWhiteStop2: 0.72,
+  gradientBlackStop1: 0.01,
+  gradientBlackStop2: 0.18,
   // Frost/blur effect intensities at each stop
   frostStop1: 0.0,            // no frost at center
   frostStop2: 3.6,           // stronger blur at edges
@@ -581,13 +581,15 @@ export function updateGrain(effect, partial){
 // ---------------- Bottom Vignette (screen-space fade at bottom edge) ----------------
 export const bottomVignetteParams = {
   heightPct: 0.15,   // bottom 15% of the screen
-  power: 1.0         // shaping exponent; >1 sharpens near bottom
+  power: 1.0,        // shaping exponent; >1 sharpens near bottom
+  color: '#000000'   // color to fade to (hex string)
 };
 
 const bottomVignetteFrag = /* glsl */ `
 uniform vec2 resolution;      // canvas size in px
 uniform float heightPct;      // fraction of screen height (0..1)
 uniform float power;          // shaping exponent (>=1)
+uniform vec3 uColor;          // color to fade to
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
   // Compute bottom fade mask using framebuffer Y in pixels
@@ -595,7 +597,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   float mask = smoothstep(0.0, heightPx, gl_FragCoord.y);
   // Optional shaping
   mask = pow(mask, max(power, 1.0));
-  vec3 col = inputColor.rgb * mask;
+  // Mix between target color (bottom) and input color (top)
+  vec3 col = mix(uColor, inputColor.rgb, mask);
   outputColor = vec4(col, inputColor.a);
 }
 `;
@@ -605,7 +608,8 @@ export function createBottomVignettePass(camera){
     uniforms: new Map([
       ['resolution', new THREE.Uniform(new THREE.Vector2(1,1))],
       ['heightPct',  new THREE.Uniform(bottomVignetteParams.heightPct)],
-      ['power',      new THREE.Uniform(bottomVignetteParams.power)]
+      ['power',      new THREE.Uniform(bottomVignetteParams.power)],
+      ['uColor',     new THREE.Uniform(new THREE.Color(bottomVignetteParams.color))]
     ])
   });
   const pass = new EffectPass(camera, effect);
@@ -624,4 +628,7 @@ export function updateBottomVignette(effect, partial){
   const U = effect.uniforms;
   U.get('heightPct').value = bottomVignetteParams.heightPct;
   U.get('power').value     = bottomVignetteParams.power;
+  if (bottomVignetteParams.color) {
+    U.get('uColor').value.set(bottomVignetteParams.color);
+  }
 }

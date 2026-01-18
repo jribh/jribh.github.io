@@ -2212,10 +2212,60 @@ function resumeAnimation() {
     if (typeof _triggerResumeGuard === 'function') {
       _triggerResumeGuard();
     }
+    // Reset clock so the first resumed frame doesn't get a huge delta
+    try { clock.getDelta(); } catch {}
     // Restart the animation loop
     requestAnimationFrame(animate);
   }
 }
+
+// Auto-pause rendering when the canvas is fully obscured (saves GPU), resume instantly when visible.
+let _autoPausedByOcclusion = false;
+
+function _isSceneFullyObscured() {
+  // If blinds fully cover, scene is not visible.
+  const blindsOverlay = document.getElementById('blinds-overlay');
+  if (blindsOverlay?.dataset?.blindsCovered === '1') return true;
+
+  // If dark overlay is fully opaque, scene is not visible.
+  const darkOverlay = document.getElementById('dark-overlay');
+  if (darkOverlay) {
+    const opacity = parseFloat(getComputedStyle(darkOverlay).opacity || '0');
+    if (opacity >= 0.995) return true;
+  }
+
+  return false;
+}
+
+function _syncRenderPauseWithOcclusion() {
+  // Don't pause during startup so initial experience stays consistent.
+  if (typeof startupActive !== 'undefined' && startupActive) return;
+
+  const obscured = _isSceneFullyObscured();
+
+  if (obscured && !isAnimationPaused) {
+    _autoPausedByOcclusion = true;
+    pauseAnimation();
+  } else if (!obscured && isAnimationPaused && _autoPausedByOcclusion) {
+    _autoPausedByOcclusion = false;
+    resumeAnimation();
+  }
+}
+
+// Keep checking occlusion even when the main render loop is paused.
+function _monitorRenderOcclusion() {
+  _syncRenderPauseWithOcclusion();
+
+  // Keep non-render smoothing responsive while paused.
+  if (isAnimationPaused) {
+    applyMusicVolumeSmoothing();
+    applyVisualizerRangeSmoothing();
+    applySpotlightIntensitySmoothing();
+  }
+
+  requestAnimationFrame(_monitorRenderOcclusion);
+}
+_monitorRenderOcclusion();
 
 function animate() {
     // Skip rendering if paused for performance

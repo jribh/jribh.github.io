@@ -243,6 +243,12 @@ body {
     transition-timing-function: ease-out;
 }
 
+/* Hovering over work cards - doubled cursor size */
+.custom-cursor--work-card .custom-cursor__circle {
+    width: 1.6em;
+    height: 1.6em;
+}
+
 /* Magnetic target defaults (applied via JS with [data-magnetic]) */
 [data-magnetic] {
     /* Use CSS variables so we don't clobber any existing transforms */
@@ -927,11 +933,48 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     padding: 6em 0 6em 0; /* Top padding 6em, bottom 6em */
 }
 
+/* Case studies divider */
+.case-studies-divider {
+    position: relative;
+    width: 100%;
+    height: 3em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.case-studies-line {
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(to right, transparent 0%, white 50%, transparent 100%);
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+}
+
+.case-studies-text {
+    position: relative;
+    z-index: 1;
+    font-size: 36px;
+    color: var(--text-secondary);
+    font-family: var(--font-body);
+    font-weight: 400;
+    white-space: nowrap;
+    padding: 0 0.8em;
+}
+
+.case-studies-text-wrapper {
+    position: relative;
+    z-index: 1;
+    background: black;
+}
+
 /* Work cards container */
 .work-cards {
     display: flex;
     flex-direction: column;
-    gap: 3.5em; /* Gap between cards */
+    gap: 6em; /* Gap between cards */
     width: 100%;
     padding-bottom: 6em; /* Space before big-cats-section */
 }
@@ -939,9 +982,400 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 /* Individual work card */
 .work-card {
     background: var(--bg-card);
-    height: 36em;
-    border-radius: 3em;
+    aspect-ratio: 2.71 / 1;
     width: 100%;
+    transition: transform 300ms ease-out;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    box-sizing: border-box;
+    text-align: left;
+    overflow: hidden;
+}
+
+.work-card:hover {
+    transform: scale(1.01);
+}
+
+.work-card:active {
+    transform: scale(1.005);
+}
+
+.work-card-row{
+    display: flex;
+    flex-direction: row;
+    gap: 6em;
+    width: 100%;
+}
+
+.work-card-row > .work-card {
+    flex: 1 1 0;
+    width: 100%;
+    aspect-ratio: 1.3 / 1;
+}
+
+.work-card__content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2vw;
+    max-width: 50%;
+    margin-right: 10%;
+}
+
+.work-card__title {
+    font-family: var(--font-body);
+    font-size: 2vw;
+    font-weight: 500;
+    color: rgba(255, 233, 206, 0.5);
+    margin: 0;
+}
+
+.work-card__highlight {
+    color: rgba(255, 233, 206, 1);
+}
+
+.work-card__meta {
+    display: flex;
+    flex-direction: row;
+    gap: 0.8em;
+    align-items: center;
+    font-family: var(--font-body);
+    font-size: 1.2vw;
+    font-weight: 400;
+    color: rgba(255, 233, 206, 0.5);
+}
+
+.work-card__dot {
+    color: rgba(255, 233, 206, 0.5);
+}
+
+.work-card__title--enterprise {
+    color: rgba(235, 255, 206, 0.5);
+}
+
+.work-card__title--enterprise .work-card__highlight {
+    color: rgba(235, 255, 206, 1);
+}
+
+.work-card__meta--enterprise {
+    color: rgba(235, 255, 206, 0.5);
+}
+
+.work-card__meta--enterprise .work-card__dot {
+    color: rgba(235, 255, 206, 0.5);
+}
+
+.work-card-axis {
+    background: url('./assets/axis-banner.svg') center / cover no-repeat;
+}
+
+.work-card-enterprise {
+    background: url('./assets/work-card-enterprise.svg') center / cover no-repeat;
+}
+
+.work-card-exploratory-projects {
+    background-color: #000C50;
+    border-radius: 2.6vw 0 2.6vw 2.6vw;
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+#work-card-song-lyrics, #work-card-remote-touch {
+    align-items: flex-end;
+    border-radius: 2.6vw 2.6vw 2vw 2.6vw;
+}
+
+#work-card-tata-neu .work-card-background {
+    background: url('./assets/tata_neu_image.png') center / cover no-repeat;
+}
+
+#work-card-song-lyrics .work-card-background {
+    background: url('./assets/song-lyrics-image.png') center / cover no-repeat;
+}
+
+#work-card-remote-touch .work-card-background {
+    background: url('./assets/remote-touch-image.png') center / cover no-repeat;
+}
+
+#work-card-guardian .work-card-background {
+    background: url('./assets/guardian-image.png') center / cover no-repeat;
+}
+
+.work-card-content-top-right {
+    background-color: #8987F3;
+    color: black;
+    border: 0.5vw solid black;
+    margin: -0.5vw -0.5vw 0 0;
+    padding: 2em;
+    gap: 1.6em;
+    width: 20vw;
+    max-width: 28em;
+    display: flex;
+    flex-direction: column;
+    border-radius: 2.6vw;
+    position: relative;
+    transform-origin: top right;
+    z-index: 10;
+}
+
+#work-card-tata-neu .work-card-content-top-right {
+    background-color: #C1A4FF;
+}
+
+#work-card-song-lyrics .work-card-content-bottom-right {
+    background-color: #9A68EA;
+}
+
+#work-card-remote-touch .work-card-content-bottom-right {
+    background-color: #3FCFBC;
+}
+
+#work-card-guardian .work-card-content-top-right {
+    background-color: #8293A5;
+}
+
+.work-card-content-bottom-right {
+    background-color: #8987F3;
+    color: black;
+    border: 0.5vw solid black;
+    margin: 0 -0.5vw -0.5vw 0;
+    padding: 2em;
+    gap: 1.6em;
+    display: flex;
+    flex-direction: column;
+    border-radius: 2.6vw;
+    position: relative;
+    transform-origin: top right;
+    z-index: 10;
+}
+
+.work-card-row .work-card-content-top-right, .work-card-content-bottom-right {
+    width: fit-content;
+    max-width: 22em;
+    right: -0.5px;
+    min-height: 10em;
+}
+
+#work-card-tata-neu .work-card-content-top-right {
+    max-width: 22em;
+}
+
+#work-card-remote-touch .work-card-content-bottom-right {
+    max-width: 20em;
+}
+
+.work-card-background {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    transition: transform 500ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.work-card:hover .work-card-background {
+    transform: scale(1.02);
+}
+
+.work-card-content-title {
+    font-family: var(--font-body);
+    font-size: 2.8em;
+    font-weight: 500;
+    margin: 0 3vw 0 0;
+}
+
+.work-card-content-description {
+    font-family: var(--font-body);
+    font-size: 1.4em;
+    font-weight: 400;
+    margin: 0;
+}
+
+.work-card-content-arrow-top-right {
+    width: 6vw;
+    height: auto;
+    position: absolute;
+    top: -0.2px;
+    right: -0.2px;
+    transform-origin: top right;
+    transition: transform 500ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.work-card-content-cutout {
+    position: absolute;
+}
+
+.work-card-content-cutout-1 {
+    height: 2.6vw;
+    width:auto;
+    top: 0;
+    left: -3.1vw;
+}
+
+.work-card-content-cutout-2 {
+    height: auto;
+    width: 2.6vw;
+    bottom: -3.1vw;
+    right: 0;
+}
+
+.work-card-content-bottom-right .work-card-content-cutout-1 {
+    transform: scaleY(-1);
+    top: auto;
+    bottom: 0;
+}
+
+.work-card-content-bottom-right .work-card-content-cutout-2 {
+    transform: scaleY(-1);
+    bottom: auto;
+    top: -3.1vw;
+}
+
+.spacetime-wave-svgs {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.spacetime-wave-layer {
+    position: absolute;
+    left: 0;
+    width: 100%;
+}
+
+.spacetime-wave-layer--top {
+    top: 0;
+}
+
+.spacetime-wave-layer--bottom {
+    bottom: 0;
+}
+
+.spacetime-wave-track {
+    display: flex;
+    width: 400%;
+    animation: spacetimeWaveScrollRight var(--wave-speed, 14s) linear infinite;
+}
+
+.spacetime-wave-img {
+    flex: 0 0 50%;
+    width: 50%;
+    height: auto;
+    display: block;
+}
+
+.spacetime-wave-layer--bottom .spacetime-wave-img {
+    transform: scaleY(-1);
+}
+
+.spacetime-wave-layer--1 {
+    --wave-speed: 36s;
+}
+
+.spacetime-wave-layer--2 {
+    --wave-speed: 70s;
+}
+
+.spacetime-wave-layer--3 {
+    --wave-speed: 110s;
+}
+
+@keyframes spacetimeWaveScrollRight {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+.spacetime-planets {
+    position: absolute;
+    width: 100%;
+    height: auto;
+    z-index: 1;
+    transition: transform 500ms ease-out;
+}
+
+.spacetime-noise {
+    position: absolute;
+    width: 100%;
+    z-index: 2;
+    object-fit: cover;
+    pointer-events: none;
+    mix-blend-mode: plus-lighter;
+    /* opacity: 0; */
+}
+
+.work-card-exploratory-projects:hover {
+    .work-card-content-arrow-top-right {
+        transform: scale(1.1);
+    }
+    .spacetime-planets {
+        transform: scale(1.02);
+    }
+}
+
+.work-card-exploratory-projects:active {
+    .work-card-content-arrow-top-right {
+        transform: scale(1.02);
+    }
+}
+
+.spacetime-stars-container {
+    position: absolute;
+    inset: 0;
+    z-index: -10;
+    overflow: hidden;
+}
+
+.spacetime-stars-track {
+    display: flex;
+    width: 200%;
+    height: 100%;
+    animation: spacetimeStarsScroll 140s linear infinite;
+}
+
+.spacetime-stars-img {
+    flex: 0 0 50%;
+    width: 50%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+@keyframes spacetimeStarsScroll {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+.spacetime-rocket {
+    position: absolute;
+    width: 50%;
+    height: auto;
+    z-index: 0;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    animation: rocketFloat 3s ease-in-out infinite;
+}
+
+@keyframes rocketFloat {
+    0%, 100% {
+        transform: translateY(-50%);
+    }
+    50% {
+        transform: translateY(calc(-50% - 0.5vh));
+    }
 }
 
 /* Big cats section */
@@ -1850,6 +2284,27 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     }
 }
 
+/* Largest laptops/desktops (>2600px) */
+@media (width > 2600px) {
+    .work-card__content {
+        gap: 2.4em;
+    }
+    .work-card__title {
+        font-size: 3em;
+    }
+    .work-card__meta {
+        font-size: 1.3vw;
+    }
+
+    .work-card-content-title {
+        font-size: 3em;
+    }
+
+    .work-card-content-description {
+        font-size: 1.5em;
+    }
+}
+
 /* Large laptops/desktops (<=1920px) */
 @media (width <= 1920px) {
     .content-section[data-section="2"] .section-heading { font-size: 5.5em; }
@@ -1876,6 +2331,32 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
     .section-content--enterprise {
         padding-top: 10em;
+    }
+
+    .work-card-content-title {
+        font-size: 2.4em;
+    }
+
+    .work-card-content-description {
+        font-size: 1.2em;
+    }
+
+    .work-card-content-top-right {
+        padding: 2.4em;
+        gap: 1.2em;
+    }
+
+    .work-card-row .work-card-content-top-right, .work-card-content-bottom-right {
+        max-width: 18em;
+        min-height: 8em;
+    }
+
+    #work-card-tata-neu .work-card-content-top-right {
+        max-width: 15em;
+    }
+
+    #work-card-remote-touch .work-card-content-bottom-right {
+        max-width: 15em;
     }
 }
 
@@ -1906,6 +2387,32 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .beyond-svg,
     .pretty-svg {
         height: 20em;
+    }
+
+    .work-card-content-title {
+        font-size: 2.4em;
+    }
+
+    .work-card-content-description {
+        font-size: 1.2em;
+    }
+
+    .work-card-content-top-right {
+        padding: 2.4em;
+        gap: 1.2em;
+    }
+
+    .work-card-row .work-card-content-top-right, .work-card-content-bottom-right {
+        max-width: 16em;
+        min-height: 7em;
+    }
+
+    #work-card-tata-neu .work-card-content-top-right {
+        max-width: 14em;
+    }
+
+    #work-card-remote-touch .work-card-content-bottom-right {
+        max-width: 14em;
     }
 }
 
@@ -1943,6 +2450,32 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
     .content-section[data-section="2"] .section-content {
         gap: 2.2em;
+    }
+
+    .work-card-content-title {
+        font-size: 2em;
+    }
+
+    .work-card-content-description {
+        font-size: 1em;
+    }
+
+    .work-card-content-top-right {
+        padding: 2em;
+        gap: 1em;
+    }
+
+    .work-card-row .work-card-content-top-right, .work-card-content-bottom-right {
+        max-width: 13em;
+        min-height: 6em;
+    }
+
+    #work-card-tata-neu .work-card-content-top-right {
+        max-width: 12em;
+    }
+
+    #work-card-remote-touch .work-card-content-bottom-right {
+        max-width: 10em;
     }
 }
 
@@ -2015,6 +2548,27 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
     .content-section[data-section="2"] .section-content {
         gap: 2em;
+    }
+
+    .work-card-content-title {
+        font-size: 2em;
+    }
+
+    .work-card-content-description {
+        font-size: 1em;
+    }
+
+    .work-card-content-title {
+        font-size: 1.8em;
+    }
+
+    .work-card-content-description {
+        font-size: 1em;
+    }
+
+    .work-card-content-top-right {
+        padding: 1.8em;
+        gap: 0.8em;
     }
 }
 

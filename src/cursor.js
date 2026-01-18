@@ -90,7 +90,8 @@ function initCustomCursor() {
 
     // Magnetic targets (subset: nav links and buttons) as requested
     // Added .performance-hud__content so FPS HUD gets the same magnetic hover effects
-    const magneticSelectors = 'a, .navbar__link, button, .btn-link, .btn-instagram, .contact-form-submit, .side-nav__dot, .bottom-bar__social, .bottom-bar__visualizer, .navbar__logo, .performance-hud__content';
+    // Excluded .work-card from magnetic selectors to remove magnet effect from work cards
+    const magneticSelectors = 'a:not(.work-card), .navbar__link, button:not(.work-card), .btn-link, .btn-instagram, .contact-form-submit, .side-nav__dot, .bottom-bar__social, .bottom-bar__visualizer, .navbar__logo, .performance-hud__content';
 
     // Text element selectors for text cursor behavior
     const textSelectors = 'h1, h2, h3, h4, h5, h6, p, input, textarea';
@@ -100,6 +101,10 @@ function initCustomCursor() {
     const allTextElements = document.querySelectorAll(textSelectors);
     const textElements = Array.from(allTextElements).filter(el => {
         const tagName = el.tagName.toLowerCase();
+        // Exclude elements within work card content
+        if (el.closest('.work-card__content')) {
+            return false;
+        }
         // Include all inputs and textareas
         if (tagName === 'input' || tagName === 'textarea') {
             return true;
@@ -119,6 +124,20 @@ function initCustomCursor() {
         el.addEventListener('mouseleave', () => {
             if (isCursorLocked) return; // magnetic lock manages its own state
             cursor.classList.remove('custom-cursor--text');
+        });
+    });
+
+    // Work card hover state - enlarge cursor
+    const workCards = document.querySelectorAll('.work-card');
+    workCards.forEach((card) => {
+        card.addEventListener('mouseenter', () => {
+            if (isCursorLocked) return; // magnetic lock takes precedence
+            cursor.classList.add('custom-cursor--work-card');
+        });
+        
+        card.addEventListener('mouseleave', () => {
+            if (isCursorLocked) return; // magnetic lock manages its own state
+            cursor.classList.remove('custom-cursor--work-card');
         });
     });
 

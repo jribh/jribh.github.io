@@ -65,7 +65,9 @@ export function updateVenetianBlinds(progress, opts = {}) {
 	const smooth = typeof opts.smooth === 'number' ? opts.smooth : 0.18;
 	const smoothed = state.currentProgress + (progress - state.currentProgress) * smooth;
 	
-	console.log('Blinds progress (raw, smooth):', progress, smoothed, 'slats:', state.slats.length);
+	if (window.__debugBlinds) {
+		console.log('Blinds progress (raw, smooth):', progress, smoothed, 'slats:', state.slats.length);
+	}
 	
 	// Calculate stagger offset for each slat
 	const stagger = opts.stagger ?? DEFAULTS.stagger;
@@ -73,6 +75,7 @@ export function updateVenetianBlinds(progress, opts = {}) {
 	const numSlats = state.slats.length;
 	
 	let maxSlatScale = 0; // Track the maximum slat scale to determine visibility
+	let minSlatScale = 1; // Track the minimum slat scale to detect full coverage
 	
 	state.slats.forEach((slat, index) => {
 		// If reverse, stagger from right to left (reverse the index)
@@ -98,6 +101,7 @@ export function updateVenetianBlinds(progress, opts = {}) {
 		
 		// Track max scale
 		maxSlatScale = Math.max(maxSlatScale, easedProgress);
+		minSlatScale = Math.min(minSlatScale, easedProgress);
 	});
 	
 	// Only show container if any slat has meaningful scale
@@ -108,6 +112,12 @@ export function updateVenetianBlinds(progress, opts = {}) {
 		state.container.style.opacity = '0';
 		state.container.style.visibility = 'hidden';
 	}
+
+	// Expose whether the blinds fully cover the scene so the renderer can pause safely.
+	// "covered" means no gaps are visible (all slats effectively at scale 1).
+	const fullyCovered = maxSlatScale > 0.99 && minSlatScale > 0.99;
+	blindsOverlay.dataset.blindsCovered = fullyCovered ? '1' : '0';
+	blindsOverlay.dataset.blindsProgress = String(smoothed);
     
 	state.currentProgress = smoothed;
 }
