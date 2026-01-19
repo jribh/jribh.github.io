@@ -118,6 +118,8 @@ function initCustomCursor() {
     textElements.forEach((el) => {
         el.addEventListener('mouseenter', () => {
             if (isCursorLocked) return; // magnetic lock takes precedence
+            // Don't change cursor for text inside work-cards
+            if (el.closest('.work-cards')) return;
             cursor.classList.add('custom-cursor--text');
         });
         

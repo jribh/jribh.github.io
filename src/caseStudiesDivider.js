@@ -4,9 +4,9 @@ import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
 gsap.registerPlugin(ScrollTrigger);
 
 /**
- * Case Studies Divider Fade-in Animation
+ * Work Section Subheader Divider Fade-in Animation
  * 
- * Animates all .case-studies-divider elements with a smooth fade-in,
+ * Animates all .work-subheader-divider elements with a smooth fade-in,
  * blur reduction, and slight upward movement when scrolling into view.
  */
 
@@ -16,7 +16,7 @@ const getScroller = () => {
 };
 
 function initCaseStudiesDividers() {
-  const dividers = document.querySelectorAll('.case-studies-divider');
+  const dividers = document.querySelectorAll('.work-subheader-divider');
 
   if (!dividers.length) {
     console.warn('No case studies divider elements found');
