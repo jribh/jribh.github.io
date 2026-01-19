@@ -104,9 +104,6 @@ body {
     .content-section {
         scroll-snap-align: start;
     }
-    .content-section[data-section="2"] {
-        scroll-snap-stop: always; /* ensure 2 locks firmly when reached */
-    }
 }
 
 /* Text selection styling */

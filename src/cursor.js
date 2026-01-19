@@ -101,8 +101,8 @@ function initCustomCursor() {
     const allTextElements = document.querySelectorAll(textSelectors);
     const textElements = Array.from(allTextElements).filter(el => {
         const tagName = el.tagName.toLowerCase();
-        // Exclude elements within work card content
-        if (el.closest('.work-card__content')) {
+        // Exclude all text elements within .work-cards
+        if (el.closest('.work-cards')) {
             return false;
         }
         // Include all inputs and textareas
@@ -118,8 +118,6 @@ function initCustomCursor() {
     textElements.forEach((el) => {
         el.addEventListener('mouseenter', () => {
             if (isCursorLocked) return; // magnetic lock takes precedence
-            // Don't change cursor for text inside work-cards
-            if (el.closest('.work-cards')) return;
             cursor.classList.add('custom-cursor--text');
         });
         

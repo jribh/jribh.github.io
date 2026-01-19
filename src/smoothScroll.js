@@ -26,6 +26,8 @@ class SmoothScroll {
   this.snapPendingTimeout = null; // allow short delay before triggering snap
   this.lastWheelTime = 0; // time of last wheel event for decay
   this.snapThresholdPx = 0; // dynamic threshold computed from viewport
+    // Touch-specific snap suppression during programmatic scrolls (e.g., navbar clicks)
+    this.touchDisableSnapUntil = 0;
     // Keyboard scrolling state
     this.keysPressed = new Set();
     this.keyScrollSpeed = 0;
@@ -77,8 +79,12 @@ class SmoothScroll {
         this.lastNativeScrollY = y;
         this.scrollCurrent = y;
 
+        // If we're currently doing a programmatic animated scroll (anchor/nav),
+        // never run the Section-1 snap-assist.
+        const snapAssistEnabled = performance.now() >= this.touchDisableSnapUntil;
+
         const withinSection1 = y < this.section2Top * 0.95;
-        if (withinSection1) {
+        if (withinSection1 && snapAssistEnabled) {
           if (delta > 0) {
             // Ignore iOS elastic bounce from the top
             if (y < 12) return;
@@ -105,7 +111,7 @@ class SmoothScroll {
               this.mobileSnapPending = null;
             }
           }
-        } else {
+        } else if (!withinSection1) {
           // Reset once we leave Section 1
           this.mobileSnapAccumulated = 0;
           if (this.mobileSnapPending) {
@@ -523,6 +529,8 @@ class SmoothScroll {
   setupAnchorLinks() {
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       anchor.addEventListener('click', (e) => {
+        // If the global capture interceptor already handled this click, skip.
+        if (e.__smoothScrollHandled) return;
         const href = anchor.getAttribute('href');
         if (href === '#' || href === '') return;
         
@@ -546,6 +554,16 @@ class SmoothScroll {
 
   // Custom animated scroll that works on touch devices
   animateScrollTo(target, duration = 1000) {
+    // Suppress the touch Section-1 snap-assist while we're animating.
+    if (this.isTouchDevice) {
+      this.touchDisableSnapUntil = performance.now() + duration + 250;
+      this.mobileSnapAccumulated = 0;
+      if (this.mobileSnapPending) {
+        clearTimeout(this.mobileSnapPending);
+        this.mobileSnapPending = null;
+      }
+    }
+
     const start = window.scrollY;
     const distance = target - start;
     const startTime = performance.now();
@@ -588,6 +606,8 @@ class SmoothScroll {
 
       // Prevent default jump and route through our animator
       e.preventDefault();
+      // Mark so per-anchor listeners don't also run animateScrollTo.
+      e.__smoothScrollHandled = true;
       const targetTop = target.offsetTop;
       instance.animateScrollTo(targetTop, 1000);
     }, true); // capture to intercept before default

@@ -105,32 +105,56 @@ function initSideNav() {
 
 function initScrollbar() {
 	let scrollTimeout;
+	let rafPending = false;
+
+	const isTouchLike = (
+		(window.smoothScroll && window.smoothScroll.isTouchDevice) ||
+		(window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
+		('ontouchstart' in window) ||
+		(navigator.maxTouchPoints > 0)
+	);
 	
 	// Get scroll position from smooth scroll or fallback to window
 	const getScrollPosition = () => {
+		// On touch devices, rely on native scrollY (rAF can pause during scroll)
+		if (isTouchLike) return window.scrollY;
 		if (window.smoothScroll && window.smoothScroll.scrollCurrent !== undefined) {
 			return window.smoothScroll.scrollCurrent;
 		}
 		return window.scrollY;
 	};
-	
-	// Use requestAnimationFrame to continuously monitor scroll position
-	const monitorScroll = () => {
+
+	const updateScrollingState = () => {
 		const scrollY = getScrollPosition();
-		
-		// Add scrolling class
+
 		document.body.classList.add('is-scrolling');
-		
-		// Clear existing timeout
 		clearTimeout(scrollTimeout);
-		
-		// Remove class after scrolling stops
 		scrollTimeout = setTimeout(() => {
 			document.body.classList.remove('is-scrolling');
 		}, 150);
-		
-		// Update navbar state based on scroll position
+
 		updateNavbarOnScroll(scrollY);
+	};
+
+	// On touch devices, use the native scroll event (rAF loops can stall during scrolling on iOS)
+	if (isTouchLike) {
+		const onNativeScroll = () => {
+			if (rafPending) return;
+			rafPending = true;
+			requestAnimationFrame(() => {
+				rafPending = false;
+				updateScrollingState();
+			});
+		};
+		window.addEventListener('scroll', onNativeScroll, { passive: true });
+		// Prime state
+		updateScrollingState();
+		return;
+	}
+	
+	// Use requestAnimationFrame to continuously monitor scroll position
+	const monitorScroll = () => {
+		updateScrollingState();
 		
 		// Continue monitoring
 		requestAnimationFrame(monitorScroll);
