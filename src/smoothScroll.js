@@ -35,6 +35,69 @@ class SmoothScroll {
     this.init();
   }
 
+  getNavigationType() {
+    try {
+      const nav = performance.getEntriesByType?.('navigation')?.[0];
+      if (nav && typeof nav.type === 'string') return nav.type;
+    } catch {}
+
+    // Legacy fallback
+    try {
+      // 2 === TYPE_BACK_FORWARD
+      if (performance?.navigation && typeof performance.navigation.type === 'number') {
+        return performance.navigation.type === 2 ? 'back_forward' : 'navigate';
+      }
+    } catch {}
+
+    return 'navigate';
+  }
+
+  persistHomeScrollPosition() {
+    try {
+      const y = this.isTouchDevice ? (window.scrollY || 0) : (this.scrollCurrent || 0);
+      sessionStorage.setItem('__homeScrollY', String(Math.round(y)));
+    } catch {}
+  }
+
+  restoreHomeScrollPositionIfNeeded() {
+    // Only restore on back/forward navigations and only when home URL isn't
+    // explicitly driving a scroll via project param/hash.
+    const navType = this.getNavigationType();
+    if (navType !== 'back_forward') return;
+
+    const hasProjectKey = (() => {
+      try {
+        const qs = new URLSearchParams(window.location.search);
+        if (qs.get('project')) return true;
+        const hs = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
+        return !!hs.get('project');
+      } catch {
+        return false;
+      }
+    })();
+    if (hasProjectKey) return;
+
+    let y = null;
+    try {
+      const raw = sessionStorage.getItem('__homeScrollY');
+      if (raw != null && raw !== '') {
+        const parsed = Number(raw);
+        if (Number.isFinite(parsed)) y = parsed;
+      }
+    } catch {}
+    if (y == null) return;
+
+    // Clamp to max scroll so we don't overshoot if content height changed.
+    const maxScroll = this.content ? Math.max(0, this.content.scrollHeight - window.innerHeight) : 0;
+    y = Math.max(0, Math.min(y, maxScroll));
+
+    this.scrollTarget = y;
+    this.scrollCurrent = y;
+
+    if (this.scrollbarContainer) this.scrollbarContainer.scrollTop = y;
+    if (this.content) this.content.style.transform = `translate3d(0, -${Math.round(y * 100) / 100}px, 0)`;
+  }
+
   detectTouchDevice() {
     return (
       'ontouchstart' in window ||
@@ -131,6 +194,10 @@ class SmoothScroll {
       this.setupAnchorLinks();
       SmoothScroll.installGlobalAnchorInterceptor(this);
       return;
+    }
+    
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
     }
     
     // Get initial scroll position
@@ -252,7 +319,16 @@ class SmoothScroll {
         };
       }
     });
-    
+
+    // Restore scroll position (e.g., when coming back from a project page)
+    this.restoreHomeScrollPositionIfNeeded();
+
+    // Persist scroll position when leaving the page (supports back/forward restore)
+    window.addEventListener('pagehide', () => this.persistHomeScrollPosition(), { passive: true });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') this.persistHomeScrollPosition();
+    }, { passive: true });
+
     // Start animation loop
     this.start();
     
@@ -269,6 +345,9 @@ class SmoothScroll {
   }
 
   onWheel(e) {
+    // When project overlay is open, allow native scrolling (don't hijack wheel).
+    if (window.__projectOverlayOpen) return;
+
     e.preventDefault();
     
     // Normalize wheel delta across browsers
@@ -333,6 +412,9 @@ class SmoothScroll {
   }
 
   onKeyDown(e) {
+    // When project overlay is open, allow native scrolling (don't hijack keys).
+    if (window.__projectOverlayOpen) return;
+
     // Only handle keyboard scrolling if not in an input/textarea/contenteditable
     const target = e.target;
     if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.contentEditable === 'true') {
@@ -396,6 +478,7 @@ class SmoothScroll {
   }
 
   onKeyUp(e) {
+    if (window.__projectOverlayOpen) return;
     const key = e.key;
     if (this.keysPressed.has(key)) {
       this.keysPressed.delete(key);

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="src/assets/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Antonio:wght@100;200;300;400;500;600;700&family=Fraunces:ital,opsz,wght,SOFT,WONK@1,9..144,100..900,0..100,0..1&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="src/styles.css">
+    <title>Jribh Shandilya | Axis</title>
+</head>
+<body class="project-details-page">
+    <!-- Custom Cursor -->
+    <div class="custom-cursor">
+        <div class="custom-cursor__circle"></div>
+    </div>
+
+    <header class="project-details-hero project-details-hero--axis">
+        <img class="project-details-hero__svg" src="src/assets/axis-full-banner.svg" alt="Axis design system banner" />
+    </header>
+
+    <main class="project-details-content">
+        <a class="btn-link text-label pd-back-button pd-back-button-fixed" href="./index.htm#project=axis">
+            <img src="src/assets/arrow-left.svg" alt="" />ALL PROJECTS
+        </a>
+        <img class="project-details-gradient" src="src/assets/axis-details-gradient.svg" alt="" aria-hidden="true" />
+        <a class="btn-link text-label pd-back-button" href="./index.htm#project=axis">
+            <img src="src/assets/arrow-left.svg" alt="" />ALL PROJECTS
+        </a>
+        <h1 class="pd-type-h1">Creating Axis: A high density, scalable and modern design system for a Hedge Fund</h1>
+        <p class="pd-type-subheader">
+            <span>8 min read</span>
+            <span class="work-card__dot">•</span>
+            <span>Content adapted to preserve privacy</span>
+        </p>
+
+        <section class="pd-type-section" aria-label="Typography samples">
+            <h2 class="pd-type-h2">It works, until it doesn't.</h2>
+            <p class="pd-type-body">
+                After 8+ years of catering to extremely specific business use cases, the firm’s component library started showing its age. Bandaid solutions, one after the other, exposed enormous design and tech debt.
+            </p>
+            <p class="pd-type-body">
+                Enter Axis, a modern take extending MUI. Built from the ground up, with themes, densities, dark mode and more.
+            </p>
+
+            <h2 class="pd-type-h2">Who’s it for?</h2>
+            <p class="pd-type-body">
+                Everyone in the firm consumes a design system in some form. Traders and analysts like seeing lots of data, with split second decisions involving minimal clicks. Human Capital would want people management dashboards, while Systems would visualise inventories and services. Everyone would have common use cases like leave and ticket management, or specialised ones like creating visualisation dashboards or building workflows.
+            </p>
+            <p class="pd-type-body">
+                A hedge fund app is a high density trading platform. It’s also a low density leave management app. And everything in between. How do you even design for that?
+            </p>
+            <img class="pd-project-image pd-project-image--full-width" src="src/assets/axis-project-image-1.svg" alt="Axis design system densities" />
+            <h2 class="pd-type-h2">“I want to see more rows!”</h2>
+            <p class="pd-type-body">
+                Page level density setting, or component level size setting? Answering a question with a question; would I ever want small and large buttons on the same page?
+            </p>
+            <p class="pd-type-body">
+                Tokenizing spacers for page densities is important. Having sizes for components like buttons and inputs is equally important. The same trading dashboard can have a big button for sending orders while a smaller button deletes items. How’re the sizes decided though?
+            </p>
+            <img class="pd-project-image" src="src/assets/axis-project-image-2.svg" alt="Axis project buttons" />
+            <p class="pd-type-body">
+                See how things will be used together. Say a chip is in an input (like Autocomplete), and the input is in a data grid cell. Users love seeing many cells without scrolling; define how big the cell is and everything comes together.
+            </p>
+            <blockquote class="pd-type-quote">
+                If the grid cell’s height is 30px, the input becomes 26px (26 - 4; leaving 1px on top and bottom for the cell’s border, and another 1px white space), and the chip becomes 22px (26 - 4). The buttons have to be the same as inputs (since they can be next to each other in forms). Add/subtract 4 to 8px to get large and small sizes.
+            </blockquote>
+            <img class="pd-project-image" src="src/assets/axis-project-image-3.svg" alt="Axis project buttons" />
+
+            <h2 class="pd-type-h2">Making a Hierarchical Multiselect</h2>
+            <p class="pd-type-body">
+                Components can be atomic (buttons, inputs), complex (navbar, multiselect hierarchical lists) and macro (a stock watchlist). They solve recurring use cases and bring consistency.
+            </p>
+            <blockquote class="pd-type-quote">
+                A straightforward use case of multi-selecting items in a tree uncovers so much more. What happens when I search for children within collapsed parents? Can I reorder list items between parents? How can I select a single item and submit with just one click? How can I lazily fetch huge lists? Can I add tags to items?
+                <br><br>
+                Here’s an interesting one - if I search for an item and select its parent’s checkbox, would all the children within that parent be selected, even the ones that weren’t in search results? If not, will my click give the checkbox an indeterminate state?
+            </blockquote>
+            <img class="pd-project-image" src="src/assets/axis-project-image-4.svg" alt="Axis project buttons" />
+
+            <p class="pd-type-body">
+                What do libraries like Ant do? Would I need sizes? (Maybe not if it’s in a dropdown) Which variants would I need? Props are defined while evaluating what all application teams can customize, for corner cases even props can’t cover.
+            </p>
+            <p class="pd-type-body">
+                Tab cycles, arrow key behavior and shortcuts are important. Power users love keyboard.
+            </p>
+            <p class="pd-type-body">
+                Once developed, storybook examples are put up for teams to refer to.
+            </p>
+
+            <h2 class="pd-type-h2">Let’s add some Color</h2>
+            <p class="pd-type-body">
+                Color adds hierarchy, accessibility and functional cues. For the primary palette, choose something that defines the brand well while avoiding functional colors like green, red and orange. Choose a secondary which goes well with it. Lastly, add some shades for light, main and dark.
+            </p>
+            <blockquote class="pd-type-quote">
+                Generating palettes algorithmically can be a challenge, simply because different hues behave differently. The best way I found was to take the HSL code, increment Lightness by 5-10 to get different shades, and tweak the saturation and lightness further to ensure the colors remain recognizable across the Hue spectrum.
+            </blockquote>
+            <img class="pd-project-image" src="src/assets/axis-project-image-5.svg" alt="Axis project buttons" />
+            <p class="pd-type-body">
+                Products can have different branding by customizing the primary palette, while keeping functional palettes like error, warning and success consistent.
+            </p>
+            <blockquote class="pd-type-quote">
+                Everyone uses WCAG 2.0 for accessibility/contrast, but it’s far from perfect, failing spectacularly for certain hues. I found APCA much better, though it takes some time to get used to since it isn’t a simple Pass/Fail result.
+            </blockquote>
+
+            <h2 class="pd-type-h2">Dark Mode: The King of ROI</h2>
+            <p class="pd-type-body">
+                A light palette in reverse ≠ a dark palette. Light palettes need more colors on the lighter side, while dark palettes need more colors on the darker spectrum. Dark mode colors also need more saturation to remain recognizable (blue should remain blue).
+            </p>
+            <blockquote class="pd-type-quote">
+                Solving background colors in dark mode is a fun challenge. Turns out, if there’s a white card on grey background in light mode, we perceive the card to be on top. However, simply inverting the colors to get a black card on grey background in dark mode gives the opposite feel; the card suddenly looks like it’s embedded in the page. Hence, grey and black backgrounds need to be swapped in dark mode (switch the phone settings page from light to dark mode to see it yourself)
+            </blockquote>
+            <img class="pd-project-image pd-project-image--full-width" src="src/assets/axis-project-image-6.svg" alt="Axis project buttons" />
+
+            <h2 class="pd-type-h2">“Little” Details</h2>
+            <p class="pd-type-body">
+                12px font size is the sweet spot for dense yet readable apps. Tokenized, of course, to proportionally increase in low density apps.
+            </p>
+            <blockquote class="pd-type-quote">
+                Ensure the typeface looks visually centered. We’d made everything with ‘Open Sans’, only to realise that it looks pushed slightly ‘downwards’, especially noticeable in small buttons and chips.
+            </blockquote>
+            <img class="pd-project-image" src="src/assets/axis-project-image-7.svg" alt="Axis project buttons" />
+            <p class="pd-type-body">
+                Modern UIs prefer higher border radii, but how high? In dense UIs, the biggest border radius the smallest components (like chips) can handle without looking like pills gives the answer.
+            </p>
+            <p class="pd-type-body">
+                Traders will use huge ultrawides, while someone could use a little iPad or a phone, making breakpoints and touch targets important to address.
+            </p>
+            <blockquote class="pd-type-quote">
+                Ensure the typeface looks visually centered. We’d made everything with ‘Open Sans’, only to realise that it looks pushed slightly ‘downwards’, especially noticeable in small buttons and chips.
+            </blockquote>
+            <p class="pd-type-body">
+                In Figma, should we create a separate touch library? To begin with, simply reusing small and medium sizes of existing components seems good enough.
+            </p>
+            <p class="pd-type-body">
+                The Figma component library mimics the actual library with spacing, color and typography tokens across multiple themes, while the components mimic code structure, unlocking high quality Figma-Code Connect outputs using AI.
+            </p>
+            <img class="pd-project-image" src="src/assets/axis-project-image-8.svg" alt="Axis project buttons" />
+
+            <h2 class="pd-type-h2">When to use what?</h2>
+            <p class="pd-type-body">
+                The next step is to bring parity with the old library in terms of use cases, with continuous feedback loops and iterations with different teams for ongoing improvements.
+            </p>
+            <p class="pd-type-body">
+                Now that the design system is in place, we need to tell everyone when to use what, best practices, usage patterns, what customisations are acceptable, and so on. All that lives in a pattern library.
+            </p>
+
+            <div class="pd-project-nav pd-project-nav--first">
+                <a class="btn-link text-label pd-project-nav__prev" href="./project-details-guardian.htm" style="visibility: hidden;">
+                    <img src="src/assets/arrow-left.svg" alt="" />PREVIOUS PROJECT
+                </a>
+                <a class="btn-link text-label" href="./project-details-enterprise.htm">
+                    NEXT PROJECT<img src="src/assets/arrow-right-main.svg" alt="" />
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <div class="bottom-bar">
+        <div class="bottom-bar__left">
+            <canvas id="music-visualizer" class="bottom-bar__visualizer" width="160" height="96"></canvas>
+        </div>
+        <div class="bottom-bar__right">
+            <a href="https://www.linkedin.com/in/jribh-shandilya-820361125/" target="_blank" rel="noopener" class="bottom-bar__social" aria-label="LinkedIn">
+                <img src="src/assets/linkedin.svg" alt="LinkedIn" class="bottom-bar__icon" />
+            </a>
+            <a href="https://www.instagram.com/waititshere/" target="_blank" rel="noopener" class="bottom-bar__social" aria-label="Instagram">
+                <img src="src/assets/instagram.svg" alt="Instagram" class="bottom-bar__icon" />
+            </a>
+        </div>
+    </div>
+
+    <script type="module" src="./src/cursor.js"></script>
+    <script type="module" src="./src/projectBackButton.js"></script>
+</body>
+</html>

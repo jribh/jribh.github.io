@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="src/assets/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Antonio:wght@100;200;300;400;500;600;700&family=Fraunces:ital,opsz,wght,SOFT,WONK@1,9..144,100..900,0..100,0..1&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="src/styles.css">
+    <title>Jribh Shandilya | Visualising Song Lyrics</title>
+</head>
+<body class="project-details-page">
+    <!-- Custom Cursor -->
+    <div class="custom-cursor">
+        <div class="custom-cursor__circle"></div>
+    </div>
+
+    <header class="project-details-hero">
+        <img src="src/assets/song-lyrics-image.png" alt="Song lyrics banner" />
+    </header>
+
+    <main class="project-details-content">
+        <a class="btn-link text-label pd-back-button pd-back-button-fixed" href="./index.htm#project=song-lyrics">
+            <img src="src/assets/arrow-left.svg" alt="" />ALL PROJECTS
+        </a>
+        <img class="project-details-gradient" src="src/assets/song-details-gradient.svg" alt="" aria-hidden="true" />
+        <a class="btn-link text-label pd-back-button" href="./index.htm#project=song-lyrics">
+            <img src="src/assets/arrow-left.svg" alt="" />ALL PROJECTS
+        </a>
+        <h1 class="pd-type-h1">Visualising Song Lyrics</h1>
+        <p class="pd-type-subheader">
+            <span>~6 min read</span>
+            <span class="work-card__dot">•</span>
+            <span>Personal project</span>
+        </p>
+
+        <section class="pd-type-section" aria-label="Typography samples">
+            <h2 class="pd-type-h2">H2 Heading — Visual Language</h2>
+            <p class="pd-type-body">Body text sample: Color, scale, and rhythm map to emotion, emphasis, and musical structure across verses and choruses.</p>
+
+            <h3 class="pd-type-h3">H3 Heading — Motion Studies</h3>
+            <p class="pd-type-body">Body text sample: Motion reinforces meaning by pairing lyrical cadence with pacing, transitions, and typography behavior.</p>
+
+            <h4 class="pd-type-h4">H4 Heading — Interaction Detail</h4>
+            <p class="pd-type-body">Body text sample: Hover and scroll reveal layers of meaning without overwhelming the primary reading experience.</p>
+
+            <h5 class="pd-type-h5">H5 Heading — Big Callout</h5>
+            <p class="pd-type-body">Body text sample: Lyrics are data — but they should feel human.</p>
+
+            <blockquote class="pd-type-quote">“Quotation sample: When type moves with intent, it becomes music.”</blockquote>
+            <div class="pd-project-nav">
+                <a class="btn-link text-label" href="./project-details-tata-neu.htm">
+                    <img src="src/assets/arrow-left.svg" alt="" />PREVIOUS PROJECT
+                </a>
+                <a class="btn-link text-label" href="./project-details-remote-touch.htm">
+                    NEXT PROJECT<img src="src/assets/arrow-right-main.svg" alt="" />
+                </a>
+            </div>        </section>
+    </main>
+
+    <div class="bottom-bar">
+        <div class="bottom-bar__left">
+            <canvas id="music-visualizer" class="bottom-bar__visualizer" width="160" height="96"></canvas>
+        </div>
+        <div class="bottom-bar__right">
+            <a href="https://www.linkedin.com/in/jribh-shandilya-820361125/" target="_blank" rel="noopener" class="bottom-bar__social" aria-label="LinkedIn">
+                <img src="src/assets/linkedin.svg" alt="LinkedIn" class="bottom-bar__icon" />
+            </a>
+            <a href="https://www.instagram.com/waititshere/" target="_blank" rel="noopener" class="bottom-bar__social" aria-label="Instagram">
+                <img src="src/assets/instagram.svg" alt="Instagram" class="bottom-bar__icon" />
+            </a>
+        </div>
+    </div>
+
+    <script type="module" src="./src/cursor.js"></script>
+    <script type="module" src="./src/projectBackButton.js"></script>
+</body>
+</html>

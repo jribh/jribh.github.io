@@ -1043,8 +1043,18 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     width: 100%;
 }
 
-.work-card-row > .work-card {
+.work-card-row > .work-card,
+.work-card-row > .work-card-link {
     width: 100%;
+}
+
+.work-card-row > .work-card-link {
+    display: block;
+    flex: 1 1 0;
+}
+
+.work-card-row > .work-card,
+.work-card-row > .work-card-link .work-card {
     aspect-ratio: 1.3 / 1;
 }
 
@@ -1731,6 +1741,16 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     z-index: 3; /* above dark overlay */
 }
 
+/* Page navigation transition overlay (covers everything, including project overlay) */
+#page-transition-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 20000;
+}
+
 /* Venetian blinds container (independent of dark overlay) */
 .venetian-blinds {
     position: absolute;
@@ -1760,6 +1780,11 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
 
 .venetian-blinds__slat:last-child {
     margin-right: 0;
+}
+
+/* Page transition overlay uses purple slats */
+#page-transition-overlay .venetian-blinds__slat {
+    background: #0c0c21;
 }
 
 .loading-overlay {
@@ -2783,7 +2808,8 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
         flex-direction: column;
         gap: 3em;
     }
-    .work-card-row > .work-card {
+    .work-card-row > .work-card,
+    .work-card-row > .work-card-link {
         width: 100%;
     }
 
@@ -2815,7 +2841,8 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
         transform: none;
     }
 
-    .work-card-row > .work-card {
+    .work-card-row > .work-card,
+    .work-card-row > .work-card-link .work-card {
         aspect-ratio: auto;
     }
 
@@ -3128,4 +3155,334 @@ body.is-scrolling::-webkit-scrollbar-thumb:hover {
     .work-card-mobile-title {
         font-size: 1em;
     }
+}
+
+/* Project details pages */
+body.project-details-page {
+    background-color: #0C0C0C;
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: block;
+    overflow-x: hidden;
+}
+
+/* Project overlay (SPA navigation) */
+body.project-overlay-open #head-container,
+body.project-overlay-open #content,
+body.project-overlay-open #site-bottom-bar,
+body.project-overlay-open .side-nav,
+body.project-overlay-open .performance-hud {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.project-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: #0C0C0C;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 160ms ease-out;
+    overflow-x: hidden;
+}
+
+body.project-overlay-open .project-overlay {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Style scrollbar for project overlay (match home page scrollbar) */
+.project-overlay::-webkit-scrollbar {
+    width: var(--scrollbar-track-width);
+}
+
+.project-overlay::-webkit-scrollbar-track {
+    background: var(--scrollbar-track-bg);
+    border-left: 1px solid var(--scrollbar-track-border);
+}
+
+.project-overlay::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb-bg);
+    background-clip: padding-box;
+    border-radius: var(--scrollbar-thumb-radius);
+    border: var(--scrollbar-thumb-padding) solid transparent;
+    transition: var(--scrollbar-transition);
+    box-sizing: border-box;
+}
+
+.project-overlay::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover-bg);
+    background-clip: padding-box;
+}
+
+.project-overlay::-webkit-scrollbar-thumb:active {
+    background: var(--scrollbar-thumb-active-bg);
+    background-clip: padding-box;
+}
+
+.project-details-hero {
+    width: 100%;
+    height: clamp(24em, 30vw, 38em);
+    overflow: hidden;
+    position: relative;
+}
+
+.project-details-hero img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    z-index: 1;
+}
+
+.project-details-hero--spacetime .spacetime-rocket {
+    width: 56vw !important;
+    height: auto !important;
+}
+
+.project-details-hero--spacetime .spacetime-stars-container {
+    background-color: #000c50;
+}
+
+.project-details-hero--spacetime .spacetime-wave-track {
+    width: 120%;
+}
+
+.project-details-hero--axis {
+    background-color: #080300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.project-details-hero__svg {
+    width: 120%;
+    height: auto;
+    max-width: none;
+}
+
+.project-details-content {
+    width: 100%;
+    max-width: 80em;
+    margin: 0 auto;
+    padding: 6em 2em 8em;
+    color: var(--text-primary);
+    text-align: center;
+    position: relative;
+    isolation: isolate;
+}
+
+.project-details-gradient {
+    position: absolute;
+    width: 120vw;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: auto;
+    z-index: 0;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Ensure all content renders above the gradient */
+.project-details-content > *:not(.project-details-gradient) {
+    position: relative;
+    z-index: 1;
+}
+
+.project-details-content h1 {
+    margin: 0 0 1em;
+    font-family: var(--font-heading-sans);
+    font-size: clamp(2.8em, 4vw, 4.2em);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.project-details-content p {
+    margin: 0 0 1.2em;
+    color: var(--white-80);
+    font-size: clamp(1rem, 1.1vw, 1.25rem);
+    line-height: 1.6;
+}
+
+/* Project page typography (unique class names vs home) */
+.project-details-content .pd-back-button {
+    margin: 0 0 2em 0;
+    display: inline-flex;
+    color: var(--primary-main);
+    text-decoration: none;
+}
+
+.project-details-content .pd-back-button:hover {
+    text-decoration: none;
+}
+
+.pd-back-button-fixed {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    margin: 3em 0 0 3em !important;
+    z-index: 110;
+    display: inline-flex;
+    color: var(--primary-main);
+    text-decoration: none;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 600ms ease;
+}
+
+.pd-back-button-fixed.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.project-details-content .pd-back-button img {
+    /* arrow-left.svg already uses --primary-main fill */
+    filter: none;
+}
+
+.project-details-content .pd-type-h1,
+.project-details-content .pd-type-h2,
+.project-details-content .pd-type-h3,
+.project-details-content .pd-type-h4,
+.project-details-content .pd-type-subheader,
+.project-details-content .pd-type-body,
+.project-details-content .pd-type-quote {
+    font-family: var(--font-body);
+}
+
+.project-details-content .pd-type-h1 {
+    margin: 0 0 0.6em;
+    font-size: 4em;
+    font-weight: 600;
+    letter-spacing: -0.02em; /* -2% */
+    color: var(--text-primary);
+    text-transform: none;
+    line-height: 1.1;
+}
+
+.project-details-content .pd-type-subheader {
+    margin: 0 0 1.25em;
+    font-size: 1.25em;
+    font-weight: 400;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5em;
+}
+
+.project-details-content .pd-type-subheader span {
+    display: inline;
+}
+
+.project-details-content .pd-type-subheader .work-card__dot {
+    display: inline;
+}
+
+.project-details-content .pd-type-h2 {
+    margin: 2em 0 1em;
+    font-size: 3em;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.12;
+}
+
+.project-details-content .pd-type-h3 {
+    margin: 1.5em 0 0.8em;
+    font-size: 1.75em;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.project-details-content .pd-type-h4 {
+    margin: 1.2em 0 0.6em;
+    font-size: 1.5em;
+    font-weight: 300;
+    color: var(--text-primary);
+    line-height: 1.25;
+}
+
+.project-details-content .pd-type-body {
+    margin: 0 0 1.8em;
+    font-size: 1.5em;
+    font-weight: 400;
+    color: var(--text-primary);
+    line-height: 1.6;
+    text-align: left;
+}
+
+.project-details-content .pd-type-quote {
+    margin: 1.4em 0;
+    font-size: 1.25em;
+    font-weight: 400;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    text-align: left;
+    margin: 3em 0;
+    padding: 0 0 0 3em;
+    border-left: 6px solid rgba(255, 255, 255, 0.12);
+}
+
+.project-details-content .pd-type-section {
+    margin: 3em auto 0;
+    max-width: 45em;
+}
+
+.pd-project-nav {
+    display: none;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4em 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin-top: 4em;
+}
+
+.pd-project-nav .btn-link {
+    color: var(--primary-main);
+    text-decoration: none;
+}
+
+.pd-project-nav .btn-link img {
+    filter: none;
+}
+
+.pd-project-nav--first {
+    justify-content: flex-end;
+}
+
+.pd-project-nav--last {
+    justify-content: flex-start;
+}
+
+.pd-project-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 3.6em 0;
+}
+
+.pd-project-image--full-width {
+    width: 80em;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.work-card-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+
+.work-card-link:focus-visible {
+    outline: 2px solid var(--primary-main);
+    outline-offset: 6px;
+    border-radius: 0.5em;
 }

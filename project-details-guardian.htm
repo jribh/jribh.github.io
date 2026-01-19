@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="src/assets/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Antonio:wght@100;200;300;400;500;600;700&family=Fraunces:ital,opsz,wght,SOFT,WONK@1,9..144,100..900,0..100,0..1&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="src/styles.css">
+    <title>Jribh Shandilya | Guardian</title>
+</head>
+<body class="project-details-page">
+    <!-- Custom Cursor -->
+    <div class="custom-cursor">
+        <div class="custom-cursor__circle"></div>
+    </div>
+
+    <header class="project-details-hero">
+        <img src="src/assets/guardian-image-mobile.png" alt="Guardian app banner" />
+    </header>
+
+    <main class="project-details-content">
+        <a class="btn-link text-label pd-back-button pd-back-button-fixed" href="./index.htm#project=guardian">
+            <img src="src/assets/arrow-left.svg" alt="" />ALL PROJECTS
+        </a>
+        <img class="project-details-gradient" src="src/assets/guardian-details-gradient.svg" alt="" aria-hidden="true" />
+        <a class="btn-link text-label pd-back-button" href="./index.htm#project=guardian">
+            <img src="src/assets/arrow-left.svg" alt="" />ALL PROJECTS
+        </a>
+        <h1 class="pd-type-h1">Guardian</h1>
+        <p class="pd-type-subheader">
+            <span>~10 min read</span>
+            <span class="work-card__dot">•</span>
+            <span>Content adapted to preserve privacy</span>
+        </p>
+
+        <section class="pd-type-section" aria-label="Typography samples">
+            <h2 class="pd-type-h2">H2 Heading — Core Workflows</h2>
+            <p class="pd-type-body">Body text sample: Scheduling, participation, and performance tracking are designed to be quick to scan and easy to update.</p>
+
+            <h3 class="pd-type-h3">H3 Heading — Roles & Permissions</h3>
+            <p class="pd-type-body">Body text sample: Interfaces adapt to roles while keeping shared mental models consistent across stakeholders.</p>
+
+            <h4 class="pd-type-h4">H4 Heading — Accessibility</h4>
+            <p class="pd-type-body">Body text sample: Typography and spacing choices support readability in busy, real-world contexts.</p>
+
+            <h5 class="pd-type-h5">H5 Heading — Big Callout</h5>
+            <p class="pd-type-body">Body text sample: Good admin tools feel invisible — they just help work happen.</p>
+
+            <blockquote class="pd-type-quote">“Quotation sample: Design for the moment someone is in a hurry.”</blockquote>
+            <div class="pd-project-nav pd-project-nav--last">
+                <a class="btn-link text-label" href="./project-details-remote-touch.htm">
+                    <img src="src/assets/arrow-left.svg" alt="" />PREVIOUS PROJECT
+                </a>
+                <a class="btn-link text-label pd-project-nav__next" href="./project-details-axis.htm" style="visibility: hidden;">
+                    NEXT PROJECT<img src="src/assets/arrow-right.svg" alt="" />
+                </a>
+            </div>        </section>
+    </main>
+
+    <div class="bottom-bar">
+        <div class="bottom-bar__left">
+            <canvas id="music-visualizer" class="bottom-bar__visualizer" width="160" height="96"></canvas>
+        </div>
+        <div class="bottom-bar__right">
+            <a href="https://www.linkedin.com/in/jribh-shandilya-820361125/" target="_blank" rel="noopener" class="bottom-bar__social" aria-label="LinkedIn">
+                <img src="src/assets/linkedin.svg" alt="LinkedIn" class="bottom-bar__icon" />
+            </a>
+            <a href="https://www.instagram.com/waititshere/" target="_blank" rel="noopener" class="bottom-bar__social" aria-label="Instagram">
+                <img src="src/assets/instagram.svg" alt="Instagram" class="bottom-bar__icon" />
+            </a>
+        </div>
+    </div>
+
+    <script type="module" src="./src/cursor.js"></script>
+    <script type="module" src="./src/projectBackButton.js"></script>
+</body>
+</html>

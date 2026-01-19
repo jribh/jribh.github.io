@@ -1,5 +1,4 @@
 // Custom Cursor Logic
-import smoothScroll from './smoothScroll.js';
 
 // Touch-device detection (phones/tablets)
 const IS_TOUCH_DEVICE = (function(){
@@ -86,72 +85,126 @@ function initCustomCursor() {
     });
     
     // Define clickable selectors - comprehensive list for all interactive elements
-    const clickableSelectors = 'a, button, input, textarea, select, [role="button"], .navbar__link, .side-nav__dot, .bottom-bar__social, .bottom-bar__visualizer, .work-card, .contact-form, .contact-email-link, .contact-copy-btn, .btn-primary, .btn-secondary, .btn-instagram, .contact-form-input, .contact-form-submit, .navbar__logo';
+    const clickableSelectors = 'a:not(.work-card-link), button, input, textarea, select, [role="button"], .navbar__link, .side-nav__dot, .bottom-bar__social, .bottom-bar__visualizer, .work-card, .contact-form, .contact-email-link, .contact-copy-btn, .btn-primary, .btn-secondary, .btn-instagram, .contact-form-input, .contact-form-submit, .navbar__logo';
 
     // Magnetic targets (subset: nav links and buttons) as requested
     // Added .performance-hud__content so FPS HUD gets the same magnetic hover effects
     // Excluded .work-card from magnetic selectors to remove magnet effect from work cards
-    const magneticSelectors = 'a:not(.work-card), .navbar__link, button:not(.work-card), .btn-link, .btn-instagram, .contact-form-submit, .side-nav__dot, .bottom-bar__social, .bottom-bar__visualizer, .navbar__logo, .performance-hud__content';
+    const magneticSelectors = 'a:not(.work-card-link):not(.work-card), .navbar__link, button:not(.work-card), .btn-link, .btn-instagram, .contact-form-submit, .side-nav__dot, .bottom-bar__social, .bottom-bar__visualizer, .navbar__logo, .performance-hud__content';
 
     // Text element selectors for text cursor behavior
     const textSelectors = 'h1, h2, h3, h4, h5, h6, p, input, textarea';
 
-    // Handle hover on text elements (headings, paragraphs, inputs, textareas) - show text cursor
-    // Filter out paragraphs that contain interactive elements, but include all inputs and textareas
-    const allTextElements = document.querySelectorAll(textSelectors);
-    const textElements = Array.from(allTextElements).filter(el => {
-        const tagName = el.tagName.toLowerCase();
-        // Exclude all text elements within .work-cards
-        if (el.closest('.work-cards')) {
-            return false;
-        }
-        // Include all inputs and textareas
-        if (tagName === 'input' || tagName === 'textarea') {
-            return true;
-        }
-        // For paragraphs, exclude those that contain interactive elements
-        if (tagName === 'p') {
-            return !el.querySelector('a, button, .btn-link, .btn-instagram, .contact-footer__link');
-        }
-        return true; // Include all headings
-    });
-    textElements.forEach((el) => {
-        el.addEventListener('mouseenter', () => {
-            if (isCursorLocked) return; // magnetic lock takes precedence
-            cursor.classList.add('custom-cursor--text');
-        });
-        
-        el.addEventListener('mouseleave', () => {
-            if (isCursorLocked) return; // magnetic lock manages its own state
-            cursor.classList.remove('custom-cursor--text');
-        });
-    });
+    // Track which nodes we've already wired so we can refresh safely
+    const wiredTextElements = new WeakSet();
+    const wiredWorkCards = new WeakSet();
+    const wiredMagneticElements = new WeakSet();
 
-    // Work card hover state - enlarge cursor
-    const workCards = document.querySelectorAll('.work-card');
-    workCards.forEach((card) => {
-        card.addEventListener('mouseenter', () => {
-            if (isCursorLocked) return; // magnetic lock takes precedence
-            cursor.classList.add('custom-cursor--work-card');
+    function refreshCursorTargets(root = document) {
+        // Text hover -> text cursor
+        const allTextElements = root.querySelectorAll(textSelectors);
+        const textElements = Array.from(allTextElements).filter((el) => {
+            const tagName = el.tagName.toLowerCase();
+            // Exclude all text elements within .work-cards
+            if (el.closest('.work-cards')) return false;
+            // Include all inputs and textareas
+            if (tagName === 'input' || tagName === 'textarea') return true;
+            // For paragraphs, exclude those that contain interactive elements
+            if (tagName === 'p') {
+                return !el.querySelector('a, button, .btn-link, .btn-instagram, .contact-footer__link');
+            }
+            return true; // Include headings
         });
-        
-        card.addEventListener('mouseleave', () => {
-            if (isCursorLocked) return; // magnetic lock manages its own state
-            cursor.classList.remove('custom-cursor--work-card');
-        });
-    });
 
-    // Apply [data-magnetic] and wire magnetic behavior
-    const magneticElements = Array.from(document.querySelectorAll(magneticSelectors));
-    if (!IS_TOUCH_DEVICE) {
-        magneticElements.forEach((el) => el.setAttribute('data-magnetic', ''));
+        textElements.forEach((el) => {
+            if (wiredTextElements.has(el)) return;
+            wiredTextElements.add(el);
+
+            el.addEventListener('mouseenter', () => {
+                if (isCursorLocked) return;
+                cursor.classList.add('custom-cursor--text');
+            });
+
+            el.addEventListener('mouseleave', () => {
+                if (isCursorLocked) return;
+                cursor.classList.remove('custom-cursor--text');
+            });
+        });
+
+        // Work card hover -> enlarged cursor
+        const workCards = root.querySelectorAll('.work-card');
+        workCards.forEach((card) => {
+            if (wiredWorkCards.has(card)) return;
+            wiredWorkCards.add(card);
+
+            card.addEventListener('mouseenter', () => {
+                if (isCursorLocked) return;
+                cursor.classList.add('custom-cursor--work-card');
+            });
+
+            card.addEventListener('mouseleave', () => {
+                if (isCursorLocked) return;
+                cursor.classList.remove('custom-cursor--work-card');
+            });
+        });
+
+        // Magnetic wiring (skip on touch devices)
+        if (IS_TOUCH_DEVICE) return;
+
+        const magneticElements = Array.from(root.querySelectorAll(magneticSelectors));
+        magneticElements.forEach((el) => {
+            el.setAttribute('data-magnetic', '');
+            if (wiredMagneticElements.has(el)) return;
+            wiredMagneticElements.add(el);
+
+            el.addEventListener('mouseenter', (ev) => {
+                if (ev.target.matches('input, textarea, select')) return;
+                lockToTarget(ev.currentTarget);
+            }, { passive: true });
+
+            el.addEventListener('mousemove', (ev) => {
+                if (!isCursorLocked) return;
+                lockedRect = ev.currentTarget.getBoundingClientRect();
+                updateMagneticOffsets(ev);
+            }, { passive: true });
+
+            el.addEventListener('mouseleave', (ev) => {
+                unlockTarget(ev.currentTarget);
+            }, { passive: true });
+        });
     }
+
+    // Make refresh available for dynamically injected content (project overlay)
+    window.__refreshCursorTargets = refreshCursorTargets;
+
+    // Expose a tiny API so the project overlay can safely close without leaving
+    // the cursor locked onto an element that was removed from the DOM.
+    window.__cursorApi = {
+        refreshTargets: refreshCursorTargets,
+        forceUnlock: () => {
+            try {
+                unlockTarget();
+            } catch {
+                // no-op
+            }
+        },
+        ensureVisible: () => {
+            // If the cursor was hidden due to a leave/visibility edge case,
+            // force it visible when returning to home.
+            mouseHasEnteredViewport = true;
+            cursor.style.opacity = '1';
+            isVisible = true;
+        },
+    };
 
     // Also add data-magnetic to navbar for transform support (skip on touch devices)
     const navbar = document.querySelector('.navbar');
     if (navbar && !IS_TOUCH_DEVICE) {
         navbar.setAttribute('data-magnetic', '');
     }
+
+    // Initial wiring for existing DOM
+    refreshCursorTargets(document);
 
     function lockToTarget(target) {
         // Skip magnetic behavior on touch devices
@@ -318,27 +371,7 @@ function initCustomCursor() {
         cursor.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
     }
 
-    // Wire events for magnetic elements (skip on touch devices)
-    if (!IS_TOUCH_DEVICE) {
-        magneticElements.forEach((el) => {
-            el.addEventListener('mouseenter', (ev) => {
-                // Ignore inputs/textareas inside form fields where text cursor is desired
-                if (ev.target.matches('input, textarea, select')) return;
-                lockToTarget(ev.currentTarget);
-            }, { passive: true });
-
-            el.addEventListener('mousemove', (ev) => {
-                if (!isCursorLocked) return;
-                // Keep rect up-to-date when content moves (smooth scroll)
-                lockedRect = ev.currentTarget.getBoundingClientRect();
-                updateMagneticOffsets(ev);
-            }, { passive: true });
-
-            el.addEventListener('mouseleave', (ev) => {
-                unlockTarget(ev.currentTarget);
-            }, { passive: true });
-        });
-    }
+    // Magnetic wiring is handled via refreshCursorTargets() so it works for dynamic DOM too.
 
     // Keep lock centered on scroll/resize
     const refreshLock = () => {
