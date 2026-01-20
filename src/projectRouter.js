@@ -1,4 +1,5 @@
 import { withVenetianPageTransition } from './venetianBlinds.js';
+import { gsap } from 'gsap';
 
 function isSameOriginUrl(url) {
   try {
@@ -61,18 +62,45 @@ function setupOverlayBackButtonObserver(overlayRoot) {
   const regularButton = overlayRoot.querySelector('.pd-back-button:not(.pd-back-button-fixed)');
   if (!fixedButton || !regularButton) return;
 
-  // Clean up any previous observer when swapping projects
+  const showFixed = () => fixedButton.classList.add('is-visible');
+  const hideFixed = () => fixedButton.classList.remove('is-visible');
+
+  // Clean up any previous observer/listeners when swapping projects
   if (overlayRoot.__pdBackBtnObserver) {
     try { overlayRoot.__pdBackBtnObserver.disconnect(); } catch {}
     overlayRoot.__pdBackBtnObserver = null;
   }
+  if (typeof overlayRoot.__pdBackBtnCleanup === 'function') {
+    try { overlayRoot.__pdBackBtnCleanup(); } catch {}
+    overlayRoot.__pdBackBtnCleanup = null;
+  }
+
+  let rafId = null;
+  const update = () => {
+    rafId = null;
+    const rootRect = overlayRoot.getBoundingClientRect();
+    const rect = regularButton.getBoundingClientRect();
+    const isVisible = rect.bottom > rootRect.top && rect.top < rootRect.bottom;
+    if (isVisible) hideFixed();
+    else showFixed();
+  };
+
+  const requestUpdate = () => {
+    if (rafId != null) return;
+    rafId = window.requestAnimationFrame(update);
+  };
+
+  const onScroll = () => requestUpdate();
+  overlayRoot.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', requestUpdate);
+  requestUpdate();
 
   const observer = new IntersectionObserver(
     (entries) => {
       const entry = entries[0];
       if (!entry) return;
-      if (!entry.isIntersecting) fixedButton.classList.add('is-visible');
-      else fixedButton.classList.remove('is-visible');
+      if (!entry.isIntersecting) showFixed();
+      else hideFixed();
     },
     {
       root: overlayRoot,
@@ -82,6 +110,11 @@ function setupOverlayBackButtonObserver(overlayRoot) {
 
   observer.observe(regularButton);
   overlayRoot.__pdBackBtnObserver = observer;
+  overlayRoot.__pdBackBtnCleanup = () => {
+    overlayRoot.removeEventListener('scroll', onScroll);
+    window.removeEventListener('resize', requestUpdate);
+    if (rafId != null) window.cancelAnimationFrame(rafId);
+  };
 }
 
 function ensureOverlay() {
@@ -127,14 +160,23 @@ function buildOverlayContentFromDoc(doc, href) {
 
   const hero = doc.querySelector('.project-details-hero');
   const main = doc.querySelector('.project-details-content');
-  const bottomBar = doc.querySelector('.bottom-bar');
 
   const title = doc.querySelector('title')?.textContent?.trim();
   if (title) document.title = title;
 
-  if (hero) overlay.appendChild(document.importNode(hero, true));
-  if (main) overlay.appendChild(document.importNode(main, true));
-  if (bottomBar) overlay.appendChild(document.importNode(bottomBar, true));
+  const insertedHero = hero ? document.importNode(hero, true) : null;
+  const insertedMain = main ? document.importNode(main, true) : null;
+
+  if (insertedHero) {
+    overlay.appendChild(insertedHero);
+    gsap.set(insertedHero, { autoAlpha: 0, y: 20 });
+  }
+  if (insertedMain) {
+    overlay.appendChild(insertedMain);
+    // Don't translate the entire main container: it contains a fixed-position back button.
+    // A transformed ancestor would make `position: fixed` behave like `absolute`.
+    gsap.set(insertedMain, { autoAlpha: 0 });
+  }
 
   // Cursor wiring happens on initial DOMContentLoaded. Project pages are injected later,
   // so refresh hover targets to enable text cursor + magnetic hover.
@@ -147,6 +189,8 @@ function buildOverlayContentFromDoc(doc, href) {
 
   // Ensure fixed back button visibility logic works inside the overlay scroller.
   setupOverlayBackButtonObserver(overlay);
+
+  return { hero: insertedHero, main: insertedMain };
 }
 
 async function openProject(href, { pushState = true, replaceState = false, animate = true } = {}) {
@@ -173,22 +217,28 @@ async function openProject(href, { pushState = true, replaceState = false, anima
       pauseSmoothScroll();
       setOverlayOpen(true);
       const doc = await fetchProjectDom(resolvedHref);
-      buildOverlayContentFromDoc(doc, resolvedHref);
+      const elements = buildOverlayContentFromDoc(doc, resolvedHref);
+      return elements;
     };
 
     if (animate) {
-      await withVenetianPageTransition(doSwap, { 
+      const elements = await withVenetianPageTransition(doSwap, { 
         slats: 18, 
-        stagger: 0.05, 
+        stagger: 0.025, 
         coverReverse: false, 
         revealReverse: false,
-        coverDuration: 1.8,
-        revealDuration: 2.2,
+        coverDuration: 0.9,
+        revealDuration: 1.1,
         coverEase: 'power2.inOut',
         revealEase: 'power2.inOut'
       });
     } else {
-      await doSwap();
+      const elements = await doSwap();
+      // Instant reveal for non-animated navigation
+      if (elements) {
+        if (elements.hero) gsap.set(elements.hero, { autoAlpha: 1, y: 0 });
+        if (elements.main) gsap.set(elements.main, { autoAlpha: 1 });
+      }
     }
   });
 }
@@ -197,16 +247,17 @@ async function closeProjectWithTransition(state, { animate = true } = {}) {
   return runNavExclusive(async () => {
     const doSwap = async () => {
       closeProject(state);
+      return null;
     };
 
     if (animate) {
       await withVenetianPageTransition(doSwap, { 
         slats: 18, 
-        stagger: 0.05, 
+        stagger: 0.025, 
         coverReverse: false, 
         revealReverse: false,
-        coverDuration: 1.8,
-        revealDuration: 2.2,
+        coverDuration: 0.9,
+        revealDuration: 1.1,
         coverEase: 'power2.inOut',
         revealEase: 'power2.inOut'
       });

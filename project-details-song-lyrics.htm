@@ -18,7 +18,7 @@
     </div>
 
     <header class="project-details-hero">
-        <img src="src/assets/song-lyrics-image.png" alt="Song lyrics banner" />
+        <img src="src/assets/song-banner.png" alt="Song lyrics banner" />
     </header>
 
     <main class="project-details-content">
@@ -29,27 +29,97 @@
         <a class="btn-link text-label pd-back-button" href="./index.htm#project=song-lyrics">
             <img src="src/assets/arrow-left.svg" alt="" />ALL PROJECTS
         </a>
-        <h1 class="pd-type-h1">Visualising Song Lyrics</h1>
+        <h1 class="pd-type-h1">Creating Data Art From Emotional Aspects of Song Lyrics</h1>
         <p class="pd-type-subheader">
-            <span>~6 min read</span>
-            <span class="work-card__dot">•</span>
-            <span>Personal project</span>
+            <span>March 2022</span>
         </p>
 
         <section class="pd-type-section" aria-label="Typography samples">
-            <h2 class="pd-type-h2">H2 Heading — Visual Language</h2>
-            <p class="pd-type-body">Body text sample: Color, scale, and rhythm map to emotion, emphasis, and musical structure across verses and choruses.</p>
+            <h2 class="pd-type-h2">Introduction</h2>
+            <p class="pd-type-body">
+                Written as a research paper, this project explores different types of data art, and goes on to propose a type of data art that creatively visualizes various emotions contained in lyrics of different songs.
+            </p>
 
-            <h3 class="pd-type-h3">H3 Heading — Motion Studies</h3>
-            <p class="pd-type-body">Body text sample: Motion reinforces meaning by pairing lyrical cadence with pacing, transitions, and typography behavior.</p>
+            <h2 class="pd-type-h2">Explorations</h2>
+            <h3 class="pd-type-h3">What is Data Art?</h3>
+            <p class="pd-type-body">
+                Data art, like art itself, is difficult to clearly define. One of the ways could be to identify the intent of the creator; if they intended their product to actually be art.
+            </p>
+            <p class="pd-type-body">
+                Data art can also have some major overlaps with data visualization.
+            </p>
 
-            <h4 class="pd-type-h4">H4 Heading — Interaction Detail</h4>
-            <p class="pd-type-body">Body text sample: Hover and scroll reveal layers of meaning without overwhelming the primary reading experience.</p>
+            <blockquote class="pd-type-quote">
+                <ul>
+                    <li>Data visualisation sacrifices aesthetics for insights, whereas data art does the opposite</li>
+                    <li>Data art might not be good data visualisation, but it promotes what’s called “disinterested analysis”: provoking a non-expert into thought by using strong connected emotions</li>
+                    <li>Both data visualisation and data art consist of two things: objects and features. An example of objects can be cities, with their features being their weather attributes</li>
+                    <li>Overly focussing on usability can snatch away the aspect of beauty, spontaneity and emotion from data art</li>
+                    <li>Data art is allowed to commit ‘sins of data visualisation’- unclear presentation of information and blurred readability of data just for the sake of aesthetics</li>
+                    <li>Data visualisations provide quantitative insights, whereas data art may provide more qualitative insights open to interpretation</li>
+                </ul>
+            </blockquote>
 
-            <h5 class="pd-type-h5">H5 Heading — Big Callout</h5>
-            <p class="pd-type-body">Body text sample: Lyrics are data — but they should feel human.</p>
+            <h3 class="pd-type-h3">Classification of Data Art</h3>
+            <p class="pd-type-body">
+                Data art can be classified based on form, temporality and generators.
+            </p>
+            <h4 class="pd-type-h4">Based on Form</h4>
+            <h4 class="pd-type-h4">Based on Temporality</h4>
+            <h4 class="pd-type-h4">Based on Generators</h4>
 
-            <blockquote class="pd-type-quote">“Quotation sample: When type moves with intent, it becomes music.”</blockquote>
+            <h2 class="pd-type-h2">The Proposal</h2>
+            <p class="pd-type-body">
+                I propose a method to generate digital 3D models using lyrical emotions of different songs, and present data art created using this method.
+            </p>
+            <p class="pd-type-body">
+                Music as a dataset is readily available, and is consumed by the public in massive volumes. It is relatable and appealing. The data art I present, instead of focussing on music’s quantitative factors like pitch and amplitude, focusses on the actual emotion behind what its lyrics say, which more often than not, is completely different from the song’s beats and tempo.
+            </p>
+            <h3 class="pd-type-h3">Literature Review of Existing Visualisations</h3>
+            <p class="pd-type-body">
+                Most visualisations are static, considering the entire song at once. Some of them are dynamic shapes that changes in real time.
+            </p>
+            <p class="pd-type-body">
+                The aim of this project is to not focus on accuracy as much as the emotions in the songs; its mood and meaning. The result should visually capture the artist’s interpretation of the essence of the song based on the data provided to the algorithm, resulting in a different form for each musical piece.
+            </p>
+            <h3 class="pd-type-h3">The Product</h3>
+            <p class="pd-type-body">
+                I present data art as a ‘growing’ 3D model that develops based on the underlying emotions of a song. The process of generating this piece is as follows:
+            </p>
+            <h4 class="pd-type-h4">Choosing a song</h4>
+            <p class="pd-type-body">
+                For more engaging pieces, it’s good to choose songs that are ‘emotional rollercosters’. Also, heavily lyrical songs are preferred, with minimal repetitions. Following 3 songs are considered:
+            </p>
+            <h4 class="pd-type-h4">Assigning Emotions to Song Lyrics</h4>
+            <p class="pd-type-body">
+                Song lyrics, once laid out line by line, have 2 inputs: quantitative and qualitative. Quantitative input is time; how long it took for the singer to say that line. Qualitative input is the emotional variable assigned to that line. This project uses an arousal-valence dimensional model called the Russel’s Circumplex Model of Affect, which places different emotions on a scatter plot matrix based on their positivity and arousal values.
+            </p>
+            <h4 class="pd-type-h4">Converting Emotions to Inputs</h4>
+            <p class="pd-type-body">
+                Based on emotions assigned to different lyrics, the total time each emotion appears is noted. Based on the emotions’ location in the matrix, zones are assigned as seen below.  Both arousal and valence are divided into 8 zones each, giving a total of 16 combinations. This gives three numerical values; the positivity zone (from-4 to +4), the arousal zone (from -4 to +4) and the running time (in seconds).
+            </p>
+            <h4 class="pd-type-h4">Generating a 3D Model from the Inputs</h4>
+            <p class="pd-type-body">
+                Using three.js, different emotions are visualised as randomly growing lines emanating from a common origin, in 3D space. For each emotion, the drawing algorithm takes as input the positivity zone, arousal zone and the running time.
+            </p>
+            <h3 class="pd-type-h3">Comparing Art Created by the 3 Songs</h3>
+            <p class="pd-type-body">
+                Data from lyrics of three songs; Space Bound, How Far I’ll Go and Eastside is taken to create three different art pieces.
+            </p>
+
+            <h2 class="pd-type-h2">Conclusions and Future Work</h2>
+            <p class="pd-type-body">
+                I propose a method to generate digital 3D models using lyrical emotions of different songs, and present data art created using this method.
+            </p>
+            <ul class="pd-type-body">
+                <li>The product is a subjective manifestation of the artist’s interpretation of a song’s emotions</li>
+                <li>An aesthetic piece that promotes disinterested analysis, providing a gist of the song, and qualitative insights open to interpretation</li>
+                <li>Future work is to refine the algorithm and automating the process of emotion assignment</li>
+            </ul>
+            <p class="pd-type-body">
+                Check out the detailed <a href="https://drive.google.com/file/d/1-Ys7UImEbIsegC_psVO16tX7UKdIwxtG/view?usp=sharing" target="_blank" rel="noopener" class="contact-footer__link">project report</a>.
+            </p>
+
             <div class="pd-project-nav">
                 <a class="btn-link text-label" href="./project-details-tata-neu.htm">
                     <img src="src/assets/arrow-left.svg" alt="" />PREVIOUS PROJECT
@@ -57,7 +127,8 @@
                 <a class="btn-link text-label" href="./project-details-remote-touch.htm">
                     NEXT PROJECT<img src="src/assets/arrow-right-main.svg" alt="" />
                 </a>
-            </div>        </section>
+            </div>
+        </section>
     </main>
 
     <div class="bottom-bar">
