@@ -23,16 +23,18 @@ function initCaseStudiesDividers() {
     return;
   }
 
-  // Mobile-responsive trigger: trigger further up (60%) on mobile (<=768px), 75% on desktop
-  const isMobile = window.innerWidth <= 768;
-  const triggerStart = isMobile ? 'top 60%' : 'top 75%';
+  const shouldSkipOnMobile = (divider) => {
+    if (divider.classList.contains('work-subheader-divider--no-scroll-mobile')) return true;
+    const text = divider.querySelector('.work-subheader-text')?.textContent?.trim().toLowerCase();
+    return text === 'exploratory projects';
+  };
 
-  dividers.forEach((divider) => {
+  const setupAnimatedDivider = (divider, triggerStart) => {
     // Set initial state: hidden with blur and slight downward offset
-    gsap.set(divider, { 
-      autoAlpha: 0, 
-      y: 32, 
-      filter: 'blur(8px)' 
+    gsap.set(divider, {
+      autoAlpha: 0,
+      y: 32,
+      filter: 'blur(8px)'
     });
 
     ScrollTrigger.create({
@@ -40,7 +42,6 @@ function initCaseStudiesDividers() {
       start: triggerStart,
       scroller: getScroller(),
       onEnter: () => {
-        // Beautiful fade-in animation matching the site's aesthetic
         gsap.to(divider, {
           autoAlpha: 1,
           y: 0,
@@ -51,7 +52,6 @@ function initCaseStudiesDividers() {
         });
       },
       onLeaveBack: () => {
-        // Fade out when scrolling back up
         gsap.to(divider, {
           autoAlpha: 0,
           y: 32,
@@ -62,6 +62,25 @@ function initCaseStudiesDividers() {
         });
       }
     });
+  };
+
+  ScrollTrigger.matchMedia({
+    '(max-width: 768px)': () => {
+      const triggerStart = 'top 60%';
+      dividers.forEach((divider) => {
+        if (shouldSkipOnMobile(divider)) {
+          gsap.set(divider, { autoAlpha: 1, y: 0, filter: 'blur(0px)' });
+          return;
+        }
+        setupAnimatedDivider(divider, triggerStart);
+      });
+    },
+    '(min-width: 769px)': () => {
+      const triggerStart = 'top 75%';
+      dividers.forEach((divider) => {
+        setupAnimatedDivider(divider, triggerStart);
+      });
+    }
   });
 }
 

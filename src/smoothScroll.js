@@ -576,6 +576,9 @@ class SmoothScroll {
 
   onScroll() {
     if (!this.content) return;
+    // Touch devices use native scrolling; never translate the content container.
+    // This guards against other modules calling `start()`/`onScroll()` during overlay transitions.
+    if (this.isTouchDevice) return;
     
     // Calculate the difference
     const diff = this.scrollTarget - this.scrollCurrent;
@@ -724,6 +727,8 @@ class SmoothScroll {
   }
 
   start() {
+    // Touch devices do not run the smooth-scroll RAF loop.
+    if (this.isTouchDevice) return;
     if (this.isRunning) return;
     this.isRunning = true;
     this.onScroll();

@@ -384,6 +384,14 @@ export async function withVenetianPageTransition(runSwap, opts = {}) {
 		return;
 	}
 
+	const t0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+	const waitUntilMsFromStart = async (msFromStart) => {
+		const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+		const elapsed = now - t0;
+		const remaining = msFromStart - elapsed;
+		if (remaining > 0) await wait(remaining);
+	};
+
 	const logoAnim = await ensurePageTransitionLogoAnimation(overlay);
 
 	// Block clicks during the transition.
@@ -412,6 +420,15 @@ export async function withVenetianPageTransition(runSwap, opts = {}) {
 	// Per your requirement: unravel should also go left -> right.
 	const revealFrom = (opts.revealReverse ?? false) ? 'end' : 'start';
 
+	// Overlap controls (seconds). These allow the logo to begin before full cover completes,
+	// and allow the reveal to begin before the logo sequence fully finishes.
+	const coverLogoOverlap = typeof opts.coverLogoOverlap === 'number' ? opts.coverLogoOverlap : 0.35;
+	const logoRevealOverlap = typeof opts.logoRevealOverlap === 'number' ? opts.logoRevealOverlap : 0.60;
+	const logoHoldMs = typeof opts.logoHoldMs === 'number' ? opts.logoHoldMs : 300;
+	const logoTotalSeconds = 1.0 + (logoHoldMs / 1000) + 1.0;
+	const logoStartSeconds = Math.max(0, coverDuration - coverLogoOverlap);
+	const revealStartSeconds = Math.max(0, logoStartSeconds + logoTotalSeconds - logoRevealOverlap);
+
 	// Always start from a clean visual state.
 	if (container) {
 		container.style.opacity = '1';
@@ -421,7 +438,7 @@ export async function withVenetianPageTransition(runSwap, opts = {}) {
 	gsap.set(slats, { transformOrigin: 'left center', scaleX: 0 });
 	if (logoAnim?.wrapper) gsap.set(logoAnim.wrapper, { autoAlpha: 1, visibility: 'hidden' });
 
-	await new Promise((resolve) => {
+	const coverPromise = new Promise((resolve) => {
 		gsap.timeline({
 			defaults: { overwrite: true },
 			onComplete: resolve,
@@ -435,11 +452,11 @@ export async function withVenetianPageTransition(runSwap, opts = {}) {
 			}, 0);
 	});
 
-	// Start swapping content while fully covered (logo animation plays on top).
-	const swapPromise = Promise.resolve(runSwap?.());
-
-	// Logo stroke animation (same as startup): 1s in, 500ms hold, 1s out.
-	if (logoAnim?.tl && logoAnim?.paths && logoAnim?.wrapper) {
+	// Logo stroke animation (same as startup): 1s in, hold, 1s out.
+	// Starts before cover fully completes for intentional overlap.
+	const logoPromise = (async () => {
+		if (!(logoAnim?.tl && logoAnim?.paths && logoAnim?.wrapper)) return;
+		await waitUntilMsFromStart(logoStartSeconds * 1000);
 		// Reset + fit total timing to exactly 1s.
 		resetStrokeDash(logoAnim.paths);
 		logoAnim.tl.pause(0);
@@ -447,12 +464,23 @@ export async function withVenetianPageTransition(runSwap, opts = {}) {
 		logoAnim.tl.timeScale(total / 1);
 		gsap.set(logoAnim.wrapper, { visibility: 'visible', autoAlpha: 1 });
 		await playTimeline(logoAnim.tl, { direction: 'forward' });
-		await wait(500);
+		await wait(logoHoldMs);
 		await playTimeline(logoAnim.tl, { direction: 'reverse' });
 		gsap.set(logoAnim.wrapper, { visibility: 'hidden', autoAlpha: 0 });
-	}
+	})();
 
-	const swapResult = await swapPromise;
+	// Start swapping content as soon as we're fully covered.
+	const swapPromise = (async () => {
+		await coverPromise;
+		return Promise.resolve(runSwap?.());
+	})();
+
+	// Wait for content + the desired reveal start time (for overlap with the logo),
+	// then begin revealing.
+	const [swapResult] = await Promise.all([
+		swapPromise,
+		waitUntilMsFromStart(revealStartSeconds * 1000),
+	]);
 
 	await new Promise((resolve) => {
 		const timeline = gsap.timeline({
@@ -479,6 +507,9 @@ export async function withVenetianPageTransition(runSwap, opts = {}) {
 		}, 0.06);
 		timeline.set(container, { opacity: 0, visibility: 'hidden' });
 	});
+
+	// Ensure logo cleanup completes even if it overlaps the reveal.
+	await logoPromise;
 
 	overlay.style.pointerEvents = 'none';
 	resetVenetianBlindsOn(overlay);

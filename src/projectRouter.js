@@ -33,7 +33,7 @@ function getScrollPosition() {
 
 function setScrollPosition(y) {
   const ss = window.smoothScroll;
-  if (ss && ss.content) {
+  if (ss && ss.content && !ss.isTouchDevice) {
     ss.scrollTarget = y;
     ss.scrollCurrent = y;
     ss.onScroll();
@@ -143,7 +143,7 @@ function pauseSmoothScroll() {
 
 function resumeSmoothScroll() {
   const ss = window.smoothScroll;
-  if (ss && typeof ss.start === 'function') ss.start();
+  if (ss && !ss.isTouchDevice && typeof ss.start === 'function') ss.start();
 }
 
 async function fetchProjectDom(href) {
