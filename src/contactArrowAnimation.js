@@ -25,6 +25,7 @@ class ContactArrowAnimation {
     // Find all buttons and links that should have the animation
     const selectors = [
       '.enterprise-buttons button',
+      '.enterprise-buttons a',
       '.contact-email-link',
       '.contact-return-btn'
     ];

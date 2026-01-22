@@ -5,11 +5,33 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="src/assets/favicon.svg">
+    
+    <!-- SEO Meta Tags -->
+    <title>Jribh Shandilya | Enterprise Design Patterns</title>
+    <meta name="description" content="Designing for data-dense enterprise: Patterns from visualisation, trading and systems tools. A field guide to building high-throughput, mission-critical interfaces.">
+    <meta name="author" content="Jribh Shandilya">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://jribh.com/project-details-enterprise.htm">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Designing for Data-Dense Enterprise">
+    <meta property="og:description" content="Patterns from visualisation, trading and systems tools. Progressive disclosure, grids, filters, keyboard navigation, and latency-aware UI.">
+    <meta property="og:url" content="https://jribh.com/project-details-enterprise.htm">
+    <meta property="og:image" content="https://jribh.com/src/assets/og-image.jpg">
+    <meta property="og:locale" content="en_US">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Designing for Data-Dense Enterprise">
+    <meta name="twitter:description" content="Patterns from visualisation, trading and systems tools. Progressive disclosure, grids, filters, keyboard navigation, and latency-aware UI.">
+    <meta name="twitter:image" content="https://jribh.com/src/assets/og-image.jpg">
+    <meta name="twitter:site" content="@jribh">
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Antonio:wght@100;200;300;400;500;600;700&family=Fraunces:ital,opsz,wght,SOFT,WONK@1,9..144,100..900,0..100,0..1&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="src/styles.css">
-    <title>Jribh Shandilya | Enterprise Design Patterns</title>
 </head>
 <body class="project-details-page">
     <!-- Custom Cursor -->
@@ -38,7 +60,105 @@
         </p>
 
         <section class="pd-type-section" aria-label="Typography samples">
-            <h2 class="pd-type-h2">Coming soon...</h2>
+            <h2 class="pd-type-h2">Sample below; actual article coming soon...</h2>
+            <h2 class="pd-type-h2">Something for every use case.</h2>
+            <p class="pd-type-body">
+                When you design internal apps for an enterprise, you’re solving for a vast majority of use cases, albeit for a smaller audience. The product surface area is huge: trading and analytics tools for a few specialists, large-scale data visualisation platforms used by many, infrastructure components like grids and component libraries that power everything, and systems used by teams across Human Capital, Admin, Finance and Operations.
+            </p>
+            <p class="pd-type-body">
+                This page is a field guide of the patterns I’ve leaned on the most while working on high-density enterprise software. It’s written like a blog, but it’s really a collection of decisions: how to make complexity feel navigable, how to keep speed and trust high, and how to design interfaces that behave well when the data, permissions, and edge cases inevitably get messy.
+            </p>
+
+            <h2 class="pd-type-h2">Why dense is different</h2>
+            <p class="pd-type-body">
+                “Data-dense” isn’t just a visual style. It’s a workflow constraint. Users are reading, scanning, comparing, and acting—often under time pressure, with real financial and operational consequences. Density is what enables fewer scrolls and fewer clicks, but it also increases cognitive load. The job is to keep information compact without turning it into noise.
+            </p>
+            <blockquote class="pd-type-quote">
+                Dense UI is a budget. Spend pixels on signal, not decoration. The best layouts feel calm not because they’re sparse, but because hierarchy, alignment, and interaction states do the heavy lifting.
+            </blockquote>
+
+            <h2 class="pd-type-h2">The recurring problems</h2>
+            <p class="pd-type-body">
+                Across trading dashboards, analytics workbenches and systems tooling, the same set of problems shows up repeatedly:
+                consistency across products, fast scanning, high-confidence actions, auditability, discoverability of power features, and graceful degradation when APIs fail.
+            </p>
+
+            <h2 class="pd-type-h2">Patterns from the trenches</h2>
+
+            <h3 class="pd-type-h3">1) Progressive disclosure that doesn’t hide the important parts</h3>
+            <p class="pd-type-body">
+                Enterprise products tend to attract options: toggles, modes, column pickers, permissions, and feature flags. Dumping everything on screen makes the UI feel “powerful” for a week, and exhausting forever.
+            </p>
+            <p class="pd-type-body">
+                What works: establish a strong default view, then let users reveal complexity intentionally—through expandable sections, contextual drawers, inline row details, and secondary panels. The best implementations make it obvious where “more” lives, and preserve spatial memory (things open in predictable places).
+            </p>
+
+            <h3 class="pd-type-h3">2) Grids as a workspace, not a table</h3>
+            <p class="pd-type-body">
+                The grid is the home screen of enterprise. It’s where users sort, filter, compare, annotate, and take action. Treating it like a static table leaves a lot of value on the floor.
+            </p>
+            <p class="pd-type-body">
+                Patterns that consistently pay off: sticky headers, resizable and reorderable columns, pinned “identity” columns (name/symbol), inline editing with clear validation, meaningful empty states, and row-level actions that don’t cause accidental clicks.
+            </p>
+            <blockquote class="pd-type-quote">
+                A good grid has an opinion about interaction. It should be faster to do the right thing than the wrong thing.
+            </blockquote>
+
+            <h3 class="pd-type-h3">3) Filters that scale with dimensionality</h3>
+            <p class="pd-type-body">
+                Filtering in consumer products is usually a handful of chips. In enterprise, it becomes a language. Users need to slice by time, region, strategy, status, owner, risk, source, and dozens more. The UI has to scale without becoming a spreadsheet of controls.
+            </p>
+            <p class="pd-type-body">
+                The backbone is a consistent filter model: quick filters for common cuts, an “advanced” builder for power queries, and saved views that behave like bookmarks for the whole workspace (columns + filters + sort + grouping). If it can’t be saved, it’s not really a workflow.
+            </p>
+
+            <h3 class="pd-type-h3">4) Keyboard-first ergonomics</h3>
+            <p class="pd-type-body">
+                Power users don’t hate the mouse; they hate friction. Keyboard support isn’t a nice-to-have—it’s throughput. The difference between “usable” and “loved” often comes down to selection models, focus management, and shortcuts that feel consistent across tools.
+            </p>
+            <p class="pd-type-body">
+                I aim for predictable tab order, arrow-key navigation in grids and menus, type-to-search where it’s expected, and shortcuts for high-frequency actions. The trick is to keep it discoverable: tooltips, menus, and inline hints help new users level up without reading documentation.
+            </p>
+
+            <h3 class="pd-type-h3">5) Latency-aware UI</h3>
+            <p class="pd-type-body">
+                Enterprise data is rarely local, rarely small, and rarely fast. If the UI doesn’t acknowledge latency, users assume the app is broken—or worse, they retry actions and create duplicates.
+            </p>
+            <p class="pd-type-body">
+                The patterns are simple but strict: optimistic updates only when safe, explicit in-flight states for actions, partial-loading states for panels, skeletons for structured content, and clear error recovery (“Retry”, “View details”, “Copy error”, “Contact support”).
+            </p>
+
+            <h3 class="pd-type-h3">6) Trust, auditability, and safe actions</h3>
+            <p class="pd-type-body">
+                When actions have real-world impact, safety becomes a design feature. Confirmation dialogs are the blunt tool; good systems use guardrails: previews, validation, constrained inputs, undo, and clear “what will happen” copy.
+            </p>
+            <p class="pd-type-body">
+                Auditability matters too. Users want to know what changed, who changed it, and when. It’s not glamorous, but it’s often the difference between a tool that scales and a tool that creates operational risk.
+            </p>
+
+            <h2 class="pd-type-h2">How I work on these systems</h2>
+            <p class="pd-type-body">
+                The fastest path to the right design is rarely a perfect Figma file on day one. I usually start with constraints: who uses this, how often, what’s the critical path, what’s the worst-case data size, and what failures look like.
+            </p>
+            <p class="pd-type-body">
+                From there, I’ll map a workflow, prototype key interactions (especially selection + filtering + actions), and pressure-test edge cases with engineers and domain experts. If a pattern is going to be reused, it graduates into the component library with clear guidance: when to use it, how it behaves, and what’s customizable.
+            </p>
+            <blockquote class="pd-type-quote">
+                Enterprise design is systems design. The UI is only the visible layer; the real work is making the whole system coherent across products, teams, and years.
+            </blockquote>
+
+            <h2 class="pd-type-h2">A glimpse of the tooling landscape</h2>
+            <p class="pd-type-body">
+                Without getting into specifics, the work spanned multiple categories: trading and monitoring dashboards, analytics workbenches, visualisation platforms, admin and operations consoles, and foundational infrastructure like grids and component primitives.
+            </p>
+            <p class="pd-type-body">
+                The common thread: the best tools feel “inevitable”. They reduce hesitation. They make it clear what’s happening. They respect the user’s time.
+            </p>
+
+            <h2 class="pd-type-h2">The biggest learnings</h2>
+            <p class="pd-type-body">
+                If I had to summarise enterprise UI into a few guiding principles: prioritise clarity over cleverness, design for throughput, make state obvious, and never ignore the messy edges (permissions, failures, partial data). The more complex the domain, the more the interface should feel boring—in a good way.
+            </p>
 
             <div class="pd-project-nav">
                 <a class="btn-link text-label" href="./project-details-axis.htm">
