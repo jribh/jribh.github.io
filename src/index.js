@@ -238,11 +238,11 @@ function updateNavbarOnScroll(scrollY = null) {
 
 		if (currentSectionIndex === 2) {
 			// Section 3
-			overlayOpacity = isMobile ? 0.5 : 0;
+			overlayOpacity = isMobile ? 0.7 : 0;
 		} else if (currentSectionIndex === 3) {
 			// Section 4
 			// Smooth fade from previous value to 0.5 using CSS transition; set value directly here
-			overlayOpacity = 0.5;
+			overlayOpacity = 0.7;
 		} else if (currentSectionIndex === 4) {
 			// Section 5 -> use blinds; avoid stacking base overlay with blinds
 			overlayOpacity = 0;

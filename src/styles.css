@@ -2480,7 +2480,6 @@ body.project-overlay-open .project-overlay {
     color: var(--text-primary);
     text-align: center;
     position: relative;
-    isolation: isolate;
     box-sizing: border-box;
 }
 
@@ -2497,7 +2496,7 @@ body.project-overlay-open .project-overlay {
 }
 
 /* Ensure all content renders above the gradient */
-.project-details-content > *:not(.project-details-gradient) {
+.project-details-content > *:not(.project-details-gradient):not(.pd-back-button-fixed) {
     position: relative;
     z-index: 1;
 }
@@ -2540,12 +2539,12 @@ body.project-overlay-open .project-overlay {
     text-decoration: none;
 }
 
-.pd-back-button-fixed {
+.project-details-content .pd-back-button-fixed {
     position: fixed !important;
     top: 0;
     left: 0;
-    margin: 3em 0 0 3em !important;
-    z-index: 110;
+    margin: 3em 0 0 3em;
+    z-index: 11002;
     display: inline-flex;
     color: var(--primary-main);
     text-decoration: none;
@@ -3236,9 +3235,6 @@ body.project-overlay-open .project-overlay {
     }
     .lit-review-grid { gap: 2em; }
     .lit-review-image { border-radius: 0.8em; }
-    .pd-back-button-fixed {
-        display: none !important;
-    }
 }
 
 /* 768px and below */
@@ -3250,6 +3246,15 @@ body.project-overlay-open .project-overlay {
     /* Removed mobile-specific overlay alpha override; dark overlay now always solid black with JS-managed opacity */
     
     .performance-hud { display: none; }
+
+    .project-details-content .pd-back-button-fixed {
+        border-radius: 1em;
+        background-color: #2c2c2c;
+        left: 50%;
+        transform: translateX(-50%);
+        top: 2em;
+        margin: 0;
+    }
     
     .project-details-hero--axis .project-details-hero__svg {
         transform: scale(3.5);
@@ -3901,7 +3906,6 @@ body.project-overlay-open .project-overlay {
         padding-left: 1em;
         border-left-width: 3px;
     }
-    .pd-back-button-fixed { margin: 1.2em 0 0 1.2em !important; }
     .pd-project-image { margin: 1.4em 0; }
     .pd-project-image--full-width { width: 100%; }
     .lit-review-grid { gap: 1.4em; }
