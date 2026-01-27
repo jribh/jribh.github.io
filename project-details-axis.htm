@@ -61,10 +61,10 @@
         <section class="pd-type-section" aria-label="Typography samples">
             <h2 class="pd-type-h2">It works, until it doesn't.</h2>
             <p class="pd-type-body">
-                After 8+ years of catering to extremely specific business use cases, the firm’s component library started showing its age. Bandaid solutions, one after the other, exposed enormous design and tech debt.
+                After 8+ years of catering to extremely specific business use cases, the firm’s component library started showing its age. Bandaid solutions, one after the other, exposed enormous design and tech debt. Enter Axis, a modern take extending MUI. Built from the ground up, with themes, densities, dark mode and more.
             </p>
             <p class="pd-type-body">
-                Enter Axis, a modern take extending MUI. Built from the ground up, with themes, densities, dark mode and more.
+                The following is my journey of learnings and experiences as a sole (most of the time) designer working for Axis.
             </p>
 
             <h2 class="pd-type-h2">Who’s it for?</h2>
@@ -72,27 +72,30 @@
                 Everyone in the firm consumes a design system in some form. Traders and analysts like seeing lots of data, with split second decisions involving minimal clicks. Human Capital would want people management dashboards, while Systems would visualise inventories and services. Everyone would have common use cases like leave and ticket management, or specialised ones like creating visualisation dashboards or building workflows.
             </p>
             <p class="pd-type-body">
-                A hedge fund app is a high density trading platform. It’s also a low density leave management app. And everything in between. How do you even design for that?
+                A hedge fund app can be a high density trading platform. It can also be a low density leave management app. And everything in between. How do you even design for that?
             </p>
             <img class="pd-project-image pd-project-image--full-width pd-project-image--axis-density pd-project-image--axis-density-desktop" src="src/assets/axis-project-image-1.svg" alt="Axis design system densities" />
             <img class="pd-project-image pd-project-image--full-width pd-project-image--axis-density pd-project-image--axis-density-mobile" src="src/assets/axis-project-image-1-mobile.svg" alt="Axis design system densities" />
             <h2 class="pd-type-h2">“I want to see more rows!”</h2>
             <p class="pd-type-body">
-                Page level density setting, or component level size setting? Answering a question with a question; would I ever want small and large buttons on the same page?
+                Visual density for a page, i.e. the amount of information it shows without scroll, can be controlled in two ways- having a density setting at the page level, or a size setting at the component level. We answer the question with a question; would I ever want small and large buttons on the same page? Not implausible.
             </p>
             <p class="pd-type-body">
-                Tokenizing spacers for page densities is important. Having sizes for components like buttons and inputs is equally important. The same trading dashboard can have a big button for sending orders while a smaller button deletes items. How’re the sizes decided though?
+                Tokenizing spacers for page densities is important. Having sizes for components like buttons and inputs is equally important. The same trading dashboard can have a big button for sending orders while a smaller button deletes items.
             </p>
             <img class="pd-project-image" src="src/assets/axis-project-image-2.svg" alt="Axis project buttons" />
             <p class="pd-type-body">
-                See how things will be used together. Say a chip is in an input (like Autocomplete), and the input is in a data grid cell. Users love seeing many cells without scrolling; define how big the cell is and everything comes together.
+                To help decide what the sizes could be, we see how things will be used together. Say a chip is in an input (like Autocomplete), and the input is in a data grid cell. Primary research tells us users love seeing many cells without scrolling; meaning we can simply define how big the cell is and everything comes together.
             </p>
             <blockquote class="pd-type-quote">
                 If the grid cell’s height is 30px, the input becomes 26px (26 - 4; leaving 1px on top and bottom for the cell’s border, and another 1px white space), and the chip becomes 22px (26 - 4). The buttons have to be the same as inputs (since they can be next to each other in forms). Add/subtract 4 to 8px to get large and small sizes.
             </blockquote>
             <img class="pd-project-image" src="src/assets/axis-project-image-3.svg" alt="Axis project buttons" />
+            <p class="pd-type-body">
+                Once the basics are set, we move to the building blocks of the design system- the components themselves.
+            </p>
 
-            <h2 class="pd-type-h2">Making a Hierarchical Multiselect</h2>
+            <h2 class="pd-type-h2">The Repeatable Building-Blocks</h2>
             <p class="pd-type-body">
                 Components can be atomic (buttons, inputs), complex (navbar, multiselect hierarchical lists) and macro (a stock watchlist). They solve recurring use cases and bring consistency.
             </p>
@@ -104,18 +107,18 @@
             <img class="pd-project-image" src="src/assets/axis-project-image-4.svg" alt="Axis project buttons" />
 
             <p class="pd-type-body">
-                What do libraries like Ant do? Would I need sizes? (Maybe not if it’s in a dropdown) Which variants would I need? Props are defined while evaluating what all application teams can customize, for corner cases even props can’t cover.
+                Secondary research helps us understand how other libraries (like MUI and Ant Design) solve similar probolems. We evaluate the variants (eg. button styles can be filled, outlined and more) and the sizes we'd need. Props are defined while evaluating what all application teams can customize, for corner cases even props can’t cover.
             </p>
             <p class="pd-type-body">
-                Tab cycles, arrow key behavior and shortcuts are important. Power users love keyboard.
+                Power users love keyboard, making defining Tab cycles, arrow key behavior and shortcuts important.
             </p>
             <p class="pd-type-body">
-                Once developed, storybook examples are put up for teams to refer to.
+                Once developed, storybook examples are put up for app teams and developers to refer to.
             </p>
 
             <h2 class="pd-type-h2">Let’s add some Color</h2>
             <p class="pd-type-body">
-                Color adds hierarchy, accessibility and functional cues. For the primary palette, choose something that defines the brand well while avoiding functional colors like green, red and orange. Choose a secondary which goes well with it. Lastly, add some shades for light, main and dark.
+                Color adds hierarchy, accessibility and functional cues. For the primary palette, we choose something that defines the brand well while avoiding functional colors like green, red and orange. Next we choose a secondary color that goes well with it. Lastly, we add some shades for light, main and dark.
             </p>
             <blockquote class="pd-type-quote">
                 Generating palettes algorithmically can be a challenge, simply because different hues behave differently. The best way I found was to take the HSL code, increment Lightness by 5-10 to get different shades, and tweak the saturation and lightness further to ensure the colors remain recognizable across the Hue spectrum.
@@ -135,7 +138,7 @@
             <blockquote class="pd-type-quote">
                 Solving background colors in dark mode is a fun challenge. Turns out, if there’s a white card on grey background in light mode, we perceive the card to be on top. However, simply inverting the colors to get a black card on grey background in dark mode gives the opposite feel; the card suddenly looks like it’s embedded in the page. Hence, grey and black backgrounds need to be swapped in dark mode (switch the phone settings page from light to dark mode to see it yourself)
             </blockquote>
-            <img class="pd-project-image pd-project-image--full-width" src="src/assets/axis-project-image-6.svg" alt="Axis project buttons" />
+            <img class="pd-project-image" src="src/assets/axis-project-image-6.svg" alt="Axis project buttons" />
 
             <h2 class="pd-type-h2">“Little” Details</h2>
             <p class="pd-type-body">
@@ -146,13 +149,13 @@
             </blockquote>
             <img class="pd-project-image" src="src/assets/axis-project-image-7.svg" alt="Axis project buttons" />
             <p class="pd-type-body">
-                Modern UIs prefer higher border radii, but how high? In dense UIs, the biggest border radius the smallest components (like chips) can handle without looking like pills gives the answer.
+                Modern UIs prefer higher border radii, but how high? In dense UIs, the biggest border radius the smallest components (like chips) can handle without looking like pills gives the answer. Ultimately it depends on the targeted look and feel. While many modern consumer apps have high border radii (6px or even 8px for buttons), many dense enteprise apps opt for 2px or 4px for optimised utilization of space.
             </p>
             <p class="pd-type-body">
-                Traders will use huge ultrawides, while someone could use a little iPad or a phone, making breakpoints and touch targets important to address.
+                Responsiveness as an afterthought will always increase work later. Traders use huge ultrawides, while someone can use an iPad or a phone, making breakpoints and touch targets important to address from the get go.
             </p>
             <blockquote class="pd-type-quote">
-                Ensure the typeface looks visually centered. We’d made everything with ‘Open Sans’, only to realise that it looks pushed slightly ‘downwards’, especially noticeable in small buttons and chips.
+                Research out there can’t seem to agree on standard touch target sizes. When it does, it’s too big for high density enterprise apps. Best is to just test it with users. Padding with negative margin remains a nifty trick to make touch targets bigger.
             </blockquote>
             <p class="pd-type-body">
                 In Figma, should we create a separate touch library? To begin with, simply reusing small and medium sizes of existing components seems good enough.

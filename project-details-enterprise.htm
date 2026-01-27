@@ -54,110 +54,139 @@
         </a>
         <h1 class="pd-type-h1">Designing for data-dense enterprise: Patterns from visualisation, trading and systems tools</h1>
         <p class="pd-type-subheader">
-            <span>16 min read</span>
+            <span>7 min read</span>
             <span class="work-card__dot">•</span>
             <span>Content adapted to preserve privacy</span>
         </p>
 
         <section class="pd-type-section" aria-label="Typography samples">
-            <h2 class="pd-type-h2">Sample below; actual article coming soon...</h2>
-            <h2 class="pd-type-h2">Something for every use case.</h2>
+            <h2 class="pd-type-h2">Something for every use case</h2>
             <p class="pd-type-body">
-                When you design internal apps for an enterprise, you’re solving for a vast majority of use cases, albeit for a smaller audience. The product surface area is huge: trading and analytics tools for a few specialists, large-scale data visualisation platforms used by many, infrastructure components like grids and component libraries that power everything, and systems used by teams across Human Capital, Admin, Finance and Operations.
+                When you design internal apps for an enterprise, you’re solving for a vast majority of use cases, albeit for a smaller audience. The product surface area is huge: trading and analytics tools for a few specialists, large-scale data visualisation platforms used by many, infrastructure components like grids and component libraries that power everything, and systems used by teams across Human Capital, Admin and Tech.
             </p>
             <p class="pd-type-body">
-                This page is a field guide of the patterns I’ve leaned on the most while working on high-density enterprise software. It’s written like a blog, but it’s really a collection of decisions: how to make complexity feel navigable, how to keep speed and trust high, and how to design interfaces that behave well when the data, permissions, and edge cases inevitably get messy.
+                This page is a glimpse into patterns I've learned while working on different categories of enterprise software. It's a collection of decisions: how to make complex data readable, how to keep trust high and clicks low, and how to design simple solutions for complex use cases and messy edge cases.
+            </p>
+            <p class="pd-type-body">
+                The following walks through four tools I've worked on, each representing a different slice of the enterprise landscape.
             </p>
 
-            <h2 class="pd-type-h2">Why dense is different</h2>
+            <h2 class="pd-type-h2">Nexus: Infra for Data Visualization</h2>
             <p class="pd-type-body">
-                “Data-dense” isn’t just a visual style. It’s a workflow constraint. Users are reading, scanning, comparing, and acting—often under time pressure, with real financial and operational consequences. Density is what enables fewer scrolls and fewer clicks, but it also increases cognitive load. The job is to keep information compact without turning it into noise.
+                Nexus is the firm's internal data visualisation platform (think Tableau or PowerBI, but deeply tailored to internal use cases). It connects directly to internal team databases without privacy concerns, and specific user asks get incorporated quickly, creating a deeply integrated experience that market tools can't replicate.
+            </p>
+            <p class="pd-type-body">
+                Users can connect multiple datasets and build detailed charts and tables. The customisation runs deep: formatting, analysis layers, widget resizing and dragging, advanced filtering, formulas, and full AI integration for understanding data and building visualisations. What sets it apart from market tools is native integration; Nexus can live inside other internal apps, seamlessly connecting to filters and other inputs in those apps, feeling like a part of the app itself rather than an embedded iframe.
+            </p>
+            <p class="pd-type-body">
+                I've been the sole designer on Nexus for over three years. In that time, I've shipped five major features and dozens of smaller initiatives, collaborating with the PM and developers at every step.
+            </p>
+
+            <h3 class="pd-type-h3">The Process</h3>
+            <p class="pd-type-body">
+                For each requirement, I start by meeting users across teams to understand their pain points. Then comes secondary research involving PowerBI, Tableau, Excel, Looker Studio and more, to see how the industry approaches the problem. From there, I create Figma and Cursor prototypes, test them with users, iterate and test again.
             </p>
             <blockquote class="pd-type-quote">
-                Dense UI is a budget. Spend pixels on signal, not decoration. The best layouts feel calm not because they’re sparse, but because hierarchy, alignment, and interaction states do the heavy lifting.
+                Here's the thing: PowerBI, Excel, and Tableau all solve the same problems in such different ways that copy-pasting becomes an ultimate recipe for disaster. I need to understand the philosophy behind each approach, then figure out what works for Nexus's own patterns and constraints.
             </blockquote>
-
-            <h2 class="pd-type-h2">The recurring problems</h2>
             <p class="pd-type-body">
-                Across trading dashboards, analytics workbenches and systems tooling, the same set of problems shows up repeatedly:
-                consistency across products, fast scanning, high-confidence actions, auditability, discoverability of power features, and graceful degradation when APIs fail.
+                Taking formatting as an example; PowerBI opens long forms inline within a thin panel, using nested accordions. Space is cramped, and the form is far away from the widget you're trying to format. For Nexus, we moved to a draggable dialog-based approach that opens near the widget itself, giving more room and keeping context close.
             </p>
 
-            <h2 class="pd-type-h2">Patterns from the trenches</h2>
-
-            <h3 class="pd-type-h3">1) Progressive disclosure that doesn’t hide the important parts</h3>
+            <h3 class="pd-type-h3">AI for Data Insights and building Widgets</h3>
             <p class="pd-type-body">
-                Enterprise products tend to attract options: toggles, modes, column pickers, permissions, and feature flags. Dumping everything on screen makes the UI feel “powerful” for a week, and exhausting forever.
+                Adding AI meant unifying multiple entry points into a single, predictable experience. Whether you're asking questions about your data, generating a chart, or exploring insights, AI always opens in the same place, as a single chat that can pull context from multiple elements on the page.
             </p>
             <p class="pd-type-body">
-                What works: establish a strong default view, then let users reveal complexity intentionally—through expandable sections, contextual drawers, inline row details, and secondary panels. The best implementations make it obvious where “more” lives, and preserve spatial memory (things open in predictable places).
+                The challenge was making sure users don't have to think about which feature they're using. They just state the desired outcome, and the system intelligently helps out.
             </p>
 
-            <h3 class="pd-type-h3">2) Grids as a workspace, not a table</h3>
+            <h3 class="pd-type-h3">Smart Defaults and Progressive Disclosure</h3>
             <p class="pd-type-body">
-                The grid is the home screen of enterprise. It’s where users sort, filter, compare, annotate, and take action. Treating it like a static table leaves a lot of value on the floor.
-            </p>
-            <p class="pd-type-body">
-                Patterns that consistently pay off: sticky headers, resizable and reorderable columns, pinned “identity” columns (name/symbol), inline editing with clear validation, meaningful empty states, and row-level actions that don’t cause accidental clicks.
+                A side effect of features and personalisation is bloat and complexity- often requiring users to fill up long forms with complex parameters just to see the result. Nexus' philosophy is to leverage smart defaults to solve the use case in one or two clicks. A user clicks a checkbox for "data labels" and we add them with the best possible contextual settings. If they want more control, they can progressively disclose the full form in the dialog.
             </p>
             <blockquote class="pd-type-quote">
-                A good grid has an opinion about interaction. It should be faster to do the right thing than the wrong thing.
+                The goal is speed for the 80% case, and depth for the 20% who need it. Forcing everyone through the long path increases cognitive load.
             </blockquote>
-
-            <h3 class="pd-type-h3">3) Filters that scale with dimensionality</h3>
             <p class="pd-type-body">
-                Filtering in consumer products is usually a handful of chips. In enterprise, it becomes a language. Users need to slice by time, region, strategy, status, owner, risk, source, and dozens more. The UI has to scale without becoming a spreadsheet of controls.
-            </p>
-            <p class="pd-type-body">
-                The backbone is a consistent filter model: quick filters for common cuts, an “advanced” builder for power queries, and saved views that behave like bookmarks for the whole workspace (columns + filters + sort + grouping). If it can’t be saved, it’s not really a workflow.
+                Other major features I've shipped include mathematical formula support for complex equations, full formatting support for colours, tick marks, and data labels, complex analysis like regression and arithmetic accumulation, and better dataset management for multi-source dashboards. Smaller initiatives included revamping colour themes, migration to a newer tech stack, improving widget drag-and-drop, and easier onboarding for new users with clearer labels and tooltips.
             </p>
 
-            <h3 class="pd-type-h3">4) Keyboard-first ergonomics</h3>
+            <h2 class="pd-type-h2">Data Grid: Simple Looking, Deeply Complex</h2>
             <p class="pd-type-body">
-                Power users don’t hate the mouse; they hate friction. Keyboard support isn’t a nice-to-have—it’s throughput. The difference between “usable” and “loved” often comes down to selection models, focus management, and shortcuts that feel consistent across tools.
+                Data grids are at the core of an enterprise app. Ultimately, a majority of use cases involve how tons of data (which mostly used to reside in Excel) can be visualized in interactive tables, grouped intelligently and made easier to consume and analyze. Most of the time, users want to see as many rows as possible without having to scroll.
             </p>
             <p class="pd-type-body">
-                I aim for predictable tab order, arrow-key navigation in grids and menus, type-to-search where it’s expected, and shortcuts for high-frequency actions. The trick is to keep it discoverable: tooltips, menus, and inline hints help new users level up without reading documentation.
-            </p>
-
-            <h3 class="pd-type-h3">5) Latency-aware UI</h3>
-            <p class="pd-type-body">
-                Enterprise data is rarely local, rarely small, and rarely fast. If the UI doesn’t acknowledge latency, users assume the app is broken—or worse, they retry actions and create duplicates.
-            </p>
-            <p class="pd-type-body">
-                The patterns are simple but strict: optimistic updates only when safe, explicit in-flight states for actions, partial-loading states for panels, skeletons for structured content, and clear error recovery (“Retry”, “View details”, “Copy error”, “Contact support”).
+                Grids are also deceptively hard. The first challenge: how do you make something as boring as a grid look good and minimal, so it doesn't come in the way of the data itself?
             </p>
 
-            <h3 class="pd-type-h3">6) Trust, auditability, and safe actions</h3>
+            <h3 class="pd-type-h3">Edge Cases That Define the Product</h3>
             <p class="pd-type-body">
-                When actions have real-world impact, safety becomes a design feature. Confirmation dialogs are the blunt tool; good systems use guardrails: previews, validation, constrained inputs, undo, and clear “what will happen” copy.
-            </p>
-            <p class="pd-type-body">
-                Auditability matters too. Users want to know what changed, who changed it, and when. It’s not glamorous, but it’s often the difference between a tool that scales and a tool that creates operational risk.
-            </p>
-
-            <h2 class="pd-type-h2">How I work on these systems</h2>
-            <p class="pd-type-body">
-                The fastest path to the right design is rarely a perfect Figma file on day one. I usually start with constraints: who uses this, how often, what’s the critical path, what’s the worst-case data size, and what failures look like.
-            </p>
-            <p class="pd-type-body">
-                From there, I’ll map a workflow, prototype key interactions (especially selection + filtering + actions), and pressure-test edge cases with engineers and domain experts. If a pattern is going to be reused, it graduates into the component library with clear guidance: when to use it, how it behaves, and what’s customizable.
+                The interesting work is in the edge cases. As an example, consider sorting data within nested hierarchies. If a column contains multiple hierarchy levels, how can one sort the first level ascending and the second level descending, just from the column header? The UI has to expose that control without cluttering the data or the column headers.
             </p>
             <blockquote class="pd-type-quote">
-                Enterprise design is systems design. The UI is only the visible layer; the real work is making the whole system coherent across products, teams, and years.
+                Live search is another interesting example. If I search for an entry in a column that's refreshing every second, I may have new matches appearing and old ones disappearing. How do I cycle through n/N results when both n and N are changing in real time? One possible solution is to pause live updates while searching, while giving a CTA to resume updates when done.
             </blockquote>
-
-            <h2 class="pd-type-h2">A glimpse of the tooling landscape</h2>
             <p class="pd-type-body">
-                Without getting into specifics, the work spanned multiple categories: trading and monitoring dashboards, analytics workbenches, visualisation platforms, admin and operations consoles, and foundational infrastructure like grids and component primitives.
-            </p>
-            <p class="pd-type-body">
-                The common thread: the best tools feel “inevitable”. They reduce hesitation. They make it clear what’s happening. They respect the user’s time.
+                Secondary research includes places like AG Grid. The process is similar to Nexus: collate use cases from different teams, talk to users, ideate, and test prototypes. For grids, interactive prototypes matter more than static mocks since the solutions are about behaviour and interaction, not just appearance.
             </p>
 
-            <h2 class="pd-type-h2">The biggest learnings</h2>
+            <h2 class="pd-type-h2">Trading Tools: Density Under Pressure</h2>
             <p class="pd-type-body">
-                If I had to summarise enterprise UI into a few guiding principles: prioritise clarity over cleverness, design for throughput, make state obvious, and never ignore the messy edges (permissions, failures, partial data). The more complex the domain, the more the interface should feel boring—in a good way.
+                Trading tools require showing complex data within a single page, with clear information hierarchy and minimal clicks to enable fast workflows. I designed a tool to trade bonds, with a single page interface with multiple resizable panels. Each panel is packed with tables and charts, and each panel talks to the others. The data is connected: cross-filtering and highlighting the same data across widgets helps users compare and make split-second decisions.
+            </p>
+            <p class="pd-type-body">
+                Apart from the overall layout, there are many design challenges lurking within, like determining how fills are shown, how row highlights are communicated across panels, and how charts are annotated without cluttering the view.
+            </p>
+            <blockquote class="pd-type-quote">
+                Before designing any of this, I had to build deep domain knowledge. What are bonds? What does VaR mean? What does the credit yield curve denote? Domain knowledge, both from the internet as well as from direct communication with stakeholders, helps understand the user psyche better while making stakeholder discussions more productive.
+            </blockquote>
+            <p class="pd-type-body">
+                Traders don't have time for second guesses or to learn new interaction patterns. The interaction model has to be predictable; muscle memory matters when decisions are measured in seconds.
+            </p>
+
+            <h2 class="pd-type-h2">Systems Tools: Visualising Complexity</h2>
+            <p class="pd-type-body">
+                Not all enterprise tools are about trading. Some are about infrastructure- inventory management, user group administration, or visualising complex service networks.
+            </p>
+            <p class="pd-type-body">
+                One project involved a tool for visualising service dependencies across the firm, with potentially thousands of nodes connected to each other. Users needed to triage problems by tracing dependencies back to find the root cause.
+            </p>
+
+            <h3 class="pd-type-h3">The Challenge</h3>
+            <p class="pd-type-body">
+                Each service can be thought of as a bubble, with many sub-services/processes in it as smaller bubbles. Each service connects to many other services (at the core, it's sub-services connected to other services' sub-services). The information is inherently dense and tangled. How do you make that understandable at a glance?
+            </p>
+            <p class="pd-type-body">
+                We needed clear visual hierarchy, robust alert indicators, and a description panel for the selected node. The visualisation had to scale from a handful of nodes to thousands without losing legibility. At each zoom level, we progressively disclosed more information, starting with just service health at the highest level, and drilling down to individual process metrics at the lowest level, keeping information understandable.
+            </p>
+
+            <h2 class="pd-type-h2">The Patterns That Recur</h2>
+            <p class="pd-type-body">
+                Across all these tools, certain patterns show up again and again:
+            </p>
+            <ul class="pd-type-body">
+                <li>
+                    Smart defaults over blank slates: Starting with the most likely scenario as default reduces clicks and cognitive load. Let users refine if needed.
+                </li>
+                <li>
+                    Progressive disclosure over feature dumps: Show what matters, hide what doesn't.
+                </li>
+                <li>
+                    Predictable placement: Things should open where users expect. Spatial memory is a feature especially for high stakes tools with split second workflows.
+                </li>
+                <li>
+                    Interactive prototypes over static mocks: Especially for behaviour-heavy problems. A live search experience can't be evaluated with a static Figma frame.
+                </li>
+                <li>
+                    Domain knowledge: The most important one- To understand user psyche, we need to understand the user, what they do and what their workflows look like, to be able to solve their problems for them.
+                </li>
+            </ul>
+ 
+
+            <h2 class="pd-type-h2">The Biggest Learnings</h2>
+            <p class="pd-type-body">
+                Enterprise design is systems design. The UI is only the visible layer; the real work is making the whole system coherent across products, teams, and years. With all these complex use cases and unprecedented edge cases, keeping it simple is the ultimate goal.
             </p>
 
             <div class="pd-project-nav">
