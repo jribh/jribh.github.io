@@ -3888,9 +3888,9 @@ body.project-overlay-open .project-overlay {
     .pd-project-images-flex .pd-project-image { margin: 0; }
     .pd-project-nav {
         padding: 3em 0;
-        gap: 1.5em;
-        flex-direction: column;
-        align-items: flex-start;
+        gap: 3em;
+        flex-direction: column-reverse;
+        align-items: center;
     }
     .lit-review-grid { gap: 1.6em; }
     .lit-review-item { gap: 1.2em; }
@@ -3961,5 +3961,4 @@ body.project-overlay-open .project-overlay {
 
     /* Project details responsive - very small phones */
     .project-details-hero { height: clamp(12.5em, 80vw, 24em); }
-    .pd-project-nav { gap: 1em; }
 }
