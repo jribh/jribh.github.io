@@ -70,11 +70,13 @@
             <p class="pd-type-body">
                 The following walks through four tools I've worked on, each representing a different slice of the enterprise landscape.
             </p>
+            <img class="pd-project-image" src="src/assets/enterprise-project-image-1.svg" alt="Enterprise illustration 1" />
 
             <h2 class="pd-type-h2">Nexus: Infra for Data Visualization</h2>
             <p class="pd-type-body">
                 Nexus is the firm's internal data visualisation platform (think Tableau or PowerBI, but deeply tailored to internal use cases). It connects directly to internal team databases without privacy concerns, and specific user asks get incorporated quickly, creating a deeply integrated experience that market tools can't replicate.
             </p>
+            <img class="pd-project-image" src="src/assets/enterprise-project-image-2.svg" alt="Nexus overview" />
             <p class="pd-type-body">
                 Users can connect multiple datasets and build detailed charts and tables. The customisation runs deep: formatting, analysis layers, widget resizing and dragging, advanced filtering, formulas, and full AI integration for understanding data and building visualisations. What sets it apart from market tools is native integration; Nexus can live inside other internal apps, seamlessly connecting to filters and other inputs in those apps, feeling like a part of the app itself rather than an embedded iframe.
             </p>
@@ -89,6 +91,7 @@
             <blockquote class="pd-type-quote">
                 Here's the thing: PowerBI, Excel, and Tableau all solve the same problems in such different ways that copy-pasting becomes an ultimate recipe for disaster. I need to understand the philosophy behind each approach, then figure out what works for Nexus's own patterns and constraints.
             </blockquote>
+            <img class="pd-project-image" src="src/assets/enterprise-project-image-3.svg" alt="Comparing tools" />
             <p class="pd-type-body">
                 Taking formatting as an example; PowerBI opens long forms inline within a thin panel, using nested accordions. Space is cramped, and the form is far away from the widget you're trying to format. For Nexus, we moved to a draggable dialog-based approach that opens near the widget itself, giving more room and keeping context close.
             </p>
@@ -97,6 +100,7 @@
             <p class="pd-type-body">
                 Adding AI meant unifying multiple entry points into a single, predictable experience. Whether you're asking questions about your data, generating a chart, or exploring insights, AI always opens in the same place, as a single chat that can pull context from multiple elements on the page.
             </p>
+            <img class="pd-project-image" src="src/assets/enterprise-project-image-4.svg" alt="AI chat for insights" />
             <p class="pd-type-body">
                 The challenge was making sure users don't have to think about which feature they're using. They just state the desired outcome, and the system intelligently helps out.
             </p>
@@ -116,6 +120,7 @@
             <p class="pd-type-body">
                 Data grids are at the core of an enterprise app. Ultimately, a majority of use cases involve how tons of data (which mostly used to reside in Excel) can be visualized in interactive tables, grouped intelligently and made easier to consume and analyze. Most of the time, users want to see as many rows as possible without having to scroll.
             </p>
+            <img class="pd-project-image" src="src/assets/enterprise-project-image-5.svg" alt="Data grid overview" />
             <p class="pd-type-body">
                 Grids are also deceptively hard. The first challenge: how do you make something as boring as a grid look good and minimal, so it doesn't come in the way of the data itself?
             </p>
@@ -124,6 +129,7 @@
             <p class="pd-type-body">
                 The interesting work is in the edge cases. As an example, consider sorting data within nested hierarchies. If a column contains multiple hierarchy levels, how can one sort the first level ascending and the second level descending, just from the column header? The UI has to expose that control without cluttering the data or the column headers.
             </p>
+            <img class="pd-project-image" src="src/assets/enterprise-project-image-6.svg" alt="Hierarchy sorting" />
             <blockquote class="pd-type-quote">
                 Live search is another interesting example. If I search for an entry in a column that's refreshing every second, I may have new matches appearing and old ones disappearing. How do I cycle through n/N results when both n and N are changing in real time? One possible solution is to pause live updates while searching, while giving a CTA to resume updates when done.
             </blockquote>
@@ -135,6 +141,7 @@
             <p class="pd-type-body">
                 Trading tools require showing complex data within a single page, with clear information hierarchy and minimal clicks to enable fast workflows. I designed a tool to trade bonds, with a single page interface with multiple resizable panels. Each panel is packed with tables and charts, and each panel talks to the others. The data is connected: cross-filtering and highlighting the same data across widgets helps users compare and make split-second decisions.
             </p>
+            <img class="pd-project-image" src="src/assets/enterprise-project-image-7.svg" alt="Trading panels" />
             <p class="pd-type-body">
                 Apart from the overall layout, there are many design challenges lurking within, like determining how fills are shown, how row highlights are communicated across panels, and how charts are annotated without cluttering the view.
             </p>
@@ -149,6 +156,7 @@
             <p class="pd-type-body">
                 Not all enterprise tools are about trading. Some are about infrastructure- inventory management, user group administration, or visualising complex service networks.
             </p>
+            <img class="pd-project-image" src="src/assets/enterprise-project-image-8.svg" alt="Systems network overview" />
             <p class="pd-type-body">
                 One project involved a tool for visualising service dependencies across the firm, with potentially thousands of nodes connected to each other. Users needed to triage problems by tracing dependencies back to find the root cause.
             </p>
@@ -157,6 +165,7 @@
             <p class="pd-type-body">
                 Each service can be thought of as a bubble, with many sub-services/processes in it as smaller bubbles. Each service connects to many other services (at the core, it's sub-services connected to other services' sub-services). The information is inherently dense and tangled. How do you make that understandable at a glance?
             </p>
+            <img class="pd-project-image" src="src/assets/enterprise-project-image-9.svg" alt="Service dependency bubbles" />
             <p class="pd-type-body">
                 We needed clear visual hierarchy, robust alert indicators, and a description panel for the selected node. The visualisation had to scale from a handful of nodes to thousands without losing legibility. At each zoom level, we progressively disclosed more information, starting with just service health at the highest level, and drilling down to individual process metrics at the lowest level, keeping information understandable.
             </p>

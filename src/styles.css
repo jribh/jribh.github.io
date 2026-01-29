@@ -2700,7 +2700,7 @@ body.project-overlay-open .project-overlay {
 }
 
 .pd-project-nav {
-    display: none;
+    display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;

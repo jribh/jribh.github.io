@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "start": "parcel index.htm --open",
-    "devmac": "parcel index.htm --host 192.168.1.2 --port 3000",
+    "devmac": "parcel index.htm --host 192.168.1.3 --port 1234",
     "build": "parcel build index.htm --public-url ./ --no-scope-hoist && cp public/og-image.jpg dist/og-image.jpg"
   },
   "devDependencies": {

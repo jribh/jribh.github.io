@@ -396,6 +396,22 @@ function setupInterceptors() {
       return;
     }
 
+    // Handle next/previous project navigation inside the overlay
+    const pdNavLink = e.target.closest && e.target.closest('.pd-project-nav a');
+    if (pdNavLink && isOverlayOpen()) {
+      const href = pdNavLink.getAttribute('href');
+      if (!href) return;
+
+      // Allow modifier-clicks to behave normally
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+
+      e.preventDefault();
+      openProject(href, { pushState: false, replaceState: true, animate: true }).catch((err) => {
+        console.warn('Failed to navigate to next/previous project:', err);
+      });
+      return;
+    }
+
     // Handle project-to-project navigation inside the overlay without full page reload.
     if (isOverlayOpen()) {
       const a = e.target.closest && e.target.closest('a');
