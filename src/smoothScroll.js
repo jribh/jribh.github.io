@@ -700,7 +700,16 @@ class SmoothScroll {
   }
 
   scrollTo(target, duration = 1000, onComplete) {
-    // Smoothly animate to target position
+    // On touch devices, use native scroll animation
+    if (this.isTouchDevice) {
+      this.animateScrollTo(target, duration);
+      if (typeof onComplete === 'function') {
+        setTimeout(onComplete, duration);
+      }
+      return;
+    }
+
+    // Smoothly animate to target position for desktop
     const start = this.scrollTarget;
     const distance = target - start;
     const startTime = performance.now();
